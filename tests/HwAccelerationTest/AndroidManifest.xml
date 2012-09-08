@@ -33,6 +33,42 @@
         <meta-data android:name="android.graphics.renderThread" android:value="true" />
 
         <activity
+                android:name="PathOffsetActivity"
+                android:label="_PathOffset">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name="TJunctionActivity"
+                android:label="_T-Junction">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name="TextPathActivity"
+                android:label="_TextPath">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name="GradientStopsActivity"
+                android:label="_GradientStops">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
                 android:name="PaintDrawFilterActivity"
                 android:label="_DrawFilter">
             <intent-filter>
