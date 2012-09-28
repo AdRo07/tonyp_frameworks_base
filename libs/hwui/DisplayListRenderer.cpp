@@ -144,6 +144,7 @@ void DisplayList::destroyDisplayListDeferred(DisplayList* displayList) {
 
 void DisplayList::clearResources() {
     sk_free((void*) mReader.base());
+    mReader.setMemory(NULL, 0);
 
     delete mTransformMatrix;
     delete mTransformCamera;
@@ -206,17 +207,18 @@ void DisplayList::clearResources() {
 
 void DisplayList::initFromDisplayListRenderer(const DisplayListRenderer& recorder, bool reusing) {
     const SkWriter32& writer = recorder.writeStream();
-    init();
-
-    if (writer.size() == 0) {
-        return;
-    }
 
     if (reusing) {
         // re-using display list - clear out previous allocations
         clearResources();
     }
+
+    init();
     initProperties();
+
+    if (writer.size() == 0) {
+        return;
+    }
 
     mSize = writer.size();
     void* buffer = sk_malloc_throw(mSize);
@@ -278,6 +280,7 @@ void DisplayList::initFromDisplayListRenderer(const DisplayListRenderer& recorde
 void DisplayList::init() {
     mSize = 0;
     mIsRenderable = true;
+    mFunctorCount = 0;
 }
 
 size_t DisplayList::getSize() {
