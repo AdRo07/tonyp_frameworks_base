@@ -83,6 +83,13 @@ class GLES20DisplayList extends DisplayList {
     }
 
     @Override
+    public void reset() {
+        if (hasNativeDisplayList()) {
+            nReset(mFinalizer.mNativeDisplayList);
+        }
+    }
+
+    @Override
     public boolean isValid() {
         return mValid;
     }
@@ -290,6 +297,7 @@ class GLES20DisplayList extends DisplayList {
         }
     }
 
+    private static native void nReset(int displayList);
     private static native void nOffsetTopBottom(int displayList, int offset);
     private static native void nOffsetLeftRight(int displayList, int offset);
     private static native void nSetLeftTopRightBottom(int displayList, int left, int top,

@@ -882,6 +882,9 @@ public:
         SkIRect ir;
         bool     result = canvas->getClipBounds(&r, SkCanvas::kBW_EdgeType);
 
+        if (!result) {
+            r.setEmpty();
+        }
         r.round(&ir);
         (void)GraphicsJNI::irect_to_jrect(ir, env, bounds);
         return result;

@@ -106,35 +106,6 @@ DisplayList::~DisplayList() {
     clearResources();
 }
 
-void DisplayList::initProperties() {
-    mLeft = 0;
-    mTop = 0;
-    mRight = 0;
-    mBottom = 0;
-    mClipChildren = true;
-    mAlpha = 1;
-    mMultipliedAlpha = 255;
-    mHasOverlappingRendering = true;
-    mTranslationX = 0;
-    mTranslationY = 0;
-    mRotation = 0;
-    mRotationX = 0;
-    mRotationY= 0;
-    mScaleX = 1;
-    mScaleY = 1;
-    mPivotX = 0;
-    mPivotY = 0;
-    mCameraDistance = 0;
-    mMatrixDirty = false;
-    mMatrixFlags = 0;
-    mPrevWidth = -1;
-    mPrevHeight = -1;
-    mWidth = 0;
-    mHeight = 0;
-    mPivotExplicitlySet = false;
-    mCaching = false;
-}
-
 void DisplayList::destroyDisplayListDeferred(DisplayList* displayList) {
     if (displayList) {
         DISPLAY_LIST_LOGD("Deferring display list destruction");
@@ -205,8 +176,12 @@ void DisplayList::clearResources() {
     mMatrices.clear();
 }
 
+void DisplayList::reset() {
+    clearResources();
+    init();
+}
+
 void DisplayList::initFromDisplayListRenderer(const DisplayListRenderer& recorder, bool reusing) {
-    const SkWriter32& writer = recorder.writeStream();
 
     if (reusing) {
         // re-using display list - clear out previous allocations
@@ -214,8 +189,8 @@ void DisplayList::initFromDisplayListRenderer(const DisplayListRenderer& recorde
     }
 
     init();
-    initProperties();
 
+    const SkWriter32& writer = recorder.writeStream();
     if (writer.size() == 0) {
         return;
     }
@@ -280,7 +255,32 @@ void DisplayList::initFromDisplayListRenderer(const DisplayListRenderer& recorde
 void DisplayList::init() {
     mSize = 0;
     mIsRenderable = true;
-    mFunctorCount = 0;
+    mLeft = 0;
+    mTop = 0;
+    mRight = 0;
+    mBottom = 0;
+    mClipChildren = true;
+    mAlpha = 1;
+    mMultipliedAlpha = 255;
+    mHasOverlappingRendering = true;
+    mTranslationX = 0;
+    mTranslationY = 0;
+    mRotation = 0;
+    mRotationX = 0;
+    mRotationY= 0;
+    mScaleX = 1;
+    mScaleY = 1;
+    mPivotX = 0;
+    mPivotY = 0;
+    mCameraDistance = 0;
+    mMatrixDirty = false;
+    mMatrixFlags = 0;
+    mPrevWidth = -1;
+    mPrevHeight = -1;
+    mWidth = 0;
+    mHeight = 0;
+    mPivotExplicitlySet = false;
+    mCaching = false;
 }
 
 size_t DisplayList::getSize() {
