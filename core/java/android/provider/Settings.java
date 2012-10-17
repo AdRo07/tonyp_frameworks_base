@@ -3066,6 +3066,7 @@ public final class Settings {
           * 11 - Kill App
           * 12 - Last App
           * 13 - Custom App
+          * 14 - Torch
           * @hide
           */
 
