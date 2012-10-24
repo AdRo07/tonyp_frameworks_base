@@ -2262,12 +2262,6 @@ public final class Settings {
         public static final String LOCKSCREEN_IF_CALL_ENDS_WITH_SCREENOFF = "lockscreen_if_call_ends_with_screenoff";
 
         /**
-         * Stores values for custom lockscreen targets
-         * @hide
-         */
-        public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
-
-        /**
          * URI for the low battery sound file.
          * @hide
          */
@@ -3085,6 +3079,16 @@ public final class Settings {
 
         /**
          * Show the pending notification counts as overlays on the status bar
+
+        /**
+         * Which lockscreen style to use. The value is an integer.
+         * ( 0 - GlowPadView: JB )
+         * ( 1 - MultiwaveView: ICS )
+         * ( 2 - Tabs: GB   )
+         * ( 3 - Rotary: Eclair )
+         * @hide
+         */
+        public static final String LOCKSCREEN_STYLE = "lockscreen_style";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
