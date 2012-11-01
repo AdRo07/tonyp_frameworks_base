@@ -28,9 +28,11 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Vibrator;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
@@ -56,7 +58,7 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
 
     // Animation properties.
     private static final long DURATION = 300; // duration of transitional animations
-    private static final long FINAL_DURATION = 500; // duration of final animations when unlocking
+    private static final long FINAL_DURATION = 300; // duration of final animations when unlocking
     private static final long RING_DELAY = 1300; // when to start fading animated rings
     private static final long FINAL_DELAY = 200; // delay for unlock success animation
     private static final long SHORT_DELAY = 100; // for starting one animation after another.
@@ -191,6 +193,15 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
         double distY = mouseY - mLockCenterY;
         int dragDistance = (int) Math.ceil(Math.hypot(distX, distY));
         double touchA = Math.atan2(distX, distY);
+
+	int screenHeight = getHeight();
+            if (screenHeight < 1280) {
+                mRingRadius = 800.0f;
+            } else {
+                mRingRadius = 1280.0f;
+            }
+
+
         float ringX = (float) (mLockCenterX + mRingRadius * Math.sin(touchA));
         float ringY = (float) (mLockCenterY + mRingRadius * Math.cos(touchA));
 
@@ -242,8 +253,16 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
                 mUnlockHalo.setScaleY(1.0f);
                 // mUnlockHalo.setAlpha(1.0f);
                 mUnlockHalo.addAnimTo(DURATION, 0, "x", mLockCenterX, true);
+
+            if (screenHeight < 1280) {
+                mUnlockHalo.addAnimTo(DURATION, 0, "y", mLockCenterY + 550, true);
+                mUnlockHalo.addAnimTo(0, DURATION, "y", mLockCenterY + 400, true);
+            } else {
                 mUnlockHalo.addAnimTo(DURATION, 0, "y", mLockCenterY + 880, true);
                 mUnlockHalo.addAnimTo(0, DURATION, "y", mLockCenterY + 640, true);
+            }
+
+
                 mUnlockHalo.addAnimTo(0, DURATION, "alpha", 0.0f, true);
 
                 removeCallbacks(mLockTimerActions);
@@ -263,10 +282,16 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
 
             case STATE_ATTEMPTING:
                 if (DBG) Log.v(TAG, "State ATTEMPTING (fingerDown = " + fingerDown + ")");
-                if (mouseY < mLockCenterY - 55) {
+
+                if ((mouseY < mLockCenterY - 55 && screenHeight >= 1280)
+		|| (mouseY < mLockCenterY - 35 && screenHeight < 1280)) {
                     if (fingerDown) {
                         mUnlockWave.addAnimTo(0, 0, "x", mLockCenterX, true);
+            		if (screenHeight < 1280) {
+                        mUnlockWave.addAnimTo(0, 0, "y", mouseY - 550, true);
+            		} else {
                         mUnlockWave.addAnimTo(0, 0, "y", mouseY - 880, true);
+            		}
                         mUnlockWave.addAnimTo(0, 0, "scaleX", 1.0f, true);
                         mUnlockWave.addAnimTo(0, 0, "scaleY", 1.0f, true);
                         mUnlockWave.addAnimTo(0, 0, "alpha", 1.0f, true);
@@ -288,7 +313,11 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
                     }
                 } else {
                     mUnlockWave.addAnimTo(0, 0, "x", mLockCenterX, true);
+            	    if (screenHeight < 1280) {
+                    mUnlockWave.addAnimTo(0, 0, "y", mouseY - 550, true);
+            	    } else {
                     mUnlockWave.addAnimTo(0, 0, "y", mouseY - 880, true);
+            	    }
                     mUnlockWave.addAnimTo(0, 0, "scaleX", 1.0f, true);
                     mUnlockWave.addAnimTo(0, 0, "scaleY", 1.0f, true);
                     mUnlockWave.addAnimTo(0, 0, "alpha", 1.0f, true);
@@ -309,16 +338,26 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
 
             case STATE_UNLOCK_ATTEMPT:
                 if (DBG) Log.v(TAG, "State UNLOCK_ATTEMPT");
-                if (mouseY < mLockCenterY - 55) {
 
+                if ((mouseY < mLockCenterY - 55 && screenHeight >= 1280) 
+		|| (mouseY < mLockCenterY - 35 && screenHeight < 1280)) {
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "x", mLockCenterX, true);
+            	    if (screenHeight < 1280) {
+                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 800, true);
+            	    } else {
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 1280, true);
+           	    }
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleX", 2.0f, false);
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, false);
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, false);
 
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "x", mLockCenterX, true);
+            	    if (screenHeight < 1280) {
+                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 600, true);
+            	    } else {
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 960, true);
+            	    }
+
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleX", 1.0f, false);
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, false);
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, false);

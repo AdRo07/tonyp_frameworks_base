@@ -65,6 +65,14 @@ public class KeyguardViewManager implements KeyguardWindowController {
 
     private boolean mScreenOn = false;
 
+    // Get the style from settings  
+
+    private static final int LOCK_STYLE_JB = 0;    
+    private static final int LOCK_STYLE_ICS = 1;
+    private static final int LOCK_STYLE_GB = 2;
+    private static final int LOCK_STYLE_ECLAIR = 3;
+    private static final int LOCK_STYLE_BB = 4;
+    
     public interface ShowListener {
         void onShown(IBinder windowToken);
     };
@@ -78,6 +86,8 @@ public class KeyguardViewManager implements KeyguardWindowController {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.LOCKSCREEN_SEE_THROUGH), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.LOCKSCREEN_STYLE), false, this);
         }
 
         @Override
@@ -197,11 +207,15 @@ public class KeyguardViewManager implements KeyguardWindowController {
         boolean allowSeeThrough = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0;
 
+    int mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
+            Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
+    boolean mUseBbLockscreen = (mLockscreenStyle == LOCK_STYLE_BB);
+
         final int stretch = ViewGroup.LayoutParams.MATCH_PARENT;
         int flags = WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN
                 | WindowManager.LayoutParams.FLAG_SLIPPERY;
 
-        if (!allowSeeThrough) {
+        if (!allowSeeThrough && !mUseBbLockscreen) {
             flags |= WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER;
         }
 
