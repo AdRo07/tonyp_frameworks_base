@@ -3693,6 +3693,9 @@
   <public type="style" name="Widget.Holo.Light.MediaRouteButton" id="0x010301d6" />
   <public type="style" name="Widget.DeviceDefault.MediaRouteButton" id="0x010301d7" />
   <public type="style" name="Widget.DeviceDefault.Light.MediaRouteButton" id="0x010301d8" />
+  <public type="attr" name="format12Hour" id="0x010103ca" />
+  <public type="attr" name="format24Hour" id="0x010103cb" />
+  <public type="attr" name="timeZone" id="0x010103cc" />
 
 <!-- ===============================================================
    Resources added in version 10 of CyanogenMod
