@@ -99,7 +99,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     private static final boolean DBG = false;
     private static final String TAG = "LockScreen";
     private static final String ENABLE_MENU_KEY_FILE = "/data/local/enable_menu_key";
-    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 0;
+    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 500;
     private static final int STAY_ON_WHILE_GRABBED_TIMEOUT = 30000;
     private static final String ASSIST_ICON_METADATA_NAME =
             "com.android.systemui.action_assist_icon";
@@ -133,6 +133,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     private MultiWaveView mMultiWaveSelector;
     private SlidingTab mSlidingTabSelector;
     private RotarySelector mRotarySelector;
+    private WaveView mBlackBerrySelector;
     
     // Get the style from settings
 //    private int mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
@@ -143,11 +144,13 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     private static final int LOCK_STYLE_ICS = 1;
     private static final int LOCK_STYLE_GB = 2;
     private static final int LOCK_STYLE_ECLAIR = 3;
+    private static final int LOCK_STYLE_BB = 4;
     
     private boolean mUseJbLockscreen = (mLockscreenStyle == LOCK_STYLE_JB);
     private boolean mUseIcsLockscreen = (mLockscreenStyle == LOCK_STYLE_ICS);
     private boolean mUseGbLockscreen = (mLockscreenStyle == LOCK_STYLE_GB);
     private boolean mUseEclairLockscreen = (mLockscreenStyle == LOCK_STYLE_ECLAIR);
+    private boolean mUseBbLockscreen = (mLockscreenStyle == LOCK_STYLE_BB);
 
     InfoCallbackImpl mInfoCallback = new InfoCallbackImpl() {
 
@@ -833,35 +836,47 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mSilentMode = isSilentMode();
 
-        mGlowPadSelector = (GlowPadView) findViewById(R.id.unlock_widget);
+        mGlowPadSelector = (GlowPadView) findViewById(R.id.glowpad_widget);
         mMultiWaveSelector = (MultiWaveView) findViewById(R.id.multiwave_widget);
         mSlidingTabSelector = (SlidingTab) findViewById(R.id.tab_widget);
         mRotarySelector = (RotarySelector) findViewById(R.id.rotary_widget);
+        mBlackBerrySelector = (WaveView) findViewById(R.id.unlock_widget);
 
         if (mUseJbLockscreen) {
             mGlowPadSelector.setVisibility(View.VISIBLE);
             mMultiWaveSelector.setVisibility(View.GONE);
             mSlidingTabSelector.setVisibility(View.GONE);
             mRotarySelector.setVisibility(View.GONE);
+	    mBlackBerrySelector.setVisibility(View.GONE);
             mUnlockWidget = mGlowPadSelector;
         } else if (mUseIcsLockscreen) {
             mMultiWaveSelector.setVisibility(View.VISIBLE);
             mGlowPadSelector.setVisibility(View.GONE);
             mSlidingTabSelector.setVisibility(View.GONE);
             mRotarySelector.setVisibility(View.GONE);
+	    mBlackBerrySelector.setVisibility(View.GONE);
             mUnlockWidget = mMultiWaveSelector;
         } else if (mUseGbLockscreen) {
             mMultiWaveSelector.setVisibility(View.GONE);
             mGlowPadSelector.setVisibility(View.GONE);
             mSlidingTabSelector.setVisibility(View.VISIBLE);
             mRotarySelector.setVisibility(View.GONE);
+	    mBlackBerrySelector.setVisibility(View.GONE);
             mUnlockWidget = mSlidingTabSelector;
         } else if (mUseEclairLockscreen) {
             mMultiWaveSelector.setVisibility(View.GONE);
             mGlowPadSelector.setVisibility(View.GONE);
             mSlidingTabSelector.setVisibility(View.GONE);
             mRotarySelector.setVisibility(View.VISIBLE);
+	    mBlackBerrySelector.setVisibility(View.GONE);
             mUnlockWidget = mRotarySelector;
+        } else if (mUseBbLockscreen) {
+            mMultiWaveSelector.setVisibility(View.GONE);
+            mGlowPadSelector.setVisibility(View.GONE);
+            mSlidingTabSelector.setVisibility(View.GONE);
+            mRotarySelector.setVisibility(View.GONE);
+	    mBlackBerrySelector.setVisibility(View.VISIBLE);
+            mUnlockWidget = mBlackBerrySelector;
         }
 
         mUnlockWidgetMethods = createUnlockMethods(mUnlockWidget);

@@ -3957,6 +3957,7 @@
   <java-symbol type="drawable" name="ic_lockscreen_chevron_down" />
   <java-symbol type="drawable" name="ic_lockscreen_chevron_left" />
   <java-symbol type="drawable" name="ic_lockscreen_chevron_right" />
+  <java-symbol type="id" name="glowpad_widget" />
   <java-symbol type="id" name="multiwave_widget" />
   <java-symbol type="id" name="tab_widget" />
   <java-symbol type="id" name="rotary_widget" />

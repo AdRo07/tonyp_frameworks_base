@@ -53,6 +53,15 @@ public class WindowAnimator {
 
     int mPendingLayoutChanges;
 
+    // Get the style from settings
+   
+    private static final int LOCK_STYLE_JB = 0;    
+    private static final int LOCK_STYLE_ICS = 1;
+    private static final int LOCK_STYLE_GB = 2;
+    private static final int LOCK_STYLE_ECLAIR = 3;
+    private static final int LOCK_STYLE_BB = 4;
+    private int mLockscreenStyle = LOCK_STYLE_JB;
+
     /** Overall window dimensions */
     int mDw, mDh;
 
@@ -287,6 +296,11 @@ public class WindowAnimator {
                         mService.mFocusMayChange = true;
                     }
                     if (win.isReadyForDisplay()) {
+    mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
+            Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
+
+        boolean mUseBbLockscreen = (mLockscreenStyle == LOCK_STYLE_BB);
+		    if(!mUseBbLockscreen) {
                         if (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0 ||
                                     nowAnimating) {
@@ -298,6 +312,9 @@ public class WindowAnimator {
                         } else {
                             mForceHiding = KEYGUARD_SHOWN;
                         }
+		    } else {
+			mForceHiding = KEYGUARD_NOT_SHOWN;
+		    }
                     }
                     if (WindowManagerService.DEBUG_VISIBILITY) Slog.v(TAG,
                             "Force hide " + mForceHiding

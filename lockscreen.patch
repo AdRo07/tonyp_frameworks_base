@@ -1,0 +1,608 @@
+diff -rupN ./a/core/java/com/android/internal/widget/WaveView.java ./c/core/java/com/android/internal/widget/WaveView.java
+--- ./a/core/java/com/android/internal/widget/WaveView.java	2012-07-10 16:46:08.010789000 +0900
++++ ./c/core/java/com/android/internal/widget/WaveView.java	2012-10-05 16:13:36.801176000 +0900
+@@ -43,9 +43,8 @@ import com.android.internal.R;
+ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListener {
+     private static final String TAG = "WaveView";
+     private static final boolean DBG = false;
+-    private static final int WAVE_COUNT = 20; // default wave count
+-    private static final long VIBRATE_SHORT = 20;  // msec
+-    private static final long VIBRATE_LONG = 20;  // msec
++    private static final long VIBRATE_SHORT = 0;  // msec
++    private static final long VIBRATE_LONG = 0;  // msec
+ 
+     // Lock state machine states
+     private static final int STATE_RESET_LOCK = 0;
+@@ -57,15 +56,11 @@ public class WaveView extends View imple
+ 
+     // Animation properties.
+     private static final long DURATION = 300; // duration of transitional animations
+-    private static final long FINAL_DURATION = 200; // duration of final animations when unlocking
++    private static final long FINAL_DURATION = 500; // duration of final animations when unlocking
+     private static final long RING_DELAY = 1300; // when to start fading animated rings
+     private static final long FINAL_DELAY = 200; // delay for unlock success animation
+     private static final long SHORT_DELAY = 100; // for starting one animation after another.
+-    private static final long WAVE_DURATION = 2000; // amount of time for way to expand/decay
+-    private static final long RESET_TIMEOUT = 3000; // elapsed time of inactivity before we reset
+-    private static final long DELAY_INCREMENT = 15; // increment per wave while tracking motion
+-    private static final long DELAY_INCREMENT2 = 12; // increment per wave while not tracking
+-    private static final long WAVE_DELAY = WAVE_DURATION / WAVE_COUNT; // initial propagation delay
++    private static final long RESET_TIMEOUT = 300; // elapsed time of inactivity before we reset
+ 
+     /**
+      * The scale by which to multiply the unlock handle width to compute the radius
+@@ -81,25 +76,20 @@ public class WaveView extends View imple
+ 
+     private Vibrator mVibrator;
+     private OnTriggerListener mOnTriggerListener;
+-    private ArrayList<DrawableHolder> mDrawables = new ArrayList<DrawableHolder>(3);
+-    private ArrayList<DrawableHolder> mLightWaves = new ArrayList<DrawableHolder>(WAVE_COUNT);
++    private ArrayList<DrawableHolder> mDrawables = new ArrayList<DrawableHolder>(4);
+     private boolean mFingerDown = false;
+-    private float mRingRadius = 182.0f; // Radius of bitmap ring. Used to snap halo to it
+-    private int mSnapRadius = 136; // minimum threshold for drag unlock
+-    private int mWaveCount = WAVE_COUNT;  // number of waves
+-    private long mWaveTimerDelay = WAVE_DELAY;
+-    private int mCurrentWave = 0;
++    private float mRingRadius = 1280.0f; // Radius of bitmap ring. Used to snap halo to it
++    private int mSnapRadius = 200; // minimum threshold for drag unlock
+     private float mLockCenterX; // center of widget as dictated by widget size
+     private float mLockCenterY;
+     private float mMouseX; // current mouse position as of last touch event
+     private float mMouseY;
+     private DrawableHolder mUnlockRing;
++    private DrawableHolder mUnlockWave;
+     private DrawableHolder mUnlockDefault;
+     private DrawableHolder mUnlockHalo;
+     private int mLockState = STATE_RESET_LOCK;
+     private int mGrabbedState = OnTriggerListener.NO_HANDLE;
+-    private boolean mWavesRunning;
+-    private boolean mFinishWaves;
+ 
+     public WaveView(Context context) {
+         this(context, null);
+@@ -166,33 +156,34 @@ public class WaveView extends View imple
+         mUnlockRing = new DrawableHolder(createDrawable(R.drawable.unlock_ring));
+         mUnlockRing.setX(mLockCenterX);
+         mUnlockRing.setY(mLockCenterY);
+-        mUnlockRing.setScaleX(0.1f);
+-        mUnlockRing.setScaleY(0.1f);
++        mUnlockRing.setScaleX(1.0f);
++        mUnlockRing.setScaleY(1.0f);
+         mUnlockRing.setAlpha(0.0f);
+         mDrawables.add(mUnlockRing);
+ 
++        mUnlockWave = new DrawableHolder(createDrawable(R.drawable.unlock_wave));
++        mUnlockWave.setX(mLockCenterX);
++        mUnlockWave.setY(mLockCenterY);
++        mUnlockWave.setScaleX(1.0f);
++        mUnlockWave.setScaleY(1.0f);
++        mUnlockWave.setAlpha(1.0f);
++        mDrawables.add(mUnlockWave);
++
+         mUnlockDefault = new DrawableHolder(createDrawable(R.drawable.unlock_default));
+         mUnlockDefault.setX(mLockCenterX);
+         mUnlockDefault.setY(mLockCenterY);
+-        mUnlockDefault.setScaleX(0.1f);
+-        mUnlockDefault.setScaleY(0.1f);
+-        mUnlockDefault.setAlpha(0.0f);
++        mUnlockDefault.setScaleX(1.0f);
++        mUnlockDefault.setScaleY(1.0f);
++        mUnlockDefault.setAlpha(1.0f);
+         mDrawables.add(mUnlockDefault);
+ 
+         mUnlockHalo = new DrawableHolder(createDrawable(R.drawable.unlock_halo));
+         mUnlockHalo.setX(mLockCenterX);
+-        mUnlockHalo.setY(mLockCenterY);
+-        mUnlockHalo.setScaleX(0.1f);
+-        mUnlockHalo.setScaleY(0.1f);
++        mUnlockHalo.setY(mLockCenterY + 640);
++        mUnlockHalo.setScaleX(2.0f);
++        mUnlockHalo.setScaleY(1.0f);
+         mUnlockHalo.setAlpha(0.0f);
+         mDrawables.add(mUnlockHalo);
+-
+-        BitmapDrawable wave = createDrawable(R.drawable.unlock_wave);
+-        for (int i = 0; i < mWaveCount; i++) {
+-            DrawableHolder holder = new DrawableHolder(wave);
+-            mLightWaves.add(holder);
+-            holder.setAlpha(0.0f);
+-        }
+     }
+ 
+     private void waveUpdateFrame(float mouseX, float mouseY, boolean fingerDown) {
+@@ -206,20 +197,30 @@ public class WaveView extends View imple
+         switch (mLockState) {
+             case STATE_RESET_LOCK:
+                 if (DBG) Log.v(TAG, "State RESET_LOCK");
+-                mWaveTimerDelay = WAVE_DELAY;
+-                for (int i = 0; i < mLightWaves.size(); i++) {
+-                    DrawableHolder holder = mLightWaves.get(i);
+-                    holder.addAnimTo(300, 0, "alpha", 0.0f, false);
+-                }
+-                for (int i = 0; i < mLightWaves.size(); i++) {
+-                    mLightWaves.get(i).startAnimations(this);
+-                }
+ 
+-                mUnlockRing.addAnimTo(DURATION, 0, "x", mLockCenterX, true);
+-                mUnlockRing.addAnimTo(DURATION, 0, "y", mLockCenterY, true);
+-                mUnlockRing.addAnimTo(DURATION, 0, "scaleX", 0.1f, true);
+-                mUnlockRing.addAnimTo(DURATION, 0, "scaleY", 0.1f, true);
+-                mUnlockRing.addAnimTo(DURATION, 0, "alpha", 0.0f, true);
++                mUnlockRing.removeAnimationFor("x");
++                mUnlockRing.removeAnimationFor("y");
++                mUnlockRing.removeAnimationFor("scaleX");
++                mUnlockRing.removeAnimationFor("scaleY");
++                mUnlockRing.removeAnimationFor("alpha");
++                mUnlockRing.setX(mLockCenterX);
++                mUnlockRing.setY(mLockCenterY);
++                mUnlockRing.setScaleY(1.0f);
++                mUnlockRing.setScaleY(1.0f);
++                mUnlockRing.setAlpha(0.0f);
++
++                mUnlockWave.removeAnimationFor("x");
++                mUnlockWave.removeAnimationFor("y");
++                mUnlockWave.removeAnimationFor("scaleX");
++                mUnlockWave.removeAnimationFor("scaleY");
++                mUnlockWave.removeAnimationFor("alpha");
++                // mUnlockWave.setX(mLockCenterX);
++                // mUnlockWave.setY(mLockCenterY);
++                mUnlockWave.setScaleX(1.0f);
++                mUnlockWave.setScaleY(1.0f);
++                mUnlockWave.setAlpha(1.0f);
++                mUnlockWave.addAnimTo(DURATION, 0, "x", mLockCenterX, true);
++                mUnlockWave.addAnimTo(DURATION, 0, "y", mLockCenterY, true);
+ 
+                 mUnlockDefault.removeAnimationFor("x");
+                 mUnlockDefault.removeAnimationFor("y");
+@@ -228,28 +229,22 @@ public class WaveView extends View imple
+                 mUnlockDefault.removeAnimationFor("alpha");
+                 mUnlockDefault.setX(mLockCenterX);
+                 mUnlockDefault.setY(mLockCenterY);
+-                mUnlockDefault.setScaleX(0.1f);
+-                mUnlockDefault.setScaleY(0.1f);
+-                mUnlockDefault.setAlpha(0.0f);
+-                mUnlockDefault.addAnimTo(DURATION, SHORT_DELAY, "scaleX", 1.0f, true);
+-                mUnlockDefault.addAnimTo(DURATION, SHORT_DELAY, "scaleY", 1.0f, true);
+-                mUnlockDefault.addAnimTo(DURATION, SHORT_DELAY, "alpha", 1.0f, true);
++                mUnlockDefault.setScaleX(1.0f);
++                mUnlockDefault.setScaleY(1.0f);
++                mUnlockDefault.setAlpha(1.0f);
+ 
+                 mUnlockHalo.removeAnimationFor("x");
+                 mUnlockHalo.removeAnimationFor("y");
+                 mUnlockHalo.removeAnimationFor("scaleX");
+                 mUnlockHalo.removeAnimationFor("scaleY");
+                 mUnlockHalo.removeAnimationFor("alpha");
+-                mUnlockHalo.setX(mLockCenterX);
+-                mUnlockHalo.setY(mLockCenterY);
+-                mUnlockHalo.setScaleX(0.1f);
+-                mUnlockHalo.setScaleY(0.1f);
+-                mUnlockHalo.setAlpha(0.0f);
+-                mUnlockHalo.addAnimTo(DURATION, SHORT_DELAY, "x", mLockCenterX, true);
+-                mUnlockHalo.addAnimTo(DURATION, SHORT_DELAY, "y", mLockCenterY, true);
+-                mUnlockHalo.addAnimTo(DURATION, SHORT_DELAY, "scaleX", 1.0f, true);
+-                mUnlockHalo.addAnimTo(DURATION, SHORT_DELAY, "scaleY", 1.0f, true);
+-                mUnlockHalo.addAnimTo(DURATION, SHORT_DELAY, "alpha", 1.0f, true);
++                mUnlockHalo.setScaleX(2.0f);
++                mUnlockHalo.setScaleY(1.0f);
++                // mUnlockHalo.setAlpha(1.0f);
++                mUnlockHalo.addAnimTo(DURATION, 0, "x", mLockCenterX, true);
++                mUnlockHalo.addAnimTo(DURATION, 0, "y", mLockCenterY + 880, true);
++                mUnlockHalo.addAnimTo(0, DURATION, "y", mLockCenterY + 640, true);
++                mUnlockHalo.addAnimTo(0, DURATION, "alpha", 0.0f, true);
+ 
+                 removeCallbacks(mLockTimerActions);
+ 
+@@ -258,41 +253,33 @@ public class WaveView extends View imple
+ 
+             case STATE_READY:
+                 if (DBG) Log.v(TAG, "State READY");
+-                mWaveTimerDelay = WAVE_DELAY;
+                 break;
+ 
+             case STATE_START_ATTEMPT:
+                 if (DBG) Log.v(TAG, "State START_ATTEMPT");
+-                mUnlockDefault.removeAnimationFor("x");
+-                mUnlockDefault.removeAnimationFor("y");
+-                mUnlockDefault.removeAnimationFor("scaleX");
+-                mUnlockDefault.removeAnimationFor("scaleY");
+-                mUnlockDefault.removeAnimationFor("alpha");
+-                mUnlockDefault.setX(mLockCenterX + 182);
+-                mUnlockDefault.setY(mLockCenterY);
+-                mUnlockDefault.setScaleX(0.1f);
+-                mUnlockDefault.setScaleY(0.1f);
+-                mUnlockDefault.setAlpha(0.0f);
+-
+-                mUnlockDefault.addAnimTo(DURATION, SHORT_DELAY, "scaleX", 1.0f, false);
+-                mUnlockDefault.addAnimTo(DURATION, SHORT_DELAY, "scaleY", 1.0f, false);
+-                mUnlockDefault.addAnimTo(DURATION, SHORT_DELAY, "alpha", 1.0f, false);
+-
+-                mUnlockRing.addAnimTo(DURATION, 0, "scaleX", 1.0f, true);
+-                mUnlockRing.addAnimTo(DURATION, 0, "scaleY", 1.0f, true);
+-                mUnlockRing.addAnimTo(DURATION, 0, "alpha", 1.0f, true);
+ 
+                 mLockState = STATE_ATTEMPTING;
+                 break;
+ 
+             case STATE_ATTEMPTING:
+                 if (DBG) Log.v(TAG, "State ATTEMPTING (fingerDown = " + fingerDown + ")");
+-                if (dragDistance > mSnapRadius) {
+-                    mFinishWaves = true; // don't start any more waves.
++                if (mouseY < mLockCenterY - 55) {
+                     if (fingerDown) {
+-                        mUnlockHalo.addAnimTo(0, 0, "x", ringX, true);
+-                        mUnlockHalo.addAnimTo(0, 0, "y", ringY, true);
+-                        mUnlockHalo.addAnimTo(0, 0, "scaleX", 1.0f, true);
++                        mUnlockWave.addAnimTo(0, 0, "x", mLockCenterX, true);
++                        mUnlockWave.addAnimTo(0, 0, "y", mouseY - 880, true);
++                        mUnlockWave.addAnimTo(0, 0, "scaleX", 1.0f, true);
++                        mUnlockWave.addAnimTo(0, 0, "scaleY", 1.0f, true);
++                        mUnlockWave.addAnimTo(0, 0, "alpha", 1.0f, true);
++
++                        mUnlockDefault.addAnimTo(0, 0, "x", mLockCenterX, true);
++                        mUnlockDefault.addAnimTo(0, 0, "y", mLockCenterY, true);
++                        mUnlockDefault.addAnimTo(0, 0, "scaleX", 1.0f, true);
++                        mUnlockDefault.addAnimTo(0, 0, "scaleY", 1.0f, true);
++                        mUnlockDefault.addAnimTo(0, 0, "alpha", 0.0f, true);
++
++                        mUnlockHalo.addAnimTo(0, 0, "x", mouseX, true);
++                        mUnlockHalo.addAnimTo(0, 0, "y", mouseY, true);
++                        mUnlockHalo.addAnimTo(0, 0, "scaleX", 2.0f, true);
+                         mUnlockHalo.addAnimTo(0, 0, "scaleY", 1.0f, true);
+                         mUnlockHalo.addAnimTo(0, 0, "alpha", 1.0f, true);
+                     }  else {
+@@ -300,16 +287,21 @@ public class WaveView extends View imple
+                         mLockState = STATE_UNLOCK_ATTEMPT;
+                     }
+                 } else {
+-                    // If waves have stopped, we need to kick them off again...
+-                    if (!mWavesRunning) {
+-                        mWavesRunning = true;
+-                        mFinishWaves = false;
+-                        // mWaveTimerDelay = WAVE_DELAY;
+-                        postDelayed(mAddWaveAction, mWaveTimerDelay);
+-                    }
++                    mUnlockWave.addAnimTo(0, 0, "x", mLockCenterX, true);
++                    mUnlockWave.addAnimTo(0, 0, "y", mouseY - 880, true);
++                    mUnlockWave.addAnimTo(0, 0, "scaleX", 1.0f, true);
++                    mUnlockWave.addAnimTo(0, 0, "scaleY", 1.0f, true);
++                    mUnlockWave.addAnimTo(0, 0, "alpha", 1.0f, true);
++
++                    mUnlockDefault.addAnimTo(0, 0, "x", mLockCenterX, true);
++                    mUnlockDefault.addAnimTo(0, 0, "y", mLockCenterY, true);
++                    mUnlockDefault.addAnimTo(0, 0, "scaleX", 1.0f, true);
++                    mUnlockDefault.addAnimTo(0, 0, "scaleY", 1.0f, true);
++                    mUnlockDefault.addAnimTo(0, 0, "alpha", 1.0f, true);
++
+                     mUnlockHalo.addAnimTo(0, 0, "x", mouseX, true);
+                     mUnlockHalo.addAnimTo(0, 0, "y", mouseY, true);
+-                    mUnlockHalo.addAnimTo(0, 0, "scaleX", 1.0f, true);
++                    mUnlockHalo.addAnimTo(0, 0, "scaleX", 2.0f, true);
+                     mUnlockHalo.addAnimTo(0, 0, "scaleY", 1.0f, true);
+                     mUnlockHalo.addAnimTo(0, 0, "alpha", 1.0f, true);
+                 }
+@@ -317,55 +309,19 @@ public class WaveView extends View imple
+ 
+             case STATE_UNLOCK_ATTEMPT:
+                 if (DBG) Log.v(TAG, "State UNLOCK_ATTEMPT");
+-                if (dragDistance > mSnapRadius) {
+-                    for (int n = 0; n < mLightWaves.size(); n++) {
+-                        DrawableHolder wave = mLightWaves.get(n);
+-                        long delay = 1000L*(6 + n - mCurrentWave)/10L;
+-                        wave.addAnimTo(FINAL_DURATION, delay, "x", ringX, true);
+-                        wave.addAnimTo(FINAL_DURATION, delay, "y", ringY, true);
+-                        wave.addAnimTo(FINAL_DURATION, delay, "scaleX", 0.1f, true);
+-                        wave.addAnimTo(FINAL_DURATION, delay, "scaleY", 0.1f, true);
+-                        wave.addAnimTo(FINAL_DURATION, delay, "alpha", 0.0f, true);
+-                    }
+-                    for (int i = 0; i < mLightWaves.size(); i++) {
+-                        mLightWaves.get(i).startAnimations(this);
+-                    }
++                if (mouseY < mLockCenterY - 55) {
+ 
+-                    mUnlockRing.addAnimTo(FINAL_DURATION, 0, "x", ringX, false);
+-                    mUnlockRing.addAnimTo(FINAL_DURATION, 0, "y", ringY, false);
+-                    mUnlockRing.addAnimTo(FINAL_DURATION, 0, "scaleX", 0.1f, false);
+-                    mUnlockRing.addAnimTo(FINAL_DURATION, 0, "scaleY", 0.1f, false);
+-                    mUnlockRing.addAnimTo(FINAL_DURATION, 0, "alpha", 0.0f, false);
+-
+-                    mUnlockRing.addAnimTo(FINAL_DURATION, FINAL_DELAY, "alpha", 0.0f, false);
+-
+-                    mUnlockDefault.removeAnimationFor("x");
+-                    mUnlockDefault.removeAnimationFor("y");
+-                    mUnlockDefault.removeAnimationFor("scaleX");
+-                    mUnlockDefault.removeAnimationFor("scaleY");
+-                    mUnlockDefault.removeAnimationFor("alpha");
+-                    mUnlockDefault.setX(ringX);
+-                    mUnlockDefault.setY(ringY);
+-                    mUnlockDefault.setScaleX(0.1f);
+-                    mUnlockDefault.setScaleY(0.1f);
+-                    mUnlockDefault.setAlpha(0.0f);
+-
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, 0, "x", ringX, true);
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, 0, "y", ringY, true);
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, 0, "scaleX", 1.0f, true);
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, true);
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, true);
+-
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, FINAL_DELAY, "scaleX", 3.0f, false);
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, FINAL_DELAY, "scaleY", 3.0f, false);
+-                    mUnlockDefault.addAnimTo(FINAL_DURATION, FINAL_DELAY, "alpha", 0.0f, false);
+-
+-                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "x", ringX, false);
+-                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "y", ringY, false);
+-
+-                    mUnlockHalo.addAnimTo(FINAL_DURATION, FINAL_DELAY, "scaleX", 3.0f, false);
+-                    mUnlockHalo.addAnimTo(FINAL_DURATION, FINAL_DELAY, "scaleY", 3.0f, false);
+-                    mUnlockHalo.addAnimTo(FINAL_DURATION, FINAL_DELAY, "alpha", 0.0f, false);
++                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "x", mLockCenterX, true);
++                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 1280, true);
++                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleX", 2.0f, false);
++                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, false);
++                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, false);
++
++                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "x", mLockCenterX, true);
++                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 960, true);
++                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleX", 1.0f, false);
++                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, false);
++                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, false);
+ 
+                     removeCallbacks(mLockTimerActions);
+ 
+@@ -380,7 +336,6 @@ public class WaveView extends View imple
+ 
+             case STATE_UNLOCK_SUCCESS:
+                 if (DBG) Log.v(TAG, "State UNLOCK_SUCCESS");
+-                removeCallbacks(mAddWaveAction);
+                 break;
+ 
+             default:
+@@ -390,6 +345,7 @@ public class WaveView extends View imple
+         mUnlockDefault.startAnimations(this);
+         mUnlockHalo.startAnimations(this);
+         mUnlockRing.startAnimations(this);
++        mUnlockWave.startAnimations(this);
+     }
+ 
+     BitmapDrawable createDrawable(int resId) {
+@@ -404,9 +360,6 @@ public class WaveView extends View imple
+         for (int i = 0; i < mDrawables.size(); ++i) {
+             mDrawables.get(i).draw(canvas);
+         }
+-        for (int i = 0; i < mLightWaves.size(); ++i) {
+-            mLightWaves.get(i).draw(canvas);
+-        }
+     }
+ 
+     private final Runnable mLockTimerActions = new Runnable() {
+@@ -417,54 +370,10 @@ public class WaveView extends View imple
+                 if (DBG) Log.v(TAG, "Timer resets to STATE_RESET_LOCK");
+                 mLockState = STATE_RESET_LOCK;
+             }
+-            // for prototype, reset after successful unlock
+-            if (mLockState == STATE_UNLOCK_SUCCESS) {
+-                if (DBG) Log.v(TAG, "Timer resets to STATE_RESET_LOCK after success");
+-                mLockState = STATE_RESET_LOCK;
+-            }
+             invalidate();
+         }
+     };
+ 
+-    private final Runnable mAddWaveAction = new Runnable() {
+-        public void run() {
+-            double distX = mMouseX - mLockCenterX;
+-            double distY = mMouseY - mLockCenterY;
+-            int dragDistance = (int) Math.ceil(Math.hypot(distX, distY));
+-            if (mLockState == STATE_ATTEMPTING && dragDistance < mSnapRadius
+-                    && mWaveTimerDelay >= WAVE_DELAY) {
+-                mWaveTimerDelay = Math.min(WAVE_DURATION, mWaveTimerDelay + DELAY_INCREMENT);
+-
+-                DrawableHolder wave = mLightWaves.get(mCurrentWave);
+-                wave.setAlpha(0.0f);
+-                wave.setScaleX(0.2f);
+-                wave.setScaleY(0.2f);
+-                wave.setX(mMouseX);
+-                wave.setY(mMouseY);
+-
+-                wave.addAnimTo(WAVE_DURATION, 0, "x", mLockCenterX, true);
+-                wave.addAnimTo(WAVE_DURATION, 0, "y", mLockCenterY, true);
+-                wave.addAnimTo(WAVE_DURATION*2/3, 0, "alpha", 1.0f, true);
+-                wave.addAnimTo(WAVE_DURATION, 0, "scaleX", 1.0f, true);
+-                wave.addAnimTo(WAVE_DURATION, 0, "scaleY", 1.0f, true);
+-
+-                wave.addAnimTo(1000, RING_DELAY, "alpha", 0.0f, false);
+-                wave.startAnimations(WaveView.this);
+-
+-                mCurrentWave = (mCurrentWave+1) % mWaveCount;
+-                if (DBG) Log.v(TAG, "WaveTimerDelay: start new wave in " + mWaveTimerDelay);
+-            } else {
+-                mWaveTimerDelay += DELAY_INCREMENT2;
+-            }
+-            if (mFinishWaves) {
+-                // sentinel used to restart the waves after they've stopped
+-                mWavesRunning = false;
+-            } else {
+-                postDelayed(mAddWaveAction, mWaveTimerDelay);
+-            }
+-        }
+-    };
+-
+     @Override
+     public boolean onHoverEvent(MotionEvent event) {
+         if (AccessibilityManager.getInstance(mContext).isTouchExplorationEnabled()) {
+Binary files ./a/core/res/res/drawable-xhdpi/unlock_default.png and ./c/core/res/res/drawable-xhdpi/unlock_default.png differ
+Binary files ./a/core/res/res/drawable-xhdpi/unlock_halo.png and ./c/core/res/res/drawable-xhdpi/unlock_halo.png differ
+Binary files ./a/core/res/res/drawable-xhdpi/unlock_ring.png and ./c/core/res/res/drawable-xhdpi/unlock_ring.png differ
+Binary files ./a/core/res/res/drawable-xhdpi/unlock_wave.png and ./c/core/res/res/drawable-xhdpi/unlock_wave.png differ
+diff -rupN ./a/core/res/res/layout/keyguard_screen_tab_unlock.xml ./b/core/res/res/layout/keyguard_screen_tab_unlock.xml
+--- ./a/core/res/res/layout/keyguard_screen_tab_unlock.xml	2012-10-05 17:55:56.562004000 +0900
++++ ./b/core/res/res/layout/keyguard_screen_tab_unlock.xml	2012-10-05 17:39:54.631169000 +0900
+@@ -22,8 +22,19 @@
+   state of the device, as well as instructions on how to get past it
+   depending on the state of the device.  It is the same for landscape
+   and portrait.-->
++<RelativeLayout
++	xmlns:android="http://schemas.android.com/apk/res/android"
++	android:layout_width="match_parent"
++	android:layout_height="match_parent"
++	android:gravity="center_horizontal">
++
++        <com.android.internal.widget.WaveView
++            android:id="@+id/unlock_widget"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            />
++
+ <GridLayout
+-    xmlns:android="http://schemas.android.com/apk/res/android"
+     android:orientation="vertical"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+@@ -111,7 +122,7 @@
+         android:layout_width="fill_parent"
+         android:layout_height="wrap_content"
+         android:orientation="horizontal"
+-        android:paddingTop="4dip" >
++        android:paddingTop="20dip" >
+ 
+         <ImageView
+             android:id="@+id/weather_image"
+@@ -287,32 +298,6 @@
+ 
+     </LinearLayout>
+ 
+-        <com.android.internal.widget.multiwaveview.GlowPadView
+-            android:id="@+id/unlock_widget"
+-            android:orientation="horizontal"
+-            android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:layout_alignParentBottom="true"
+-            android:layout_centerHorizontal="true"
+-            android:layout_centerVertical="true"
+-            android:paddingLeft="8dip"
+-            android:paddingRight="8dip"
+-            android:focusable="true"
+-
+-            android:targetDrawables="@array/lockscreen_targets_with_camera"
+-            android:targetDescriptions="@array/lockscreen_target_descriptions_with_camera"
+-            android:directionDescriptions="@array/lockscreen_direction_descriptions"
+-            android:handleDrawable="@drawable/ic_lockscreen_handle"
+-            android:outerRingDrawable="@drawable/ic_lockscreen_outerring"
+-            android:outerRadius="@dimen/glowpadview_target_placement_radius"
+-            android:innerRadius="@dimen/glowpadview_inner_radius"
+-            android:snapMargin="@dimen/glowpadview_snap_margin"
+-            android:feedbackCount="1"
+-            android:vibrationDuration="20"
+-            android:glowRadius="@dimen/glowpadview_glow_radius"
+-            android:pointDrawable="@drawable/ic_lockscreen_glowdot"
+-            />
+-
+         <TextView
+             android:id="@+id/carrier"
+             android:layout_width="fill_parent"
+@@ -356,7 +341,7 @@
+         layout="@layout/keyguard_transport_control"
+         android:layout_row="0"
+         android:layout_column="0"
+-        android:layout_rowSpan="5"
++        android:layout_rowSpan="8"
+         android:layout_columnSpan="1"
+         android:layout_gravity="fill"
+         android:layout_width="0dip"
+@@ -364,3 +349,4 @@
+         />
+ 
+ </GridLayout>
++</RelativeLayout>
+diff -rupN ./a/core/res/res/layout/keyguard_transport_control.xml ./c/core/res/res/layout/keyguard_transport_control.xml
+--- ./a/core/res/res/layout/keyguard_transport_control.xml	2012-09-16 18:48:05.163973000 +0900
++++ ./c/core/res/res/layout/keyguard_transport_control.xml	2012-10-04 20:30:22.125840000 +0900
+@@ -24,8 +24,7 @@
+     <!-- FrameLayout used as scrim to show between album art and buttons -->
+     <FrameLayout
+         android:layout_width="match_parent"
+-        android:layout_height="match_parent"
+-        android:foreground="@drawable/ic_lockscreen_player_background">
++        android:layout_height="360dip">
+         <!-- We use ImageView for its cropping features, otherwise could be android:background -->
+         <ImageView
+             android:id="@+id/albumart"
+@@ -41,7 +40,8 @@
+         android:orientation="vertical"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_gravity="bottom">
++        android:layout_gravity="bottom"
++        android:layout_marginBottom="100dip">
+         <TextView
+             android:id="@+id/title"
+             android:layout_width="match_parent"
+diff -rupN ./a/core/res/res/values/dimens.xml ./c/core/res/res/values/dimens.xml
+--- ./a/core/res/res/values/dimens.xml	2012-07-10 16:46:09.070787000 +0900
++++ ./c/core/res/res/values/dimens.xml	2012-10-04 23:12:03.286659000 +0900
+@@ -182,7 +182,7 @@
+     <dimen name="keyguard_lockscreen_status_line_font_size">14dip</dimen>
+ 
+     <!-- Size of right margin on Unsecure unlock LockScreen -->
+-    <dimen name="keyguard_lockscreen_status_line_font_right_margin">42dip</dimen>
++    <dimen name="keyguard_lockscreen_status_line_font_right_margin">126dip</dimen>
+ 
+     <!-- Size of top margin on Clock font to edge on unlock LockScreen -->
+     <dimen name="keyguard_lockscreen_status_line_clockfont_top_margin">22dip</dimen>
+diff -rupN ./a/policy/src/com/android/internal/policy/impl/KeyguardViewBase.java ./c/policy/src/com/android/internal/policy/impl/KeyguardViewBase.java
+--- ./a/policy/src/com/android/internal/policy/impl/KeyguardViewBase.java	2012-07-10 16:46:22.940783000 +0900
++++ ./c/policy/src/com/android/internal/policy/impl/KeyguardViewBase.java	2012-09-20 23:25:03.026406000 +0900
+@@ -47,7 +47,7 @@ import android.util.Slog;
+  */
+ public abstract class KeyguardViewBase extends FrameLayout {
+ 
+-    private static final int BACKGROUND_COLOR = 0x70000000;
++    private static final int BACKGROUND_COLOR = 0x00000000;
+     private KeyguardViewCallback mCallback;
+     private AudioManager mAudioManager;
+     private TelephonyManager mTelephonyManager = null;
+diff -rupN ./a/policy/src/com/android/internal/policy/impl/KeyguardViewManager.java ./c/policy/src/com/android/internal/policy/impl/KeyguardViewManager.java
+--- ./a/policy/src/com/android/internal/policy/impl/KeyguardViewManager.java	2012-09-16 18:57:14.643975000 +0900
++++ ./c/policy/src/com/android/internal/policy/impl/KeyguardViewManager.java	2012-09-26 18:01:34.356700000 +0900
+@@ -116,7 +116,6 @@ public class KeyguardViewManager impleme
+ 
+             final int stretch = ViewGroup.LayoutParams.MATCH_PARENT;
+             int flags = WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN
+-                    | WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER
+                     | WindowManager.LayoutParams.FLAG_SLIPPERY
+                     /*| WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                     | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR*/ ;
+diff -rupN ./a/policy/src/com/android/internal/policy/impl/LockScreen.java ./c/policy/src/com/android/internal/policy/impl/LockScreen.java
+--- ./a/policy/src/com/android/internal/policy/impl/LockScreen.java	2012-09-16 18:47:56.583975000 +0900
++++ ./c/policy/src/com/android/internal/policy/impl/LockScreen.java	2012-10-04 20:24:43.805841000 +0900
+@@ -59,7 +59,7 @@ class LockScreen extends LinearLayout im
+     private static final boolean DBG = false;
+     private static final String TAG = "LockScreen";
+     private static final String ENABLE_MENU_KEY_FILE = "/data/local/enable_menu_key";
+-    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 0;
++    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 500;
+     private static final int STAY_ON_WHILE_GRABBED_TIMEOUT = 30000;
+     private static final String ASSIST_ICON_METADATA_NAME =
+             "com.android.systemui.action_assist_icon";
+diff -rupN ./a/services/java/com/android/server/wm/WindowAnimator.java ./b/services/java/com/android/server/wm/WindowAnimator.java
+--- ./a/services/java/com/android/server/wm/WindowAnimator.java	2012-10-11 14:43:31.251135000 +0900
++++ ./b/services/java/com/android/server/wm/WindowAnimator.java	2012-10-13 04:30:37.506307782 +0900
+@@ -286,15 +286,7 @@ public class WindowAnimator {
+                         mService.mFocusMayChange = true;
+                     }
+                     if (win.isReadyForDisplay()) {
+-                        if (nowAnimating) {
+-                            if (winAnimator.mAnimationIsEntrance) {
+-                                mForceHiding = KEYGUARD_ANIMATING_IN;
+-                            } else {
+-                                mForceHiding = KEYGUARD_ANIMATING_OUT;
+-                            }
+-                        } else {
+-                            mForceHiding = KEYGUARD_SHOWN;
+-                        }
++                            mForceHiding = KEYGUARD_NOT_SHOWN;
+                     }
+                     if (WindowManagerService.DEBUG_VISIBILITY) Slog.v(TAG,
+                             "Force hide " + mForceHiding
+
