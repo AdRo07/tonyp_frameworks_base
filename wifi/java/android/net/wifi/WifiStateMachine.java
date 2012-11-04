@@ -1882,6 +1882,7 @@ public class WifiStateMachine extends StateMachine {
                 case CMD_STOP_DRIVER:
                 case CMD_DELAYED_STOP_DRIVER:
                 case CMD_DRIVER_START_TIMED_OUT:
+                case CMD_CAPTIVE_CHECK_COMPLETE:
                 case CMD_START_AP:
                 case CMD_START_AP_SUCCESS:
                 case CMD_START_AP_FAILURE:
@@ -2112,6 +2113,13 @@ public class WifiStateMachine extends StateMachine {
                         loge("Unable to change interface settings: " + ie);
                     }
 
+                    /* Stop a running supplicant after a runtime restart
+                     * Avoids issues with drivers that do not handle interface down
+                     * on a running supplicant properly.
+                     */
+                    if (DBG) log("Kill any running supplicant");
+                    mWifiNative.killSupplicant(mP2pSupported);
+
                     if(mWifiNative.startSupplicant(mP2pSupported)) {
                         if (DBG) log("Supplicant start successful");
                         mWifiMonitor.startMonitoring();
@@ -2307,7 +2315,7 @@ public class WifiStateMachine extends StateMachine {
                 case WifiMonitor.SUP_DISCONNECTION_EVENT:
                     if (++mSupplicantRestartCount <= SUPPLICANT_RESTART_TRIES) {
                         loge("Failed to setup control channel, restart supplicant");
-                        mWifiNative.killSupplicant();
+                        mWifiNative.killSupplicant(mP2pSupported);
                         transitionTo(mDriverLoadedState);
                         sendMessageDelayed(CMD_START_SUPPLICANT, SUPPLICANT_RESTART_INTERVAL_MSECS);
                     } else {
@@ -2370,7 +2378,7 @@ public class WifiStateMachine extends StateMachine {
                     break;
                 case WifiMonitor.SUP_DISCONNECTION_EVENT:  /* Supplicant connection lost */
                     loge("Connection lost, restart supplicant");
-                    mWifiNative.killSupplicant();
+                    mWifiNative.killSupplicant(mP2pSupported);
                     mWifiNative.closeSupplicantConnection();
                     mNetworkInfo.setIsAvailable(false);
                     handleNetworkDisconnect();
@@ -2517,14 +2525,14 @@ public class WifiStateMachine extends StateMachine {
                     /* Socket connection can be lost when we do a graceful shutdown
                      * or when the driver is hung. Ensure supplicant is stopped here.
                      */
-                    mWifiNative.killSupplicant();
+                    mWifiNative.killSupplicant(mP2pSupported);
                     mWifiNative.closeSupplicantConnection();
                     transitionTo(mDriverLoadedState);
                     break;
                 case CMD_STOP_SUPPLICANT_FAILED:
                     if (message.arg1 == mSupplicantStopFailureToken) {
                         loge("Timed out on a supplicant stop, kill and proceed");
-                        mWifiNative.killSupplicant();
+                        mWifiNative.killSupplicant(mP2pSupported);
                         mWifiNative.closeSupplicantConnection();
                         transitionTo(mDriverLoadedState);
                     }
