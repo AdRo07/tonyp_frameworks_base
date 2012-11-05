@@ -99,7 +99,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     private static final boolean DBG = false;
     private static final String TAG = "LockScreen";
     private static final String ENABLE_MENU_KEY_FILE = "/data/local/enable_menu_key";
-    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 500;
+    private static final int WAIT_FOR_ANIMATION_TIMEOUT = 0;
+    private static final int WAIT_FOR_ANIMATION_TIMEOUT_ALT = 500;
     private static final int STAY_ON_WHILE_GRABBED_TIMEOUT = 30000;
     private static final String ASSIST_ICON_METADATA_NAME =
             "com.android.systemui.action_assist_icon";
@@ -129,11 +130,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
 
     private TextView mCarrier;
     private View mUnlockWidget;
-    private GlowPadView mGlowPadSelector;
-    private MultiWaveView mMultiWaveSelector;
-    private SlidingTab mSlidingTabSelector;
-    private RotarySelector mRotarySelector;
-    private WaveView mBlackBerrySelector;
     
     // Get the style from settings
 //    private int mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
@@ -755,7 +751,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
             public void run() {
                 mCallback.goToUnlockScreen();
             }
-        }, WAIT_FOR_ANIMATION_TIMEOUT);
+        }, mUseBbLockscreen ? WAIT_FOR_ANIMATION_TIMEOUT_ALT
+                : WAIT_FOR_ANIMATION_TIMEOUT);
     }
 
     private void toggleRingMode() {
@@ -805,6 +802,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         mCallback = callback;
         mEnableMenuKeyInLockScreen = shouldEnableMenuKey();
         mCreationOrientation = configuration.orientation;
+	boolean mTabletui = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.MODE_TABLET_UI, 0) == 1;
 
         if (LockPatternKeyguardView.DEBUG_CONFIGURATION) {
             Log.v(TAG, "***** CREATING LOCK SCREEN", new RuntimeException());
@@ -815,9 +814,31 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         final LayoutInflater inflater = LayoutInflater.from(context);
         if (DBG) Log.v(TAG, "Creation orientation = " + mCreationOrientation);
         if (mCreationOrientation != Configuration.ORIENTATION_LANDSCAPE) {
-            inflater.inflate(R.layout.keyguard_screen_tab_unlock, this, true);
+	    if (mUseJbLockscreen || mTabletui) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_jb, this, true);
+	    } else if (mUseIcsLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_ics, this, true);
+	    } else if (mUseGbLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_gb, this, true);
+	    } else if (mUseEclairLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_eclair, this, true);
+	    } else if (mUseBbLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_bb, this, true);
+	    } else {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_jb, this, true);
+	    }
         } else {
-            inflater.inflate(R.layout.keyguard_screen_tab_unlock_land, this, true);
+            if (mUseJbLockscreen || mTabletui) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_land_jb, this, true);
+	    } else if (mUseIcsLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_land_ics, this, true);
+	    } else if (mUseGbLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_land_gb, this, true);
+	    } else if (mUseEclairLockscreen) {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_land_eclair, this, true);
+	    } else {
+            inflater.inflate(R.layout.keyguard_screen_tab_unlock_jb, this, true);
+	    }
         }
 	if (!mUseBbLockscreen) {
         setBackground(mContext, (ViewGroup) findViewById(R.id.root));
@@ -836,50 +857,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         mHasVibrator = vibrator == null ? false : vibrator.hasVibrator();
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mSilentMode = isSilentMode();
-
-        mGlowPadSelector = (GlowPadView) findViewById(R.id.glowpad_widget);
-        mMultiWaveSelector = (MultiWaveView) findViewById(R.id.multiwave_widget);
-        mSlidingTabSelector = (SlidingTab) findViewById(R.id.tab_widget);
-        mRotarySelector = (RotarySelector) findViewById(R.id.rotary_widget);
-        mBlackBerrySelector = (WaveView) findViewById(R.id.unlock_widget);
-
-        if (mUseJbLockscreen) {
-            mGlowPadSelector.setVisibility(View.VISIBLE);
-            mMultiWaveSelector.setVisibility(View.GONE);
-            mSlidingTabSelector.setVisibility(View.GONE);
-            mRotarySelector.setVisibility(View.GONE);
-	    mBlackBerrySelector.setVisibility(View.GONE);
-            mUnlockWidget = mGlowPadSelector;
-        } else if (mUseIcsLockscreen) {
-            mMultiWaveSelector.setVisibility(View.VISIBLE);
-            mGlowPadSelector.setVisibility(View.GONE);
-            mSlidingTabSelector.setVisibility(View.GONE);
-            mRotarySelector.setVisibility(View.GONE);
-	    mBlackBerrySelector.setVisibility(View.GONE);
-            mUnlockWidget = mMultiWaveSelector;
-        } else if (mUseGbLockscreen) {
-            mMultiWaveSelector.setVisibility(View.GONE);
-            mGlowPadSelector.setVisibility(View.GONE);
-            mSlidingTabSelector.setVisibility(View.VISIBLE);
-            mRotarySelector.setVisibility(View.GONE);
-	    mBlackBerrySelector.setVisibility(View.GONE);
-            mUnlockWidget = mSlidingTabSelector;
-        } else if (mUseEclairLockscreen) {
-            mMultiWaveSelector.setVisibility(View.GONE);
-            mGlowPadSelector.setVisibility(View.GONE);
-            mSlidingTabSelector.setVisibility(View.GONE);
-            mRotarySelector.setVisibility(View.VISIBLE);
-	    mBlackBerrySelector.setVisibility(View.GONE);
-            mUnlockWidget = mRotarySelector;
-        } else if (mUseBbLockscreen) {
-            mMultiWaveSelector.setVisibility(View.GONE);
-            mGlowPadSelector.setVisibility(View.GONE);
-            mSlidingTabSelector.setVisibility(View.GONE);
-            mRotarySelector.setVisibility(View.GONE);
-	    mBlackBerrySelector.setVisibility(View.VISIBLE);
-            mUnlockWidget = mBlackBerrySelector;
-        }
-
+        mUnlockWidget = findViewById(R.id.unlock_widget);
         mUnlockWidgetMethods = createUnlockMethods(mUnlockWidget);
 
         if (DBG) Log.v(TAG, "*** LockScreen accel is "

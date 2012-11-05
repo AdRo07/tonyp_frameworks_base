@@ -92,6 +92,7 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
     private DrawableHolder mUnlockHalo;
     private int mLockState = STATE_RESET_LOCK;
     private int mGrabbedState = OnTriggerListener.NO_HANDLE;
+    private int screenHeight;
 
     public WaveView(Context context) {
         this(context, null);
@@ -155,6 +156,7 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
     }
 
     private void initDrawables() {
+
         mUnlockRing = new DrawableHolder(createDrawable(R.drawable.unlock_ring));
         mUnlockRing.setX(mLockCenterX);
         mUnlockRing.setY(mLockCenterY);
@@ -194,13 +196,12 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
         int dragDistance = (int) Math.ceil(Math.hypot(distX, distY));
         double touchA = Math.atan2(distX, distY);
 
-	int screenHeight = getHeight();
+	screenHeight = getHeight();
             if (screenHeight < 1280) {
                 mRingRadius = 790.0f;
             } else {
                 mRingRadius = 1270.0f;
             }
-
 
         float ringX = (float) (mLockCenterX + mRingRadius * Math.sin(touchA));
         float ringY = (float) (mLockCenterY + mRingRadius * Math.cos(touchA));

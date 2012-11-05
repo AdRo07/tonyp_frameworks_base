@@ -22,19 +22,8 @@
   state of the device, as well as instructions on how to get past it
   depending on the state of the device.  It is the same for landscape
   and portrait.-->
-<RelativeLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent"
-	android:gravity="center_horizontal">
-
-        <com.android.internal.widget.WaveView
-            android:id="@+id/unlock_widget"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
-
 <GridLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -122,7 +111,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingTop="12dip" >
+        android:paddingTop="4dip" >
 
         <ImageView
             android:id="@+id/weather_image"
@@ -299,7 +288,7 @@
     </LinearLayout>
 
         <com.android.internal.widget.multiwaveview.GlowPadView
-            android:id="@+id/glowpad_widget"
+            android:id="@+id/unlock_widget"
             android:orientation="horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -322,42 +311,6 @@
             android:vibrationDuration="20"
             android:glowRadius="@dimen/glowpadview_glow_radius"
             android:pointDrawable="@drawable/ic_lockscreen_glowdot"
-            />
-
-        <com.android.internal.widget.multiwaveview.MultiWaveView
-            android:id="@+id/multiwave_widget"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
-
-            android:targetDrawables="@array/lockscreen_targets_with_camera"
-            android:targetDescriptions="@array/lockscreen_target_descriptions_with_camera"
-            android:directionDescriptions="@array/lockscreen_direction_descriptions"
-            android:handleDrawable="@drawable/ic_lockscreen_handle"
-            android:waveDrawable="@drawable/ic_lockscreen_outerring"
-            android:outerRadius="@dimen/multiwaveview_target_placement_radius"
-            android:snapMargin="@dimen/multiwaveview_snap_margin"
-            android:feedbackCount="3"
-            android:vibrationDuration="20"
-            />
-
-        <com.android.internal.widget.SlidingTab
-            android:id="@+id/tab_widget"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="80dip"
-            />
-
-        <com.android.internal.widget.RotarySelector
-            android:id="@+id/rotary_widget"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="60dip"
             />
 
         <TextView
@@ -411,4 +364,3 @@
         />
 
 </GridLayout>
-</RelativeLayout>

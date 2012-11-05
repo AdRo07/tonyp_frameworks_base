@@ -1326,8 +1326,15 @@
   <java-symbol type="layout" name="keyguard_screen_sim_pin_portrait" />
   <java-symbol type="layout" name="keyguard_screen_sim_puk_landscape" />
   <java-symbol type="layout" name="keyguard_screen_sim_puk_portrait" />
-  <java-symbol type="layout" name="keyguard_screen_tab_unlock" />
-  <java-symbol type="layout" name="keyguard_screen_tab_unlock_land" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_jb" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_ics" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_gb" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_eclair" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_bb" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_land_jb" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_land_ics" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_land_gb" />
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_land_eclair" />
   <java-symbol type="layout" name="keyguard_screen_unlock_landscape" />
   <java-symbol type="layout" name="keyguard_screen_unlock_portrait" />
   <java-symbol type="layout" name="recent_apps_dialog" />
@@ -3957,8 +3964,4 @@
   <java-symbol type="drawable" name="ic_lockscreen_chevron_down" />
   <java-symbol type="drawable" name="ic_lockscreen_chevron_left" />
   <java-symbol type="drawable" name="ic_lockscreen_chevron_right" />
-  <java-symbol type="id" name="glowpad_widget" />
-  <java-symbol type="id" name="multiwave_widget" />
-  <java-symbol type="id" name="tab_widget" />
-  <java-symbol type="id" name="rotary_widget" />
 </resources>
