@@ -196,9 +196,9 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
 
 	int screenHeight = getHeight();
             if (screenHeight < 1280) {
-                mRingRadius = 800.0f;
+                mRingRadius = 790.0f;
             } else {
-                mRingRadius = 1280.0f;
+                mRingRadius = 1270.0f;
             }
 
 
