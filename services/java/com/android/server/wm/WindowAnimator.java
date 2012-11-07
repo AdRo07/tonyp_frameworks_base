@@ -60,6 +60,7 @@ public class WindowAnimator {
     private static final int LOCK_STYLE_GB = 2;
     private static final int LOCK_STYLE_ECLAIR = 3;
     private static final int LOCK_STYLE_BB = 4;
+    private static final int LOCK_STYLE_OP4 = 5;
     private int mLockscreenStyle = LOCK_STYLE_JB;
 
     /** Overall window dimensions */
@@ -300,7 +301,8 @@ public class WindowAnimator {
             Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
 
         boolean mUseBbLockscreen = (mLockscreenStyle == LOCK_STYLE_BB);
-		    if(!mUseBbLockscreen) {
+ 	boolean mUseOp4Lockscreen = (mLockscreenStyle == LOCK_STYLE_OP4);
+		    if(!mUseBbLockscreen && !mUseOp4Lockscreen) {
                         if (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0 ||
                                     nowAnimating) {

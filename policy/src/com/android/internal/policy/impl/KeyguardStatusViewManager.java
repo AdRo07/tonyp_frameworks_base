@@ -97,6 +97,9 @@ class KeyguardStatusViewManager implements OnClickListener {
     private static final int HELP_MESSAGE_TEXT = 13;
     private static final int OWNER_INFO = 14;
     private static final int BATTERY_INFO = 15;
+    private static final int LOCK_STYLE_JB = 0; 
+    private static final int LOCK_STYLE_BB = 4;
+    private static final int LOCK_STYLE_OP4 = 5;
 
     private StatusMode mStatus;
     private String mDateFormatString;
@@ -153,6 +156,9 @@ class KeyguardStatusViewManager implements OnClickListener {
     private CharSequence mSpn;
     protected int mPhoneState;
     private DigitalClock mDigitalClock;
+
+    // which lockscreen?
+    int mLockscreenStyle; 
 
     private class TransientTextManager {
         private TextView mTextView;
@@ -395,7 +401,6 @@ class KeyguardStatusViewManager implements OnClickListener {
     private void refreshWeather() {
         final ContentResolver resolver = getContext().getContentResolver();
         boolean showWeather = Settings.System.getInt(resolver,Settings.System.LOCKSCREEN_WEATHER, 0) == 1;
-
         if (showWeather) {
             final long interval = Settings.System.getLong(resolver,
                     Settings.System.WEATHER_UPDATE_INTERVAL, 60); // Default to hourly
@@ -750,8 +755,13 @@ class KeyguardStatusViewManager implements OnClickListener {
 
         final int clockAlign = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.LOCKSCREEN_CLOCK_ALIGN, 2);
-        int margin = (int) Math.round(getContext().getResources().getDimension(
-                R.dimen.keyguard_lockscreen_status_line_font_right_margin));
+       mLockscreenStyle = Settings.System.getInt(getContext().getContentResolver(),
+            Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
+       boolean mUseBbLockscreen = (mLockscreenStyle == LOCK_STYLE_BB);
+
+        int margin = (int) Math.round(getContext().getResources().getDimension(mUseBbLockscreen ?
+                R.dimen.keyguard_lockscreen_status_line_font_right_margin_bb :
+		R.dimen.keyguard_lockscreen_status_line_font_right_margin));
 
         // Adjust for each layout
         if (config.screenWidthDp >= 600) { // sw600dp

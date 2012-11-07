@@ -38,6 +38,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.SystemClock;
+ import android.provider.Settings;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
@@ -81,6 +82,15 @@ public class TransportControlView extends FrameLayout implements OnClickListener
     private LockScreenWidgetCallback mWidgetCallbacks;
     private IRemoteControlDisplayWeak mIRCD;
 
+    private static final int LOCK_STYLE_JB = 0;    
+    private static final int LOCK_STYLE_ICS = 1;
+    private static final int LOCK_STYLE_GB = 2;
+    private static final int LOCK_STYLE_ECLAIR = 3;
+    private static final int LOCK_STYLE_BB = 4;
+    private static final int LOCK_STYLE_OP4 = 5;
+    private int mLockscreenStyle = LOCK_STYLE_JB;
+    private boolean mUseOp4Lockscreen;
+
     /**
      * The metadata which should be populated into the view once we've been attached
      */
@@ -111,6 +121,9 @@ public class TransportControlView extends FrameLayout implements OnClickListener
                     }
                     mMetadata.bitmap = (Bitmap) msg.obj;
                     mAlbumArt.setImageBitmap(mMetadata.bitmap);
+                    if (mUseOp4Lockscreen) {
+                        mAlbumArt.setAlpha(0.5f);
+                    }
                 }
                 break;
 
@@ -197,6 +210,9 @@ public class TransportControlView extends FrameLayout implements OnClickListener
         mAudioManager = new AudioManager(mContext);
         mCurrentPlayState = RemoteControlClient.PLAYSTATE_NONE; // until we get a callback
         mIRCD = new IRemoteControlDisplayWeak(mHandler);
+        mLockscreenStyle = Settings.System.getInt(context.getContentResolver(),
+        Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
+  	mUseOp4Lockscreen = (mLockscreenStyle == LOCK_STYLE_OP4);
     }
 
     private void updateTransportControls(int transportControlFlags) {

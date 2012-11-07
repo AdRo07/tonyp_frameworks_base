@@ -1398,6 +1398,12 @@
   <java-symbol type="style" name="Theme.Dialog.RecentApplications" />
   <java-symbol type="style" name="Theme.ExpandedMenu" />
 
+  <!-- Optimus 4x lockscreen -->
+  <java-symbol type="layout" name="keyguard_screen_tab_unlock_op4" />
+  <java-symbol type="drawable" name="unlock_halo_op4" />
+  <java-symbol type="drawable" name="unlock_ring_op4" />
+  <java-symbol type="drawable" name="unlock_wave_op4" />
+
   <!-- From services -->
   <java-symbol type="anim" name="screen_rotate_0_enter" />
   <java-symbol type="anim" name="screen_rotate_0_exit" />
@@ -1639,6 +1645,7 @@
 
   <!-- From KeyguardStatusViewManager -->
   <java-symbol type="dimen" name="keyguard_lockscreen_status_line_font_right_margin" />
+  <java-symbol type="dimen" name="keyguard_lockscreen_status_line_font_right_margin_bb" />
 
   <!-- From Settings -->
   <java-symbol type="array" name="config_mobile_hotspot_provision_app" />
