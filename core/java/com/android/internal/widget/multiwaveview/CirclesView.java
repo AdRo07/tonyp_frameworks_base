@@ -123,14 +123,14 @@ public class CirclesView extends View implements ValueAnimator.AnimatorUpdateLis
     public CirclesView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-/*        bgColor = Settings.System.getInt(context.getContentResolver(),
+        bgColor = Settings.System.getInt(context.getContentResolver(),
                 Settings.System.CIRCLES_LOCK_BG_COLOR, defaultBgColor);
         ringColor = Settings.System.getInt(context.getContentResolver(),
                 Settings.System.CIRCLES_LOCK_RING_COLOR, defaultRingColor);
         haloColor = Settings.System.getInt(context.getContentResolver(),
                 Settings.System.CIRCLES_LOCK_HALO_COLOR, defaultHaloColor);
         waveColor = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.CIRCLES_LOCK_WAVE_COLOR, defaultWaveColor);*/
+                Settings.System.CIRCLES_LOCK_WAVE_COLOR, defaultWaveColor);
         initDrawables();
     }
 
@@ -183,7 +183,7 @@ public class CirclesView extends View implements ValueAnimator.AnimatorUpdateLis
 
     private void initDrawables() {
         mUnlockRing = new DrawableHolder(createDrawable(R.drawable.unlock_ring_op4));
-//        mUnlockRing.setColor(ringColor);
+        mUnlockRing.setColor(ringColor);
         mUnlockRing.setX(mLockCenterX);
         mUnlockRing.setY(mLockCenterY);
         mUnlockRing.setScaleX(0.1f);
@@ -192,7 +192,7 @@ public class CirclesView extends View implements ValueAnimator.AnimatorUpdateLis
         mDrawables.add(mUnlockRing);
 
         mUnlockHalo = new DrawableHolder(createDrawable(R.drawable.unlock_halo_op4));
-//        mUnlockHalo.setColor(haloColor);
+        mUnlockHalo.setColor(haloColor);
         mUnlockHalo.setX(mLockCenterX);
         mUnlockHalo.setY(mLockCenterY);
         mUnlockHalo.setScaleX(0.1f);
@@ -201,7 +201,7 @@ public class CirclesView extends View implements ValueAnimator.AnimatorUpdateLis
         mDrawables.add(mUnlockHalo);
 
         mUnlockWave = new DrawableHolder(createDrawable(R.drawable.unlock_wave_op4));
-//        mUnlockWave.setColor(waveColor);
+        mUnlockWave.setColor(waveColor);
         mUnlockWave.setX(mLockCenterX);
         mUnlockWave.setY(mLockCenterY);
         mUnlockWave.setScaleX(0.1f);
@@ -224,7 +224,7 @@ public class CirclesView extends View implements ValueAnimator.AnimatorUpdateLis
         Drawable mBackgroundDrawable = new Drawable() {
             @Override
             public void draw(Canvas canvas) {          
-                canvas.drawColor(defaultBgColor, PorterDuff.Mode.SRC);
+                canvas.drawColor(bgColor, PorterDuff.Mode.SRC);
                 canvas.drawCircle(mStartX, mStartY, mCircleSize, mPaint);
             }
 
