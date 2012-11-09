@@ -24,6 +24,14 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.PixelFormat;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Vibrator;
 import android.text.TextUtils;
@@ -86,10 +94,12 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
     private float mLockCenterY;
     private float mMouseX; // current mouse position as of last touch event
     private float mMouseY;
+    private float sizescale; // multiplier to compensate dpi changes
     private DrawableHolder mUnlockRing;
     private DrawableHolder mUnlockWave;
     private DrawableHolder mUnlockDefault;
     private DrawableHolder mUnlockHalo;
+    private Paint mPaint;
     private int mLockState = STATE_RESET_LOCK;
     private int mGrabbedState = OnTriggerListener.NO_HANDLE;
     private int screenHeight;
@@ -104,7 +114,6 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
         // TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.WaveView);
         // mOrientation = a.getInt(R.styleable.WaveView_orientation, HORIZONTAL);
         // a.recycle();
-
         initDrawables();
     }
 
@@ -156,36 +165,34 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
     }
 
     private void initDrawables() {
+	screenHeight = getHeight();
+            if (screenHeight < 1280) {
+       		sizescale = 240 * 1.0f / DisplayMetrics.DENSITY_DEVICE;
+            } else {
+       		sizescale = 320 * 1.0f / DisplayMetrics.DENSITY_DEVICE;
+            }
 
         mUnlockRing = new DrawableHolder(createDrawable(R.drawable.unlock_ring));
         mUnlockRing.setX(mLockCenterX);
         mUnlockRing.setY(mLockCenterY);
-        mUnlockRing.setScaleX(1.0f);
-        mUnlockRing.setScaleY(1.0f);
+        mUnlockRing.setScaleX(sizescale);
+        mUnlockRing.setScaleY(sizescale);
         mUnlockRing.setAlpha(0.0f);
         mDrawables.add(mUnlockRing);
 
         mUnlockWave = new DrawableHolder(createDrawable(R.drawable.unlock_wave));
         mUnlockWave.setX(mLockCenterX);
         mUnlockWave.setY(mLockCenterY);
-        mUnlockWave.setScaleX(1.0f);
-        mUnlockWave.setScaleY(1.0f);
+        mUnlockWave.setScaleX(sizescale);
+        mUnlockWave.setScaleY(sizescale);
         mUnlockWave.setAlpha(1.0f);
         mDrawables.add(mUnlockWave);
-
-        mUnlockDefault = new DrawableHolder(createDrawable(R.drawable.unlock_default));
-        mUnlockDefault.setX(mLockCenterX);
-        mUnlockDefault.setY(mLockCenterY);
-        mUnlockDefault.setScaleX(1.0f);
-        mUnlockDefault.setScaleY(1.0f);
-        mUnlockDefault.setAlpha(1.0f);
-        mDrawables.add(mUnlockDefault);
 
         mUnlockHalo = new DrawableHolder(createDrawable(R.drawable.unlock_halo));
         mUnlockHalo.setX(mLockCenterX);
         mUnlockHalo.setY(mLockCenterY + 640);
-        mUnlockHalo.setScaleX(2.0f);
-        mUnlockHalo.setScaleY(1.0f);
+        mUnlockHalo.setScaleX(2 * sizescale);
+        mUnlockHalo.setScaleY(sizescale);
         mUnlockHalo.setAlpha(0.0f);
         mDrawables.add(mUnlockHalo);
     }
@@ -199,12 +206,37 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
 	screenHeight = getHeight();
             if (screenHeight < 1280) {
                 mRingRadius = 790.0f;
+       		sizescale = 240 * 1.0f / DisplayMetrics.DENSITY_DEVICE;
             } else {
                 mRingRadius = 1270.0f;
+       		sizescale = 320 * 1.0f / DisplayMetrics.DENSITY_DEVICE;
             }
 
         float ringX = (float) (mLockCenterX + mRingRadius * Math.sin(touchA));
         float ringY = (float) (mLockCenterY + mRingRadius * Math.cos(touchA));
+
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setXfermode(new PorterDuffXfermode(Mode.CLEAR));
+        Drawable mBackgroundDrawable = new Drawable() {
+            @Override
+            public void draw(Canvas canvas) {
+                canvas.drawColor(0x3BFFFFFF, PorterDuff.Mode.SRC);
+            }
+
+            @Override
+            public void setAlpha(int alpha) {
+            }
+
+            @Override
+            public void setColorFilter(ColorFilter cf) {
+            }
+
+            @Override
+            public int getOpacity() {
+                return PixelFormat.TRANSLUCENT;
+            }
+        };
+        setBackgroundDrawable(mBackgroundDrawable);
 
         switch (mLockState) {
             case STATE_RESET_LOCK:
@@ -217,8 +249,8 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
                 mUnlockRing.removeAnimationFor("alpha");
                 mUnlockRing.setX(mLockCenterX);
                 mUnlockRing.setY(mLockCenterY);
-                mUnlockRing.setScaleY(1.0f);
-                mUnlockRing.setScaleY(1.0f);
+                mUnlockRing.setScaleX(sizescale);
+                mUnlockRing.setScaleY(sizescale);
                 mUnlockRing.setAlpha(0.0f);
 
                 mUnlockWave.removeAnimationFor("x");
@@ -228,30 +260,19 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
                 mUnlockWave.removeAnimationFor("alpha");
                 // mUnlockWave.setX(mLockCenterX);
                 // mUnlockWave.setY(mLockCenterY);
-                mUnlockWave.setScaleX(1.0f);
-                mUnlockWave.setScaleY(1.0f);
+                mUnlockWave.setScaleX(sizescale);
+                mUnlockWave.setScaleY(sizescale);
                 mUnlockWave.setAlpha(1.0f);
                 mUnlockWave.addAnimTo(DURATION, 0, "x", mLockCenterX, true);
                 mUnlockWave.addAnimTo(DURATION, 0, "y", mLockCenterY, true);
-
-                mUnlockDefault.removeAnimationFor("x");
-                mUnlockDefault.removeAnimationFor("y");
-                mUnlockDefault.removeAnimationFor("scaleX");
-                mUnlockDefault.removeAnimationFor("scaleY");
-                mUnlockDefault.removeAnimationFor("alpha");
-                mUnlockDefault.setX(mLockCenterX);
-                mUnlockDefault.setY(mLockCenterY);
-                mUnlockDefault.setScaleX(1.0f);
-                mUnlockDefault.setScaleY(1.0f);
-                mUnlockDefault.setAlpha(1.0f);
 
                 mUnlockHalo.removeAnimationFor("x");
                 mUnlockHalo.removeAnimationFor("y");
                 mUnlockHalo.removeAnimationFor("scaleX");
                 mUnlockHalo.removeAnimationFor("scaleY");
                 mUnlockHalo.removeAnimationFor("alpha");
-                mUnlockHalo.setScaleX(2.0f);
-                mUnlockHalo.setScaleY(1.0f);
+                mUnlockHalo.setScaleX(2 * sizescale);
+                mUnlockHalo.setScaleY(sizescale);
                 // mUnlockHalo.setAlpha(1.0f);
                 mUnlockHalo.addAnimTo(DURATION, 0, "x", mLockCenterX, true);
 
@@ -284,8 +305,7 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
             case STATE_ATTEMPTING:
                 if (DBG) Log.v(TAG, "State ATTEMPTING (fingerDown = " + fingerDown + ")");
 
-                if ((mouseY < mLockCenterY - 55 && screenHeight >= 1280)
-		|| (mouseY < mLockCenterY - 35 && screenHeight < 1280)) {
+                if (mouseY < mLockCenterY) {
                     if (fingerDown) {
                         mUnlockWave.addAnimTo(0, 0, "x", mLockCenterX, true);
             		if (screenHeight < 1280) {
@@ -293,20 +313,14 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
             		} else {
                         mUnlockWave.addAnimTo(0, 0, "y", mouseY - 880, true);
             		}
-                        mUnlockWave.addAnimTo(0, 0, "scaleX", 1.0f, true);
-                        mUnlockWave.addAnimTo(0, 0, "scaleY", 1.0f, true);
-                        mUnlockWave.addAnimTo(0, 0, "alpha", 1.0f, true);
-
-                        mUnlockDefault.addAnimTo(0, 0, "x", mLockCenterX, true);
-                        mUnlockDefault.addAnimTo(0, 0, "y", mLockCenterY, true);
-                        mUnlockDefault.addAnimTo(0, 0, "scaleX", 1.0f, true);
-                        mUnlockDefault.addAnimTo(0, 0, "scaleY", 1.0f, true);
-                        mUnlockDefault.addAnimTo(0, 0, "alpha", 0.0f, true);
+                        mUnlockWave.addAnimTo(0, 0, "scaleX", sizescale, true);
+                        mUnlockWave.addAnimTo(0, 0, "scaleY", sizescale, true);
+                        mUnlockWave.addAnimTo(0, 0, "alpha", sizescale, true);
 
                         mUnlockHalo.addAnimTo(0, 0, "x", mouseX, true);
                         mUnlockHalo.addAnimTo(0, 0, "y", mouseY, true);
-                        mUnlockHalo.addAnimTo(0, 0, "scaleX", 2.0f, true);
-                        mUnlockHalo.addAnimTo(0, 0, "scaleY", 1.0f, true);
+                        mUnlockHalo.addAnimTo(0, 0, "scaleX", 2 * sizescale, true);
+                        mUnlockHalo.addAnimTo(0, 0, "scaleY", sizescale, true);
                         mUnlockHalo.addAnimTo(0, 0, "alpha", 1.0f, true);
                     }  else {
                         if (DBG) Log.v(TAG, "up detected, moving to STATE_UNLOCK_ATTEMPT");
@@ -319,20 +333,14 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
             	    } else {
                     mUnlockWave.addAnimTo(0, 0, "y", mouseY - 880, true);
             	    }
-                    mUnlockWave.addAnimTo(0, 0, "scaleX", 1.0f, true);
-                    mUnlockWave.addAnimTo(0, 0, "scaleY", 1.0f, true);
+                    mUnlockWave.addAnimTo(0, 0, "scaleX", sizescale, true);
+                    mUnlockWave.addAnimTo(0, 0, "scaleY", sizescale, true);
                     mUnlockWave.addAnimTo(0, 0, "alpha", 1.0f, true);
-
-                    mUnlockDefault.addAnimTo(0, 0, "x", mLockCenterX, true);
-                    mUnlockDefault.addAnimTo(0, 0, "y", mLockCenterY, true);
-                    mUnlockDefault.addAnimTo(0, 0, "scaleX", 1.0f, true);
-                    mUnlockDefault.addAnimTo(0, 0, "scaleY", 1.0f, true);
-                    mUnlockDefault.addAnimTo(0, 0, "alpha", 1.0f, true);
 
                     mUnlockHalo.addAnimTo(0, 0, "x", mouseX, true);
                     mUnlockHalo.addAnimTo(0, 0, "y", mouseY, true);
-                    mUnlockHalo.addAnimTo(0, 0, "scaleX", 2.0f, true);
-                    mUnlockHalo.addAnimTo(0, 0, "scaleY", 1.0f, true);
+                    mUnlockHalo.addAnimTo(0, 0, "scaleX", 2 * sizescale, true);
+                    mUnlockHalo.addAnimTo(0, 0, "scaleY", sizescale, true);
                     mUnlockHalo.addAnimTo(0, 0, "alpha", 1.0f, true);
                 }
                 break;
@@ -340,16 +348,15 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
             case STATE_UNLOCK_ATTEMPT:
                 if (DBG) Log.v(TAG, "State UNLOCK_ATTEMPT");
 
-                if ((mouseY < mLockCenterY - 55 && screenHeight >= 1280) 
-		|| (mouseY < mLockCenterY - 35 && screenHeight < 1280)) {
+                if (mouseY < mLockCenterY) {
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "x", mLockCenterX, true);
             	    if (screenHeight < 1280) {
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 800, true);
             	    } else {
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 1280, true);
            	    }
-                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleX", 2.0f, false);
-                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, false);
+                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleX", 2 * sizescale, false);
+                    mUnlockWave.addAnimTo(FINAL_DURATION, 0, "scaleY", sizescale, false);
                     mUnlockWave.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, false);
 
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "x", mLockCenterX, true);
@@ -359,8 +366,8 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "y", mLockCenterY - 960, true);
             	    }
 
-                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleX", 1.0f, false);
-                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleY", 1.0f, false);
+                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleX", sizescale, false);
+                    mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "scaleY", sizescale, false);
                     mUnlockHalo.addAnimTo(FINAL_DURATION, 0, "alpha", 1.0f, false);
 
                     removeCallbacks(mLockTimerActions);
@@ -382,7 +389,6 @@ public class WaveView extends View implements ValueAnimator.AnimatorUpdateListen
                 if (DBG) Log.v(TAG, "Unknown state " + mLockState);
                 break;
         }
-        mUnlockDefault.startAnimations(this);
         mUnlockHalo.startAnimations(this);
         mUnlockRing.startAnimations(this);
         mUnlockWave.startAnimations(this);
