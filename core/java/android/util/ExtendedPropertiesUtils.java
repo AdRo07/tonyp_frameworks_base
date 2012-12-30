@@ -388,17 +388,6 @@ public class ExtendedPropertiesUtils {
      */
     public static String getProperty(String prop, String def) {
         try {
-            if(mGlobalHook.name.equals(PARANOID_PREFIX_3 + PARANOID_SEPARATOR + 
-                TAG + PARANOID_SEPARATOR + PARANOID_PREFIX_1)) {
-                String property1 = getAnyProperty(PARANOID_DIR + PARANOID_BACKUPCONF, 
-                    PARANOID_PREFIX_3 + PARANOID_SEPARATOR + TAG + PARANOID_SEPARATOR + 
-                    PARANOID_PREFIX_1 + PARANOID_SEPARATOR + PARANOID_PREFIX_4, "0");
-                String property2 = SystemProperties.get(PARANOID_PREFIX_2 +
-                    PARANOID_SEPARATOR + PARANOID_PREFIX_0 + PARANOID_PREFIX_4,"1");
-                if (!property1.equals(property2))
-                    return "0";
-            }
-
             if (isInitialized()) {
                 String result = mPropertyMap.get(prop);
                 if (result == null) return def;
