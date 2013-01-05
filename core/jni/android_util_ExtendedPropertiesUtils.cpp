@@ -47,6 +47,8 @@ static jstring android_util_ExtendedPropertiesUtils_readFile(JNIEnv* env, jobjec
 
     fread(content,1,size,file);
 
+    fclose(file);
+
     return env->NewStringUTF(content);
 }
 
