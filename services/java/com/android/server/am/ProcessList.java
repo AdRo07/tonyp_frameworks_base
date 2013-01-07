@@ -51,25 +51,25 @@ class ProcessList {
     // task switch (toggling between the two top recent apps) as well as normal
     // UI flow such as clicking on a URI in the e-mail app to view in the browser,
     // and then pressing back to return to e-mail.
-    static final int PREVIOUS_APP_ADJ = 7;
+    static final int PREVIOUS_APP_ADJ = 5;
 
     // This is a process holding the home application -- we want to try
     // avoiding killing it, even if it would normally be in the background,
     // because the user interacts with it so much.
-    static final int HOME_APP_ADJ = 6;
+    static final int HOME_APP_ADJ = 1;
 
     // This is a process holding an application service -- killing it will not
     // have much of an impact as far as the user is concerned.
-    static final int SERVICE_ADJ = 5;
+    static final int SERVICE_ADJ = 6;
 
     // This is a process currently hosting a backup operation.  Killing it
     // is not entirely fatal but is generally a bad idea.
-    static final int BACKUP_APP_ADJ = 4;
+    static final int BACKUP_APP_ADJ = 7;
 
     // This is a process with a heavy-weight application.  It is in the
     // background, but we want to try to avoid killing it.  Value set in
     // system/rootdir/init.rc on startup.
-    static final int HEAVY_WEIGHT_APP_ADJ = 3;
+    static final int HEAVY_WEIGHT_APP_ADJ = 4;
 
     // This is a process only hosting components that are perceptible to the
     // user, and we really want to avoid killing them, but they are not
@@ -78,7 +78,7 @@ class ProcessList {
 
     // This is a process only hosting activities that are visible to the
     // user, so we'd prefer they don't disappear.
-    static final int VISIBLE_APP_ADJ = 1;
+    static final int VISIBLE_APP_ADJ = 3;
 
     // This is the process running the current foreground app.  We'd really
     // rather not kill it!
@@ -138,6 +138,11 @@ class ProcessList {
             32768, 40960, 49152,
             57344, 65536, 81920
     };
+    // tonyp: hardcode custom minfree values
+    private final long[] mOomtonyp = new long[] {
+            8192, 12288, 45056,
+            53248, 61440, 69632
+    };
     // The actual OOM killer memory levels we are using.
     private final long[] mOomMinFree = new long[mOomAdj.length];
 
@@ -181,9 +186,7 @@ class ProcessList {
         if (scale < 0) scale = 0;
         else if (scale > 1) scale = 1;
         for (int i=0; i<mOomAdj.length; i++) {
-            long low = mOomMinFreeLow[i];
-            long high = mOomMinFreeHigh[i];
-            mOomMinFree[i] = (long)(low + ((high-low)*scale));
+            mOomMinFree[i] = (long) mOomtonyp[i];
 
             if (i > 0) {
                 adjString.append(',');
