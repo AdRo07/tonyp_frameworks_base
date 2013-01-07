@@ -3108,6 +3108,13 @@ public final class Settings {
          */
         public static final String LOCKSCREEN_STYLE = "lockscreen_style";
 
+       /**
+          * Whether rotate switch in status bar should be enabled for layouts < 600dp
+          * @hide
+          */
+        public static final String ROTATE_SWITCH_IN_PHONE_MODE = "rotate_switch_in_phone_mode";
+
+
         /**
          * Sets bg color of optimus lockscreen bg
          * @hide

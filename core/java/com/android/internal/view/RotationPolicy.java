@@ -46,7 +46,9 @@ public final class RotationPolicy {
      * settings.
      */
     public static boolean isRotationLockToggleSupported(Context context) {
-        return context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        return context.getResources().getConfiguration().smallestScreenWidthDp >= 600 ||
+               (Settings.System.getInt(context.getContentResolver(),
+                        Settings.System.ROTATE_SWITCH_IN_PHONE_MODE, 1) == 1);
     }
 
     /**
@@ -133,6 +135,9 @@ public final class RotationPolicy {
                 false, listener.mObserver);
         context.getContentResolver().registerContentObserver(Settings.System.getUriFor(
                 Settings.System.HIDE_ROTATION_LOCK_TOGGLE_FOR_ACCESSIBILITY),
+                false, listener.mObserver);
+        context.getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                Settings.System.ROTATE_SWITCH_IN_PHONE_MODE),
                 false, listener.mObserver);
     }
 
