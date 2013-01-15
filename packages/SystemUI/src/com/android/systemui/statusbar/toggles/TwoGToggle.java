@@ -23,9 +23,7 @@ import android.database.ContentObserver;
 import android.os.Handler;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
-import android.server.PowerSaverService;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import com.android.internal.telephony.Phone;
 import com.android.systemui.R;
@@ -33,7 +31,6 @@ import com.android.systemui.R;
 public class TwoGToggle extends Toggle {
 
     private int mNetworkMode = -1;
-    private boolean isCdma = false;
 
     public TwoGToggle(Context c) {
         super(c);
@@ -45,11 +42,9 @@ public class TwoGToggle extends Toggle {
     }
 
     @Override
-    protected void onCheckChanged(boolean isChecked) {
-        TelephonyManager tm = (TelephonyManager) mView.getContext()
-                .getSystemService(Context.TELEPHONY_SERVICE);
-        tm.toggle2G(isChecked);
-        updateState();
+    public void onCheckChanged(boolean checked) {
+        int networkType = checked ? Phone.NT_MODE_WCDMA_PREF : Phone.NT_MODE_GSM_ONLY;
+        Settings.Secure.putInt(mContext.getContentResolver(), Settings.Secure.PREFERRED_NETWORK_MODE, networkType);
     }
 
     class SettingsObserver extends ContentObserver {
@@ -81,43 +76,6 @@ public class TwoGToggle extends Toggle {
             e.printStackTrace();
         }
         return network;
-    }
-
-    private void requestPhoneStateChange(int newState) {
-        if (!isValidNetwork(newState)) {
-            Log.e(TAG, "attempting to switch to an invalid network type: "
-                    + newState);
-            Log.e(TAG, "Phone CDMA status: " + isCdma);
-            return;
-        }
-
-        Log.i(TAG, "Sending request to change phone network mode to: "
-                + newState);
-        Intent i = new Intent(PowerSaverService.ACTION_MODIFY_NETWORK_MODE);
-        i.putExtra(PowerSaverService.EXTRA_NETWORK_MODE, newState);
-        mContext.sendBroadcast(i);
-    }
-
-    private boolean isValidNetwork(int networkType) {
-        TelephonyManager telephony = (TelephonyManager) mContext
-                .getSystemService(Context.TELEPHONY_SERVICE);
-
-        isCdma = (telephony.getCurrentPhoneType() == Phone.PHONE_TYPE_CDMA);
-
-        switch (networkType) {
-            case Phone.NT_MODE_CDMA:
-            case Phone.NT_MODE_CDMA_NO_EVDO:
-            case Phone.NT_MODE_EVDO_NO_CDMA:
-            case Phone.NT_MODE_GLOBAL:
-            case Phone.NT_MODE_LTE_ONLY:
-                return (isCdma);
-            case Phone.NT_MODE_GSM_ONLY:
-            case Phone.NT_MODE_GSM_UMTS:
-            case Phone.NT_MODE_WCDMA_ONLY:
-            case Phone.NT_MODE_WCDMA_PREF:
-                return (!isCdma);
-        }
-        return false;
     }
 
     @Override
