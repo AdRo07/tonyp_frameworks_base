@@ -3140,6 +3140,18 @@ public final class Settings {
         public static final String CIRCLES_LOCK_WAVE_COLOR = "circles_lock_wave_color";
 
         /**
+          * Enable/disable low battery warning
+          * @hide
+          */
+        public static final String POWER_UI_LOW_BATTERY_WARNING = "power_ui_low_battery_warning";
+
+        /**
+          * Enable/disable low battery sound
+          * @hide
+          */
+        public static final String POWER_UI_LOW_BATTERY_SOUND = "power_ui_low_battery_sound";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *

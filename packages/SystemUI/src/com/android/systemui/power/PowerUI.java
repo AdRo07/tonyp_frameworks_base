@@ -38,6 +38,8 @@ import android.util.Slog;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.provider.Settings;
+import android.database.ContentObserver;
 
 import com.android.systemui.R;
 import com.android.systemui.SystemUI;
@@ -57,6 +59,9 @@ public class PowerUI extends SystemUI {
     int mLowBatteryAlertCloseLevel;
     int[] mLowBatteryReminderLevels = new int[2];
 
+    boolean mShowLowBatteryWarning;
+    boolean mPlayLowBatterySound;
+
     AlertDialog mInvalidChargerDialog;
     AlertDialog mLowBatteryDialog;
     TextView mBatteryLevelTextView;
@@ -70,11 +75,44 @@ public class PowerUI extends SystemUI {
         mLowBatteryReminderLevels[1] = mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_criticalBatteryWarningLevel);
 
+        setPreferences();
+
+        SettingsObserver settingsObserver = new SettingsObserver(new Handler());
+        settingsObserver.observe();
+
         // Register for Intent broadcasts for...
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         filter.addAction(Intent.ACTION_POWER_CONNECTED);
         mContext.registerReceiver(mIntentReceiver, filter, null, mHandler);
+    }
+
+    private final class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.POWER_UI_LOW_BATTERY_WARNING), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.POWER_UI_LOW_BATTERY_SOUND), false, this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            setPreferences();
+        }
+    }
+
+    private void setPreferences() {
+        mShowLowBatteryWarning = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.POWER_UI_LOW_BATTERY_WARNING, 1) == 1);
+        mPlayLowBatterySound = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.POWER_UI_LOW_BATTERY_SOUND, 1) == 1);
+        Slog.d(TAG, "Preferences set: showLowBatteryWarning: " + mShowLowBatteryWarning
+                    + "; playLowBatterySound: " + mPlayLowBatterySound);
     }
 
     /**
@@ -150,20 +188,22 @@ public class PowerUI extends SystemUI {
                     return;
                 }
 
-                if (!charging
-                        && (bucket < oldBucket || oldCharging)
-                        && mBatteryStatus != BatteryManager.BATTERY_STATUS_UNKNOWN
-                        && bucket < 0) {
-                    showLowBatteryWarning();
+                if (mShowLowBatteryWarning) {
+                    if (!charging
+                            && (bucket < oldBucket || oldCharging)
+                            && mBatteryStatus != BatteryManager.BATTERY_STATUS_UNKNOWN
+                            && bucket < 0) {
+                        showLowBatteryWarning();
 
-                    // only play SFX when the dialog comes up or the bucket changes
-                    if (bucket != oldBucket || oldCharging) {
-                        playLowBatterySound();
+                        // only play SFX when the dialog comes up or the bucket changes
+                        if (mPlayLowBatterySound && (bucket != oldBucket || oldCharging)) {
+                            playLowBatterySound();
+                        }
+                    } else if (charging || (bucket > oldBucket && bucket > 0)) {
+                        dismissLowBatteryWarning();
+                    } else if (mBatteryLevelTextView != null) {
+                        showLowBatteryWarning();
                     }
-                } else if (charging || (bucket > oldBucket && bucket > 0)) {
-                    dismissLowBatteryWarning();
-                } else if (mBatteryLevelTextView != null) {
-                    showLowBatteryWarning();
                 }
             } else {
                 Slog.w(TAG, "unknown intent: " + intent);
