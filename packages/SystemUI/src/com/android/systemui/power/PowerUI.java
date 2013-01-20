@@ -61,6 +61,8 @@ public class PowerUI extends SystemUI {
 
     boolean mShowLowBatteryWarning;
     boolean mPlayLowBatterySound;
+    static final int LOW_BATTERY_WARNING_DIALOG = 1;
+    static final int LOW_BATTERY_WARNING_SOUND = 2;
 
     AlertDialog mInvalidChargerDialog;
     AlertDialog mLowBatteryDialog;
@@ -95,9 +97,7 @@ public class PowerUI extends SystemUI {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.POWER_UI_LOW_BATTERY_WARNING), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.POWER_UI_LOW_BATTERY_SOUND), false, this);
+                    Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY), false, this);
         }
 
         @Override
@@ -107,10 +107,10 @@ public class PowerUI extends SystemUI {
     }
 
     private void setPreferences() {
-        mShowLowBatteryWarning = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.POWER_UI_LOW_BATTERY_WARNING, 1) == 1);
-        mPlayLowBatterySound = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.POWER_UI_LOW_BATTERY_SOUND, 1) == 1);
+        int currentPref = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY, 3);
+        mShowLowBatteryWarning = ((currentPref & LOW_BATTERY_WARNING_DIALOG) != 0);
+        mPlayLowBatterySound = ((currentPref & LOW_BATTERY_WARNING_SOUND) != 0);
         Slog.d(TAG, "Preferences set: showLowBatteryWarning: " + mShowLowBatteryWarning
                     + "; playLowBatterySound: " + mPlayLowBatterySound);
     }
@@ -193,6 +193,7 @@ public class PowerUI extends SystemUI {
                             && (bucket < oldBucket || oldCharging)
                             && mBatteryStatus != BatteryManager.BATTERY_STATUS_UNKNOWN
                             && bucket < 0) {
+                    if(mShowLowBatteryWarning)
                         showLowBatteryWarning();
 
                         // only play SFX when the dialog comes up or the bucket changes
@@ -201,7 +202,7 @@ public class PowerUI extends SystemUI {
                         }
                     } else if (charging || (bucket > oldBucket && bucket > 0)) {
                         dismissLowBatteryWarning();
-                    } else if (mBatteryLevelTextView != null) {
+                    } else if (mShowLowBatteryWarning && mBatteryLevelTextView != null) {
                         showLowBatteryWarning();
                     }
                 }
