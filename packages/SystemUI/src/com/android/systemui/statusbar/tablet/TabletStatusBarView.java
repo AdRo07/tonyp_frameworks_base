@@ -84,7 +84,7 @@ public class TabletStatusBarView extends FrameLayout {
 
     @Override
     public void onFinishInflate() {
-        updateColor(true);
+        updateColor(false);
     }
 
     @Override

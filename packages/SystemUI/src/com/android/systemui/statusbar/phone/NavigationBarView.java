@@ -426,7 +426,7 @@ public class NavigationBarView extends LinearLayout {
         mRotatedViews[Surface.ROTATION_270] = NAVBAR_ALWAYS_AT_RIGHT
                                                 ? findViewById(R.id.rot90)
                                                 : findViewById(R.id.rot270);
-        updateColor(true);
+        updateColor(false);
         mCurrentView = mRotatedViews[Surface.ROTATION_0];
     }
 

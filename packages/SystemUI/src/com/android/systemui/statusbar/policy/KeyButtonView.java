@@ -127,7 +127,8 @@ public class KeyButtonView extends ImageView {
                     updateGlowColor();
                 }});
 
-        updateButtonColor(true);
+        updateButtonColor(false);
+        updateGlowColor();
     }
 
     private void updateButtonColor(boolean defaults) {
