@@ -451,7 +451,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 public void onChange(boolean selfChange) {
                     updateColor(false);
                 }});
-        updateColor(true);
+        updateColor(false);
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
@@ -492,8 +492,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             }});
 
         mStatusBarView = (PhoneStatusBarView) mStatusBarWindow.findViewById(R.id.status_bar);
-        mStatusBarView.setBackgroundColor(Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_COLOR, 0xFF000000));
+        updateColor(false);
 
         // watch DO_NOT_DISTURB and convert to appropriate disable() calls
         mDoNotDisturb = new DoNotDisturb(mContext);
