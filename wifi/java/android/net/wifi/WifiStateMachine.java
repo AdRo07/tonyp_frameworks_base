@@ -1882,7 +1882,6 @@ public class WifiStateMachine extends StateMachine {
                 case CMD_STOP_DRIVER:
                 case CMD_DELAYED_STOP_DRIVER:
                 case CMD_DRIVER_START_TIMED_OUT:
-                case CMD_CAPTIVE_CHECK_COMPLETE:
                 case CMD_START_AP:
                 case CMD_START_AP_SUCCESS:
                 case CMD_START_AP_FAILURE:
