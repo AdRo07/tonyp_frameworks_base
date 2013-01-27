@@ -2851,7 +2851,26 @@ public final class Settings {
          * default: 2
          * @hide
          */
+
         public static final String STATUS_BAR_AM_PM = "status_bar_am_pm";
+        /**
+         * Sets transparency of statusbar
+         * @hide
+         */
+        public static final String STATUS_BAR_ALPHA = "status_bar_alpha";
+
+        /**
+         * Sets transparency mode of statusbar
+         * 0 = only home, 1 = keyguard and home (default), 2 = always
+         * @hide
+         */
+        public static final String STATUS_BAR_ALPHA_MODE = "status_bar_alpha_mode";
+
+        /**
+         * Sets color of statusbar
+         * @hide
+         */
+        public static final String STATUS_BAR_COLOR = "status_bar_color";
 
         /**
          * Display style of the status bar battery information
