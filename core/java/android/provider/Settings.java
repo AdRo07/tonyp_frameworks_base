@@ -2604,6 +2604,13 @@ public final class Settings {
          */
         public static final String QS_DYNAMIC_DOCK_BATTERY = "qs_dyanmic_dock_battery";
 
+         /**
+         * Quick Settings Quick Pulldown if no notifications are present
+         *
+         * @hide
+         */
+        public static final String QS_NO_NOTIFICATION_PULLDOWN = "qs_no_notification_pulldown";
+
         /**
          * Quick Settings Panel Dynamic Tiles
          *
