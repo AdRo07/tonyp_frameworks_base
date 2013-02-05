@@ -3077,8 +3077,11 @@ public final class Settings {
           */
          public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
-        /**
-         * Show the pending notification counts as overlays on the status bar
+         /**
+         * Stores values for custom lockscreen targets
+         * @hide
+         */
+        public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
 
         /**
          * Which lockscreen style to use. The value is an integer.
