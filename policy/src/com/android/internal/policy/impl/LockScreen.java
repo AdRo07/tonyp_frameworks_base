@@ -137,7 +137,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     // Get the style from settings
     private int mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
             Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
-    private int mLockscreenStyle = LOCK_STYLE_GB;
     
     private static final int LOCK_STYLE_JB = 0;    
     private static final int LOCK_STYLE_ICS = 1;
