@@ -74,6 +74,7 @@ import android.widget.ImageView.ScaleType;
 import android.util.Log;
 import android.util.Slog;
 import android.util.TypedValue;
+import android.util.ExtendedPropertiesUtils;
 
 import com.android.internal.R;
 import com.android.internal.policy.impl.KeyguardUpdateMonitor.InfoCallbackImpl;
@@ -858,8 +859,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         mCallback = callback;
         mEnableMenuKeyInLockScreen = shouldEnableMenuKey();
         mCreationOrientation = configuration.orientation;
-	boolean mTabletui = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.MODE_TABLET_UI, 0) == 1;
+        boolean mTabletui = ExtendedPropertiesUtils.mIsTablet;
 
         if (LockPatternKeyguardView.DEBUG_CONFIGURATION) {
             Log.v(TAG, "***** CREATING LOCK SCREEN", new RuntimeException());
