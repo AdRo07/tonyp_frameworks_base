@@ -73,6 +73,7 @@ import com.android.systemui.statusbar.phone.PhoneStatusBar;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
 import com.android.systemui.statusbar.tablet.TabletStatusBar;
 
+import java.lang.Runtime;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 
@@ -553,6 +554,19 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                             }
                         }
                     }).start();
+                }
+            });
+            mClearRecents.setOnLongClickListener(new OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    mRecentsContainer.removeAllViewsInLayout();
+                    try {
+                        Runtime.getRuntime().exec("su -c sync");
+                        Runtime.getRuntime().exec("su -c echo 3 > /proc/sys/vm/drop_caches");
+                    } catch (Exception e) {
+                        Log.d(TAG, "Flush caches failed!");
+                    }
+                    return true;
                 }
             });
         }
