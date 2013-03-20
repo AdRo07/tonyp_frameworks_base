@@ -18,6 +18,22 @@
 package com.android.systemui.statusbar;
 
 import java.util.ArrayList;
+import com.android.internal.statusbar.IStatusBarService;
+import com.android.internal.statusbar.StatusBarIcon;
+import com.android.internal.statusbar.StatusBarIconList;
+import com.android.internal.statusbar.StatusBarNotification;
+import com.android.internal.widget.SizeAdaptiveLayout;
+import com.android.systemui.R;
+import com.android.systemui.SearchPanelView;
+import com.android.systemui.SystemUI;
+import com.android.systemui.recent.RecentTasksLoader;
+import com.android.systemui.recent.RecentsActivity;
+import com.android.systemui.recent.TaskDescription;
+import com.android.systemui.statusbar.pie.PieLayout;
+import com.android.systemui.statusbar.policy.NotificationRowLayout;
+import com.android.systemui.statusbar.policy.PieController;
+import com.android.systemui.statusbar.policy.PieController.Position;
+import com.android.systemui.statusbar.tablet.StatusBarPanel;
 
 import android.app.ActivityManagerNative;
 import android.app.KeyguardManager;
@@ -26,9 +42,11 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.ContentObserver;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -78,7 +96,7 @@ import com.android.systemui.R;
 public abstract class BaseStatusBar extends SystemUI implements
     CommandQueue.Callbacks, RecentsPanelView.OnRecentsPanelVisibilityChangedListener {
     static final String TAG = "StatusBar";
-    private static final boolean DEBUG = false;
+    public static final boolean DEBUG = false;
 
     protected static final int MSG_OPEN_RECENTS_PANEL = 1020;
     protected static final int MSG_CLOSE_RECENTS_PANEL = 1021;
@@ -155,10 +173,6 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected PieController mPieController;
     protected PieLayout mPieContainer;
     private int mPieTriggerSlots;
-    private int mPieTriggerMask = Position.LEFT.FLAG
-            | Position.BOTTOM.FLAG
-            | Position.RIGHT.FLAG
-            | Position.TOP.FLAG;
     private View[] mPieTrigger = new View[Position.values().length];
     private PieSettingsObserver mSettingsObserver;
 
@@ -199,19 +213,12 @@ public abstract class BaseStatusBar extends SystemUI implements
                                         + event.getAxisValue(MotionEvent.AXIS_Y) + ") with position: "
                                         + tracker.position.name());
                             }
-                            if (tracker.position == Position.BOTTOM
-                                    && mPieController.isSearchLightEnabled()) {
-                                // if we are at the bottom and nothing else is there, use a
-                                // search light!
-                                showSearchPanel();
-                            } else {
-                                // send the activation to the controller
-                                mPieController.activateFromTrigger(v, event, tracker.position);
-                                // forward a spoofed ACTION_DOWN event
-                                MotionEvent echo = event.copy();
-                                echo.setAction(MotionEvent.ACTION_DOWN);
-                                return mPieContainer.onTouch(v, echo);
-                            }
+                            // send the activation to the controller
+                            mPieController.activateFromTrigger(v, event, tracker.position);
+                            // forward a spoofed ACTION_DOWN event
+                            MotionEvent echo = event.copy();
+                            echo.setAction(MotionEvent.ACTION_DOWN);
+                            return mPieContainer.onTouch(v, echo);
                         }
                         break;
                     default:
@@ -415,6 +422,33 @@ public abstract class BaseStatusBar extends SystemUI implements
                    switches[3]
                    ));
         }
+
+        mCurrentUserId = ActivityManager.getCurrentUser();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_USER_SWITCHED);
+        mContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (Intent.ACTION_USER_SWITCHED.equals(action)) {
+                    mCurrentUserId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, -1);
+                    if (true) Slog.v(TAG, "userId " + mCurrentUserId + " is in the house");
+                    userSwitched(mCurrentUserId);
+                }
+            }
+        }, filter);
+
+        mPieController = new PieController(mContext);
+        mPieController.attachTo(this);
+        addNavigationBarCallback(mPieController);
+
+        mSettingsObserver = new PieSettingsObserver(new Handler());
+
+        // this calls attachPie() implicitly
+        mSettingsObserver.onChange(true);
+
+        mSettingsObserver.observe();
     }
 
     protected View updateNotificationVetoButton(View row, StatusBarNotification n) {
@@ -1240,10 +1274,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             }
 
             // add or update pie triggers
-            if (DEBUG) {
-                Slog.d(TAG, "AttachPie with trigger position flags: "
-                        + mPieTriggerSlots + " masked: " + (mPieTriggerSlots & mPieTriggerMask));
-            }
+            if (DEBUG) Slog.d(TAG, "AttachPie with trigger position flags: " + mPieTriggerSlots);
 
             refreshPieTriggers();
 
@@ -1257,23 +1288,11 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
     }
 
-    public void updatePieTriggerMask(int newMask) {
-        int oldState = mPieTriggerSlots & mPieTriggerMask;
-        mPieTriggerMask = newMask;
-
-        // first we check, if it would make a change
-        if ((mPieTriggerSlots & mPieTriggerMask) != oldState) {
-            if (isPieEnabled()) {
-                refreshPieTriggers();
-            }
-        }
-    }
-
     // This should only be called, when is is clear that the pie controls are active
     private void refreshPieTriggers() {
         for (Position g : Position.values()) {
             View trigger = mPieTrigger[g.INDEX];
-            if (trigger == null && (mPieTriggerSlots & mPieTriggerMask & g.FLAG) != 0) {
+            if (trigger == null && (mPieTriggerSlots & g.FLAG) != 0) {
                 trigger = new View(mContext);
                 trigger.setClickable(false);
                 trigger.setLongClickable(false);
@@ -1288,7 +1307,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                 }
                 mWindowManager.addView(trigger, getPieTriggerLayoutParams(g));
                 mPieTrigger[g.INDEX] = trigger;
-            } else if (trigger != null && (mPieTriggerSlots & mPieTriggerMask & g.FLAG) == 0) {
+            } else if (trigger != null && (mPieTriggerSlots & g.FLAG) == 0) {
                 mWindowManager.removeView(trigger);
                 mPieTrigger[g.INDEX] = null;
             } else if (trigger != null) {
