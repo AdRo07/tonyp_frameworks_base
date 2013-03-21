@@ -138,11 +138,6 @@ class ProcessList {
             32768, 40960, 49152,
             57344, 65536, 81920
     };
-    // tonyp: hardcode custom minfree values
-    private final long[] mOomtonyp = new long[] {
-            8192, 12288, 45056,
-            53248, 61440, 69632
-    };
     // The actual OOM killer memory levels we are using.
     private final long[] mOomMinFree = new long[mOomAdj.length];
 
@@ -186,7 +181,9 @@ class ProcessList {
         if (scale < 0) scale = 0;
         else if (scale > 1) scale = 1;
         for (int i=0; i<mOomAdj.length; i++) {
-            mOomMinFree[i] = (long) mOomtonyp[i];
+            long low = mOomMinFreeLow[i];
+            long high = mOomMinFreeHigh[i];
+            mOomMinFree[i] = (long)(low + ((high-low)*scale));
 
             if (i > 0) {
                 adjString.append(',');
