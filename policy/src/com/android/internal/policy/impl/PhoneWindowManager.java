@@ -1448,14 +1448,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (mHasMenuKey) {
                     mPressOnMenuBehavior = KEY_ACTION_MENU;
                     if (mHasAssistKey) {
-                        mLongPressOnMenuBehavior = KEY_ACTION_NOTHING;
+                        mLongPressOnMenuBehavior = KEY_ACTION_VOICE_SEARCH;
                     } else {
                         mLongPressOnMenuBehavior = KEY_ACTION_SEARCH;
                     }
                 }
                 if (mHasAssistKey) {
-                    mPressOnAssistBehavior = KEY_ACTION_SEARCH;
-                    mLongPressOnAssistBehavior = KEY_ACTION_VOICE_SEARCH;
+                    mPressOnAssistBehavior = KEY_ACTION_APP_SWITCH;
+                    mLongPressOnAssistBehavior = KEY_ACTION_SEARCH;
                 }
                 if (mHasAppSwitchKey) {
                     mPressOnAppSwitchBehavior = KEY_ACTION_APP_SWITCH;
