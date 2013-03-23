@@ -2326,6 +2326,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
             }
         } else if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+            Log.d(TAG,"we're in KEYCODE_SEARCH");
             if (down) {
                 if (repeatCount == 0) {
                     mSearchKeyShortcutPending = true;
