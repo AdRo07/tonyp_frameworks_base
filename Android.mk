@@ -35,6 +35,10 @@ SECONDARY_FRAMEWORKS_SUBDIRS := \
         core/java/android/test \
         core/java/android/gesture \
         core/java/android/speech/srec \
+        core/java/com/google/android/mms \
+        core/java/com/google/android/mms/pdu \
+        core/java/com/google/android/mms/util \
+        core/java/com/google/android/util \
         media/java/android/media/videoeditor \
         media/java/android/media/audiofx \
         media/mca/effect/java/android/media/effect \
