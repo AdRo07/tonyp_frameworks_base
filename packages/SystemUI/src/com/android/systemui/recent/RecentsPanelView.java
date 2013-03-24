@@ -63,6 +63,7 @@ import com.android.systemui.statusbar.phone.PhoneStatusBar;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
 import com.android.systemui.statusbar.tablet.TabletStatusBar;
 
+import java.io.OutputStreamWriter;
 import java.lang.Runtime;
 import java.util.ArrayList;
 
@@ -456,8 +457,12 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                 public boolean onLongClick(View v) {
                     mRecentsContainer.removeAllViewsInLayout();
                     try {
-                        Runtime.getRuntime().exec("su -c sync");
-                        Runtime.getRuntime().exec("su -c echo 3 > /proc/sys/vm/drop_caches");
+                        ProcessBuilder pb = new ProcessBuilder("su", "-c", "/system/bin/sh");
+                        OutputStreamWriter osw = new OutputStreamWriter(pb.start().getOutputStream());
+                        osw.write("sync" + "\n" + "echo 3 > /proc/sys/vm/drop_caches" + "\n");
+                        osw.write("\nexit\n");
+                        osw.flush();
+                        osw.close();
                     } catch (Exception e) {
                         Log.d(TAG, "Flush caches failed!");
                     }
