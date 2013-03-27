@@ -103,12 +103,16 @@ class ProcessList {
     // keeping around processes on devices with large amounts of RAM.
     static final int MAX_HIDDEN_APPS;
 
+    static final boolean TONYP_MEM_MINFREE;
+
     static {
         // Allow more hidden apps on huge memory devices (1.5GB or higher)
         // or fetch from the system property
         MemInfoReader mi = new MemInfoReader();
         MAX_HIDDEN_APPS = SystemProperties.getInt("sys.mem.max_hidden_apps",
                 mi.getTotalSize() > 1572864 ? 40 : 15);
+
+        TONYP_MEMORY = SystemProperties.getBoolean ("ro.tonyp.mem_minfree",false);
     }
 
     // We put empty content processes after any hidden processes that have
@@ -137,6 +141,11 @@ class ProcessList {
     private final long[] mOomMinFreeHigh = new long[] {
             32768, 40960, 49152,
             57344, 65536, 81920
+    };
+    // tonyp: custom minfree values
+    private final long[] mOomtonyp = new long[] {
+            8192, 12288, 45056,
+            53248, 61440, 69632
     };
     // The actual OOM killer memory levels we are using.
     private final long[] mOomMinFree = new long[mOomAdj.length];
@@ -183,7 +192,8 @@ class ProcessList {
         for (int i=0; i<mOomAdj.length; i++) {
             long low = mOomMinFreeLow[i];
             long high = mOomMinFreeHigh[i];
-            mOomMinFree[i] = (long)(low + ((high-low)*scale));
+            //mOomMinFree[i] = (long)(low + ((high-low)*scale));
+            mOomMinFree[i] = TONYP_MEM_MINFREE == true ? (long) mOomtonyp[i] : (long)(low + ((high-low)*scale));
 
             if (i > 0) {
                 adjString.append(',');
