@@ -1181,6 +1181,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     public boolean isTablet() {
         return false;
+    }
 
     public void addNavigationBarCallback(NavigationBarCallback callback) {
         mNavigationCallbacks.add(callback);
