@@ -67,7 +67,7 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 
-public class NavigationBarView extends LinearLayout implements BaseStatusBar.NavigationBarCallback {
+public class NavigationBarView extends LinearLayout {
     final static boolean DEBUG = false;
     final static String TAG = "PhoneStatusBar/NavigationBarView";
 
@@ -269,7 +269,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         }
     };
 
-    @Override
     public void setNavigationIconHints(int hints) {
         setNavigationIconHints(hints, false);
     }
@@ -306,7 +305,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         }
     }
 
-    @Override
     public void setDisabledFlags(int disabledFlags) {
         setDisabledFlags(disabledFlags, false);
     }
@@ -347,7 +345,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         }
     }
 
-    @Override
     public void setMenuVisibility(final boolean show) {
         setMenuVisibility(show, false);
     }
