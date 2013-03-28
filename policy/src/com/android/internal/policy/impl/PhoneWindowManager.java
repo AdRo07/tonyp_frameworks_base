@@ -3242,14 +3242,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // For purposes of positioning and showing the nav bar, if we have
             // decided that it can't be hidden (because of the screen aspect ratio),
             // then take that into account.
-            if (expandedDesktopHidesNavigationBar()
-                    && (mLastSystemUiFlags & View.SYSTEM_UI_FLAG_SHOW_NAVIGATION_IN_EXPANDED_DESKTOP) == 0) {
-                navVisible = false;
-                navWidth = 0;
-                navHeight = 0;
-            } else if (!mCanHideNavigationBar) {
-                navVisible = true;
-            }
+            navVisible |= !mCanHideNavigationBar;
+            navVisible &= (Settings.System.getInt(mContext.getContentResolver(), Settings.System.EXPANDED_DESKTOP_STATE, 0) == 0);
 
             if (mNavigationBar != null) {
                 // Force the navigation bar to its appropriate place and
