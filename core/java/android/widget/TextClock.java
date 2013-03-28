@@ -402,7 +402,7 @@ public class TextClock extends TextView {
         }
 
         boolean hadSeconds = mHasSeconds;
-        mHasSeconds = DateFormat.hasSeconds(mFormat);
+        mHasSeconds = false;
 
         if (handleTicker && mAttached && hadSeconds != mHasSeconds) {
             if (hadSeconds) getHandler().removeCallbacks(mTicker);
