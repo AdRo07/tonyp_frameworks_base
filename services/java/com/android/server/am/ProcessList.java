@@ -112,7 +112,7 @@ class ProcessList {
         MAX_HIDDEN_APPS = SystemProperties.getInt("sys.mem.max_hidden_apps",
                 mi.getTotalSize() > 1572864 ? 40 : 15);
 
-        TONYP_MEM_MINFREE = SystemProperties.getBoolean ("ro.tonyp.mem_minfree",false);
+        TONYP_MEM_MINFREE = SystemProperties.getBoolean ("persist.sys.tonyp_mem_minfree",false);
     }
 
     // We put empty content processes after any hidden processes that have
