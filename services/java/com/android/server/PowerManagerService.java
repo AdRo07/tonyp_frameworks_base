@@ -576,7 +576,7 @@ public class PowerManagerService extends IPowerManager.Stub
                 final float transitionScale = getFloat(TRANSITION_ANIMATION_SCALE, 1.0f);
 
                 mElectronBeamAnimationOff = (Settings.System.getInt(mContext.getContentResolver(),
-                        ELECTRON_BEAM_ANIMATION_OFF, 1) != 0) &&
+                        ELECTRON_BEAM_ANIMATION_OFF, 0) != 0) &&
                         mContext.getResources().getBoolean(com.android.internal.R.bool.config_screenOffAnimation);
 
                 mAnimationSetting = 0;
