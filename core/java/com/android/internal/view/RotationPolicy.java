@@ -48,7 +48,7 @@ public final class RotationPolicy {
     public static boolean isRotationLockToggleSupported(Context context) {
         return context.getResources().getConfiguration().smallestScreenWidthDp >= 600 ||
                (Settings.System.getInt(context.getContentResolver(),
-                        Settings.System.ROTATE_SWITCH_IN_PHONE_MODE, 1) == 1);
+                        Settings.System.ROTATE_SWITCH_IN_PHONE_MODE, 0) == 1);
     }
 
     /**
