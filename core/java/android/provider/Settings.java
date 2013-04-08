@@ -2665,6 +2665,13 @@ public final class Settings {
         public static final String PIE_SENSITIVITY = "pie_sensitivity";
 
         /**
+         * Whether or not to use a center clock in phone status bar
+         *
+         * @hide
+         */
+        public static final String STATUS_BAR_CENTER_CLOCK = "status_bar_center_clock";
+
+        /**
          * Quick Settings Panel Tiles to Use
          *
          * @hide
