@@ -569,6 +569,9 @@
         <xliff:g id="number">%d</xliff:g>
     </string>
 
+    <!-- Label in drop down to identify brightness slider -->
+    <string name="brightness_label">Brightness</string>
+
     <!-- Dialog title for navigation bar button selection -->
     <string name="navbar_dialog_title">Choose action to assign</string>
     <string name="navbar_home_button">Home button</string>
