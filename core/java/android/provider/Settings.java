@@ -3524,16 +3524,6 @@ public final class Settings {
         public static final String STATUSBAR_TOGGLES_BRIGHTNESS_LOC = "statusbar_toggles_brightness_loc";
 
         /**
-         * @hide
-         */
-        public static final String SYSTEM_POWER_ENABLE_CRT_OFF = "system_power_enable_crt_off";
-
-        /**
-         * @hide
-         */
-        public static final String SYSTEM_POWER_ENABLE_CRT_ON = "system_power_enable_crt_on";
-
-        /**
          * Battery warning preferences
          *
          * 0 = show dialog + play sound (default)
@@ -3545,6 +3535,19 @@ public final class Settings {
          * @hide
          */
         public static final String POWER_UI_LOW_BATTERY_WARNING_POLICY = "power_ui_low_battery_warning_policy";
+
+        /**
+         * Whether electronic beam animation is enabled or not
+          * @hide
+          */
+        public static final String SYSTEM_POWER_ENABLE_CRT_OFF = "system_power_enable_crt_off";
+
+        /**
+         * Electronic beam animation mode
+         * 0 = always horizontal, 1 = always vertical, 2 = dependent on orientation
+          * @hide
+          */
+        public static final String SYSTEM_POWER_CRT_MODE = "system_power_crt_mode";
 
     }
 
