@@ -23,6 +23,7 @@ import com.android.internal.util.MemInfoReader;
 import com.android.server.wm.WindowManagerService;
 
 import android.graphics.Point;
+import android.os.SystemProperties;
 import android.util.Slog;
 import android.view.Display;
 import android.os.SystemProperties;
@@ -155,6 +156,20 @@ class ProcessList {
 
     private boolean mHaveDisplaySize;
 
+    // tonyp: Our low RAM device doesn't behave well with the default
+    // memory management, so let's tweak it a little bit.
+    static final boolean TONYP_MEM_MANAGEMENT;
+
+    static {
+        TONYP_MEM_MANAGEMENT = SystemProperties.getBoolean("persist.sys.tonyp_mem_mgmt",false);
+    }
+
+    // tonyp: custom minfree values
+    private final long[] mOomtonyp = new long[] {
+            8192, 12288, 16384,
+            24576, 28672, 61440
+    };
+
     ProcessList() {
         MemInfoReader minfo = new MemInfoReader();
         minfo.readMemInfo();
@@ -191,7 +206,7 @@ class ProcessList {
         if (scale < 0) scale = 0;
         else if (scale > 1) scale = 1;
         for (int i=0; i<mOomAdj.length; i++) {
-            long low = mOomMinFreeLow[i];
+            long low = TONYP_MEM_MANAGEMENT == true ? mOomtonyp[i] : mOomMinFreeLow[i];
             long high = mOomMinFreeHigh[i];
             mOomMinFree[i] = (long)(low + ((high-low)*scale));
 
