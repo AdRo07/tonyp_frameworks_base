@@ -363,7 +363,7 @@ public class PowerWidget extends FrameLayout {
             mScrollView.addView(mButtonLayout, WIDGET_LAYOUT_PARAMS);
             updateScrollbar();
             mBrightnessLayout.addView(mScrollView, ROWS_PARAMS);
-        } else {
+        } else if (mButtonLayout.getChildCount() > 0) {
             // not needed, just add the linear layout
             mBrightnessLayout.addView(mButtonLayout, ROWS_PARAMS);
         }
