@@ -52,12 +52,14 @@ public class BatteryController extends BroadcastReceiver {
     public static final int BATTERY_STYLE_CIRCLE         = 2;
     public static final int BATTERY_STYLE_CIRCLE_PERCENT = 3;
     public static final int BATTERY_STYLE_GONE           = 4;
+    public static final int BATTERY_STYLE_TEXT           = 5;
 
 
     private static final int BATTERY_TEXT_STYLE_NORMAL  = R.string.status_bar_settings_battery_meter_format;
     private static final int BATTERY_TEXT_STYLE_MIN     = R.string.status_bar_settings_battery_meter_min_format;
 
     private boolean mBatteryPlugged = false;
+    private int mLevel = -1;
     private int mBatteryStatus = BatteryManager.BATTERY_STATUS_UNKNOWN;
     private int mBatteryStyle;
 
@@ -173,11 +175,11 @@ public class BatteryController extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         final String action = intent.getAction();
         if (action.equals(Intent.ACTION_BATTERY_CHANGED)) {
-            final int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            mLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             mBatteryPlugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0;
             mBatteryStatus = intent.getIntExtra(BatteryManager.EXTRA_STATUS,
                                                 BatteryManager.BATTERY_STATUS_UNKNOWN);
-            updateViews(level);
+            updateViews(mLevel);
             if (mUiController) {
                 updateBattery();
             }
@@ -185,22 +187,6 @@ public class BatteryController extends BroadcastReceiver {
     }
 
     protected void updateViews(int level) {
-        if (mUiController) {
-            int N = mIconViews.size();
-            for (int i=0; i<N; i++) {
-                ImageView v = mIconViews.get(i);
-                v.setImageLevel(level);
-                v.setContentDescription(mContext.getString(R.string.accessibility_battery_level,
-                        level));
-            }
-            N = mLabelViews.size();
-            for (int i=0; i<N; i++) {
-                TextView v = mLabelViews.get(i);
-                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,
-                        level));
-            }
-        }
-
         for (BatteryStateChangeCallback cb : mChangeCallbacks) {
             cb.onBatteryLevelChanged(level, isBatteryStatusCharging());
         }
@@ -210,6 +196,7 @@ public class BatteryController extends BroadcastReceiver {
         int mIcon = View.GONE;
         int mText = View.GONE;
         int mIconStyle = getIconStyleNormal();
+        TextView defView = new TextView(mContext);
 
         if (isBatteryPresent()) {
             if ( isBatteryStatusUnknown() &&
@@ -226,18 +213,43 @@ public class BatteryController extends BroadcastReceiver {
                 mText = (View.VISIBLE);
                 mIconStyle = isBatteryStatusCharging() ?
                                 getIconStyleChargeMin() : getIconStyleNormalMin();
+            } else if (mBatteryStyle == BATTERY_STYLE_TEXT) {
+                mIcon = (View.GONE);
+                mText = (View.VISIBLE);
             }
         }
 
         int N = mIconViews.size();
         for (int i=0; i<N; i++) {
             ImageView v = mIconViews.get(i);
+            v.setImageLevel(mLevel);
+            v.setContentDescription(mContext.getString(R.string.accessibility_battery_level,
+                mLevel));
             v.setVisibility(mIcon);
             v.setImageResource(mIconStyle);
         }
         N = mLabelViews.size();
         for (int i=0; i<N; i++) {
             TextView v = mLabelViews.get(i);
+            if (mBatteryStyle == BATTERY_STYLE_TEXT) {
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_NORMAL,
+                        mLevel));
+                v.setTextSize(14);
+                if (mBatteryPlugged) {
+                    v.setTextColor(mContext.getResources().getColor(
+                            com.android.internal.R.color.holo_green_light));
+                } else if(mLevel <= 14) {
+                    v.setTextColor(mContext.getResources().getColor(
+                            com.android.internal.R.color.holo_orange_dark));
+                } else {
+                    v.setTextColor(defView.getTextColors());
+                }
+            } else {
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,
+                        mLevel));
+                v.setTextSize(12);
+                v.setTextColor(defView.getTextColors());
+            }
             v.setVisibility(mText);
         }
     }
