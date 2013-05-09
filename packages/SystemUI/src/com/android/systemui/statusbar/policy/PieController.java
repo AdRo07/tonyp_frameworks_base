@@ -209,8 +209,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
             // trigger setupNavigationItems()
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAV_BUTTONS), false, this);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
             // trigger setupContainer()
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_CONTROLS), false, this);
@@ -387,8 +385,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
 
     private void setupNavigationItems() {
         int minimumImageSize = (int)mContext.getResources().getDimension(R.dimen.pie_item_size);
-        boolean killAppLongPress = Settings.Secure.getInt(mContext.getContentResolver(),
-                Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1;
         ButtonInfo[] buttons = NavigationButtons.loadButtonMap(mContext);
 
         mNavigationSlice.clear();
@@ -407,7 +403,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                 }
 
                 boolean canLongPress = bi == NavigationButtons.HOME
-                        || (bi == NavigationButtons.BACK && killAppLongPress);
+                        || (bi == NavigationButtons.BACK);
                 boolean isSmall = NavigationButtons.IS_SLOT_SMALL[i];
                 mNavigationSlice.addItem(constructItem(isSmall ? 1 : 2, bi,
                         isSmall ? bi.sideResource : bi.portResource, minimumImageSize,
