@@ -234,6 +234,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private boolean mShowCarrierInPanel = false;
 
     // clock
+    private LinearLayout mCenterClockTicker;
     private boolean mShowClock;
 
     // drag bar
@@ -512,6 +513,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         mNotificationIcons = (IconMerger)mStatusBarView.findViewById(R.id.notificationIcons);
         mNotificationIcons.setOverflowIndicator(mMoreIcon);
         mStatusBarContents = (LinearLayout)mStatusBarView.findViewById(R.id.status_bar_contents);
+        mCenterClockTicker = (LinearLayout)mStatusBarView.findViewById(R.id.center_clock_ticker);
         mTickerView = mStatusBarView.findViewById(R.id.ticker);
 
         /* Destroy the old widget before recreating the expanded dialog
@@ -532,6 +534,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         mClearButton.setVisibility(View.INVISIBLE);
         mClearButton.setEnabled(false);
         mDateView = (DateView)mStatusBarWindow.findViewById(R.id.date);
+
+        showClock(true);
 
         mHasSettingsPanel = res.getBoolean(R.bool.config_hasSettingsPanel);
         mHasFlipSettings = res.getBoolean(R.bool.config_hasFlipSettingsPanel);
@@ -1331,14 +1335,33 @@ public class PhoneStatusBar extends BaseStatusBar {
         updateCarrierLabelVisibility(false);
     }
 
+    @Override
     public void showClock(boolean show) {
         if (mStatusBarView == null) return;
         ContentResolver resolver = mContext.getContentResolver();
         View clock = mStatusBarView.findViewById(R.id.clock);
+        View ctClock = mStatusBarView.findViewById(R.id.center_clock);
+
+        if(clock != null) {
+            clock.setVisibility(View.GONE);
+        }
+        if(ctClock != null) {
+            ctClock.setVisibility(View.GONE);
+        }
+
         mShowClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCK, 1) == 1);
-        if (clock != null) {
-            clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
+                Settings.System.STATUS_BAR_CLOCK, 1) > 0);
+        boolean centerClock = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CLOCK, 0) == 2;
+
+        if (clock != null && ctClock != null) {
+            if (centerClock) {
+                clock.setVisibility(View.GONE);
+                ctClock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
+            } else {
+                ctClock.setVisibility(View.GONE);
+                clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
+            }
         }
     }
 
@@ -2191,6 +2214,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             final View dockBattery2 = mStatusBarView.findViewById(R.id.dock_battery_text);
             final View dockBattery3 = mStatusBarView.findViewById(R.id.circle_dock_battery);
             final View clock = mStatusBarView.findViewById(R.id.clock);
+            final View ctClock = mStatusBarView.findViewById(R.id.center_clock);
 
             List<ObjectAnimator> lightsOutObjs = new ArrayList<ObjectAnimator>();
             lightsOutObjs.add(ObjectAnimator.ofFloat(notifications, View.ALPHA, 0));
@@ -2210,6 +2234,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 lightsOutObjs.add(ObjectAnimator.ofFloat(dockBattery3, View.ALPHA, 0.5f));
             }
             lightsOutObjs.add(ObjectAnimator.ofFloat(clock, View.ALPHA, 0.5f));
+            lightsOutObjs.add(ObjectAnimator.ofFloat(ctClock, View.ALPHA, 0.5f));
 
             List<ObjectAnimator> lightsOnObjs = new ArrayList<ObjectAnimator>();
             lightsOnObjs.add(ObjectAnimator.ofFloat(notifications, View.ALPHA, 1));
@@ -2229,6 +2254,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 lightsOnObjs.add(ObjectAnimator.ofFloat(dockBattery3, View.ALPHA, 1));
             }
             lightsOnObjs.add(ObjectAnimator.ofFloat(clock, View.ALPHA, 1));
+            lightsOnObjs.add(ObjectAnimator.ofFloat(ctClock, View.ALPHA, 1));
 
             final AnimatorSet lightsOutAnim = new AnimatorSet();
             lightsOutAnim.playTogether(
@@ -2345,25 +2371,32 @@ public class PhoneStatusBar extends BaseStatusBar {
         public void tickerStarting() {
             mTicking = true;
             mStatusBarContents.setVisibility(View.GONE);
+            mCenterClockTicker.setVisibility(View.GONE);
             mTickerView.setVisibility(View.VISIBLE);
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            mCenterClockTicker.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
         }
 
         @Override
         public void tickerDone() {
             mStatusBarContents.setVisibility(View.VISIBLE);
+            mCenterClockTicker.setVisibility(View.VISIBLE);
             mTickerView.setVisibility(View.GONE);
-            mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            //mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_down_out,
                         mTickingDoneListener));
+            mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+            mCenterClockTicker.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
         }
 
         @Override
         public void tickerHalting() {
             mStatusBarContents.setVisibility(View.VISIBLE);
+            mCenterClockTicker.setVisibility(View.VISIBLE);
             mTickerView.setVisibility(View.GONE);
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+            mCenterClockTicker.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             // we do not animate the ticker away at this point, just get rid of it (b/6992707)
         }
     }

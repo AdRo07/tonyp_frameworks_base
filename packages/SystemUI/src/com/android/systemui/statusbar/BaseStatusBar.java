@@ -257,6 +257,25 @@ public abstract class BaseStatusBar extends SystemUI implements
      * and add them to the window manager.
      */
     protected abstract void createAndAddWindows();
+    
+    public abstract void showClock(boolean show);
+
+    class ClockObserver extends ContentObserver {
+        ClockObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK), false, this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            showClock(true);
+        }
+    }
 
     protected WindowManager mWindowManager;
     protected IWindowManager mWindowManagerService;
@@ -322,6 +341,9 @@ public abstract class BaseStatusBar extends SystemUI implements
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mWindowManagerService = WindowManagerGlobal.getWindowManagerService();
         mDisplay = mWindowManager.getDefaultDisplay();
+
+        ClockObserver clockObserver = new ClockObserver(new Handler());
+        clockObserver.observe();
 
         mProvisioningObserver.onChange(false); // set up
         mContext.getContentResolver().registerContentObserver(
