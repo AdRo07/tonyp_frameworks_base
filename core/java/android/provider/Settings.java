@@ -3040,6 +3040,7 @@ public final class Settings {
           * 12 - Last App
           * 13 - Custom App
           * 14 - Torch
+          * 15 - Screenshot
           * @hide
           */
 
