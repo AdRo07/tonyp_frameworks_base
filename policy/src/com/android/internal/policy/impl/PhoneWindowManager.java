@@ -237,6 +237,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_LAST_APP = 12;
     private static final int KEY_ACTION_CUSTOM_APP = 13;
     private static final int KEY_ACTION_TORCH = 14;
+    private static final int KEY_ACTION_SCREENSHOT = 15;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -1082,6 +1083,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
                     i.putExtra("bright", false);
                     mContext.sendBroadcast(i);
+                    break;
+                case KEY_ACTION_SCREENSHOT:
+                    takeScreenshot();
                     break;
                 default:
                     break;
