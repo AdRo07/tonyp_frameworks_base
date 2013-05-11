@@ -1114,13 +1114,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     boolean expandDesktopModeOn = Settings.System.getInt(
                             mContext.getContentResolver(),
                             Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-                    int expandedMode = Settings.System.getInt(mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STYLE, 0);
-                    if (!expandDesktopModeOn && expandedMode == 0) {
-                        // Expanded desktop is going to turn on, default to 2 since
-                        // EXPANDED_DESKTOP_STYLE has not been set
-                        Settings.System.putInt(mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STYLE, 2);
+                    if (!expandDesktopModeOn) {
                         Runnable expandedDesktopToast = new Runnable() {
                             public void run() {
                                 Toast.makeText(mContext, R.string.expanded_mode_default_set, Toast.LENGTH_LONG).show();
@@ -1499,10 +1493,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     public String getDefString(ContentResolver resolver, String key, int def) {
-        String value = Settings.System.getStringForUser(resolver, key, UserHandle.USER_CURRENT);
-        if (value == null)
-            value = Integer.toString(def);
-        return value;
+        return = Integer.toString(def);
     }
 
     public String getStr(int str) {
