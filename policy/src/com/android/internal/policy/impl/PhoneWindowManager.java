@@ -1496,6 +1496,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
             }
         }
+    }
 
     public String getDefString(ContentResolver resolver, String key, int def) {
         String value = Settings.System.getStringForUser(resolver, key, UserHandle.USER_CURRENT);
