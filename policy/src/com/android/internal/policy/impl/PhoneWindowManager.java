@@ -1114,14 +1114,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     boolean expandDesktopModeOn = Settings.System.getInt(
                             mContext.getContentResolver(),
                             Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-                    if (!expandDesktopModeOn) {
-                        Runnable expandedDesktopToast = new Runnable() {
-                            public void run() {
-                                Toast.makeText(mContext, R.string.expanded_mode_default_set, Toast.LENGTH_LONG).show();
-                            }
-                        };
-                        mHandler.post(expandedDesktopToast);
-                    }
                     Settings.System.putInt(
                             mContext.getContentResolver(),
                             Settings.System.EXPANDED_DESKTOP_STATE, expandDesktopModeOn ? 0 : 1);
