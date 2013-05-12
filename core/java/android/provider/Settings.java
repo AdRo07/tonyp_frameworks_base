@@ -3030,13 +3030,11 @@ public final class Settings {
           * 6 - Voice Search
           * 7 - In-App Search
           * 8 - Power Off
-          * 9 - Notification shade toggle
-          * 10 - Expanded desktop toggle
+          * 9 - Torch
+          * 10 - Screenshot
           * 11 - Kill App
           * 12 - Last App
           * 13 - Custom App
-          * 14 - Torch
-          * 15 - Screenshot
           * @hide
           */
 
