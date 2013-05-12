@@ -741,8 +741,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.KEY_APP_SWITCH_LONG_PRESS_ACTION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HARDWARE_KEY_REBINDING), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.EXPANDED_DESKTOP_STATE), false, this);
             if (SEPARATE_TIMEOUT_FOR_SCREEN_SAVER) {
                 resolver.registerContentObserver(Settings.Secure.getUriFor(
                         "screensaver_timeout"), false, this);
@@ -1096,25 +1094,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case KEY_ACTION_POWER:
                     PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
                     pm.goToSleep(SystemClock.uptimeMillis());
-                    break;
-                case KEY_ACTION_NOTIFICATIONS:
-                    try {
-                        IStatusBarService statusbar = getStatusBarService();
-                        if (statusbar != null) {
-                            statusbar.toggleNotificationShade();
-                        }
-                    } catch (RemoteException e) {
-                        Slog.e(TAG, "RemoteException when toggling notification shade", e);
-                        mStatusBarService = null;
-                    }
-                    break;
-                case KEY_ACTION_EXPANDED:
-                    boolean expandDesktopModeOn = Settings.System.getInt(
-                            mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-                    Settings.System.putInt(
-                            mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STATE, expandDesktopModeOn ? 0 : 1);
                     break;
                 case KEY_ACTION_TORCH:
                     Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
