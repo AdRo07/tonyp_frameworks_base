@@ -1435,6 +1435,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
             }
         }
+    }
 
     public String getDefString(ContentResolver resolver, String key, int def) {
         String value = Settings.System.getString(resolver, key);
@@ -2296,9 +2297,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 if (repeatCount == 0) {
                     mHomePressed = true;
-                    if (!mRecentAppsPreloaded && mLongPressOnHomeBehavior == KEY_ACTION_APP_SWITCH) {
-                        preloadRecentApps();
-                    }
                 } else if (longPress) {
                     if (!keyguardOn && !mLongPressOnHomeBehavior.equals(getStr(KEY_ACTION_NOTHING))) {
                         performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
