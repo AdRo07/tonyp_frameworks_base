@@ -1485,7 +1485,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     public String getDefString(ContentResolver resolver, String key, int def) {
-        return = Integer.toString(def);
+        return Integer.toString(def);
     }
 
     public String getStr(int str) {
