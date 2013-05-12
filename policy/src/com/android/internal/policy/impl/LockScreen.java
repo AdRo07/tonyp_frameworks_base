@@ -60,6 +60,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.media.AudioManager;
 import android.os.RemoteException;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.provider.MediaStore;
@@ -1068,7 +1069,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     private static final int ACTION_RESULT_RUN = 0;
     private static final int ACTION_RESULT_NOTRUN = 1;
 
-    private static int runAction(Context context, String uri) {
+    private int runAction(Context context, String uri) {
         if ("FLASHLIGHT".equals(uri)) {
             context.sendBroadcast(new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT"));
             return ACTION_RESULT_RUN;
@@ -1084,8 +1085,15 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         } else if ("SOUND".equals(uri)) {
             toggleSilentMode(context);
             return ACTION_RESULT_RUN;
+        } else if ("CAMERA".equals(uri)) {
+            dismiss();
+            context.sendBroadcast(new Intent(Intent.ACTION_CAMERA_BUTTON, null));
+            return true;
+        } else if ("POWER".equals(uri)) {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            pm.goToSleep(SystemClock.uptimeMillis());
+            return true;
         }
-
         return ACTION_RESULT_NOTRUN;
     }
 
