@@ -1088,11 +1088,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
         } else if ("CAMERA".equals(uri)) {
             dismiss();
             context.sendBroadcast(new Intent(Intent.ACTION_CAMERA_BUTTON, null));
-            return true;
+            return ACTION_RESULT_RUN;
         } else if ("POWER".equals(uri)) {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             pm.goToSleep(SystemClock.uptimeMillis());
-            return true;
+            return ACTION_RESULT_RUN;
         }
         return ACTION_RESULT_NOTRUN;
     }
