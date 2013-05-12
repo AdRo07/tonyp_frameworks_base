@@ -1069,7 +1069,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
     private static final int ACTION_RESULT_RUN = 0;
     private static final int ACTION_RESULT_NOTRUN = 1;
 
-    private int runAction(Context context, String uri) {
+    private static int runAction(Context context, String uri) {
         if ("FLASHLIGHT".equals(uri)) {
             context.sendBroadcast(new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT"));
             return ACTION_RESULT_RUN;
@@ -1086,7 +1086,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen {
             toggleSilentMode(context);
             return ACTION_RESULT_RUN;
         } else if ("CAMERA".equals(uri)) {
-            dismiss();
             context.sendBroadcast(new Intent(Intent.ACTION_CAMERA_BUTTON, null));
             return ACTION_RESULT_RUN;
         } else if ("POWER".equals(uri)) {
