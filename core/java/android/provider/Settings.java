@@ -3041,6 +3041,7 @@ public final class Settings {
           * 13 - Custom App
           * 14 - Torch
           * 15 - Screenshot
+          * 16 - Quickmemo
           * @hide
           */
 
