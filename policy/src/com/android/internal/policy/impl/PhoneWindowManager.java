@@ -238,6 +238,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_CUSTOM_APP = 13;
     private static final int KEY_ACTION_TORCH = 14;
     private static final int KEY_ACTION_SCREENSHOT = 15;
+    private static final int KEY_ACTION_QUICKMEMO = 16;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -883,6 +884,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mHandler.removeCallbacks(mRingerChordLongPress);
     }
 
+    private boolean isAppInstalled(String uri) {
+        PackageManager pm = mContext.getPackageManager();
+        try {
+            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+        return true;
+    }
+
     private final Runnable mPowerLongPress = new Runnable() {
         @Override
         public void run() {
@@ -927,20 +938,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private final Runnable mRingerChordLongPress = new Runnable() {
         public void run() {
             // Do the switch
-            final AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
-            final int ringerMode = am.getRingerMode();
-            final VolumePanel volumePanel = new VolumePanel(ThemeUtils.createUiContext(mContext),
-                                                              (AudioService) getAudioService());
-            if (ringerMode == AudioManager.RINGER_MODE_NORMAL) {
-                boolean vibrateSetting = Settings.System.getInt(mContext.getContentResolver(),
-                                           Settings.System.VIBRATE_WHEN_RINGING, 0) != 0;
-                am.setRingerMode(vibrateSetting ? AudioManager.RINGER_MODE_VIBRATE :
-                                   AudioManager.RINGER_MODE_SILENT);
-            } else {
-                am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            if (isAppInstalled("com.lge.QuickClip")) {
+                mContext.sendBroadcast(new Intent("com.lge.QuickClip.action.START_QUICKCLIP"));
+            }            
+            else {
+                final AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+                final int ringerMode = am.getRingerMode();
+                final VolumePanel volumePanel = new VolumePanel(ThemeUtils.createUiContext(mContext),
+                                                                  (AudioService) getAudioService());
+                if (ringerMode == AudioManager.RINGER_MODE_NORMAL) {
+                    boolean vibrateSetting = Settings.System.getInt(mContext.getContentResolver(),
+                                               Settings.System.VIBRATE_WHEN_RINGING, 0) != 0;
+                    am.setRingerMode(vibrateSetting ? AudioManager.RINGER_MODE_VIBRATE :
+                                       AudioManager.RINGER_MODE_SILENT);
+                } else {
+                    am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                }
+                volumePanel.postVolumeChanged(AudioManager.STREAM_RING,AudioManager.FLAG_SHOW_UI
+                                              | AudioManager.FLAG_VIBRATE);
             }
-            volumePanel.postVolumeChanged(AudioManager.STREAM_RING,AudioManager.FLAG_SHOW_UI
-                                          | AudioManager.FLAG_VIBRATE);
         }
     };
 
@@ -1086,6 +1102,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     break;
                 case KEY_ACTION_SCREENSHOT:
                     takeScreenshot();
+                    break;
+                case KEY_ACTION_QUICKMEMO:
+                    if (isAppInstalled("com.lge.QuickClip")) {
+                        mContext.sendBroadcast(new Intent("com.lge.QuickClip.action.START_QUICKCLIP"));
+                    } else {
+                        Runnable quickMemoToast = new Runnable() {
+                        public void run() {
+                            Toast.makeText(mContext, "Quickmemo isn't installed!", Toast.LENGTH_LONG).show();
+                            }
+                        };
+                        mHandler.post(quickMemoToast);
+                    }
                     break;
                 default:
                     break;
