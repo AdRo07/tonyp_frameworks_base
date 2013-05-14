@@ -196,7 +196,6 @@ public class BatteryController extends BroadcastReceiver {
         int mIcon = View.GONE;
         int mText = View.GONE;
         int mIconStyle = getIconStyleNormal();
-        TextView defView = new TextView(mContext);
 
         if (isBatteryPresent()) {
             if ( isBatteryStatusUnknown() &&
@@ -232,23 +231,26 @@ public class BatteryController extends BroadcastReceiver {
         for (int i=0; i<N; i++) {
             TextView v = mLabelViews.get(i);
             if (mBatteryStyle == BATTERY_STYLE_TEXT) {
-                v.setText(mContext.getString(BATTERY_TEXT_STYLE_NORMAL,
-                        mLevel));
-                v.setTextSize(14);
                 if (mBatteryPlugged) {
                     v.setTextColor(mContext.getResources().getColor(
                             com.android.internal.R.color.holo_green_light));
-                } else if(mLevel <= 14) {
+                } else if (mLevel <= 4) {
+                    v.setTextColor(mContext.getResources().getColor(
+                            com.android.internal.R.color.holo_red_dark));
+                } else if (mLevel <= 14) {
                     v.setTextColor(mContext.getResources().getColor(
                             com.android.internal.R.color.holo_orange_dark));
                 } else {
-                    v.setTextColor(defView.getTextColors());
+                    v.setTextAppearance(mContext, 
+                        com.android.systemui.R.style.TextAppearance_StatusBar_Battery);
                 }
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_NORMAL,mLevel));
+                v.setTextSize(14);
             } else {
-                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,
-                        mLevel));
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,mLevel));
                 v.setTextSize(12);
-                v.setTextColor(defView.getTextColors());
+                v.setTextAppearance(mContext, 
+                    com.android.systemui.R.style.TextAppearance_StatusBar_Battery);
             }
             v.setVisibility(mText);
         }
