@@ -3029,13 +3029,14 @@ public final class Settings {
           * 5 - Search
           * 6 - Voice Search
           * 7 - In-App Search
-          * 8 - Power Off
+          * 8 - Screen Off
           * 9 - Toggle Torch
           * 10 - Take Screenshot
           * 11 - Kill App
           * 12 - Last App
           * 13 - Custom App
           * 14 - Quickmemo
+          * 15 - Power menu
           * @hide
           */
 
