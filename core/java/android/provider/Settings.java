@@ -3034,7 +3034,7 @@ public final class Settings {
           * 5 - Search
           * 6 - Voice Search
           * 7 - In-App Search
-          * 8 - Power Off
+          * 8 - Screen Off
           * 9 - Notification shade toggle
           * 10 - Expanded desktop toggle
           * 11 - Kill App
@@ -3043,6 +3043,7 @@ public final class Settings {
           * 14 - Torch
           * 15 - Screenshot
           * 16 - Quickmemo
+          * 17 - Power menu
           * @hide
           */
 
