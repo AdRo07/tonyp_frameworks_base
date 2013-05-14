@@ -239,6 +239,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_TORCH = 14;
     private static final int KEY_ACTION_SCREENSHOT = 15;
     private static final int KEY_ACTION_QUICKMEMO = 16;
+    private static final int KEY_ACTION_POWER_MENU = 17;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -1114,6 +1115,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         };
                         mHandler.post(quickMemoToast);
                     }
+                    break;
+                case KEY_ACTION_POWER_MENU:
+                    Runnable pmenu = new Runnable() {
+                        public void run() {
+                                sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
+                                showGlobalActionsDialog();
+                        }
+                    };
+                    mHandler.post(pmenu);
                     break;
                 default:
                     break;
