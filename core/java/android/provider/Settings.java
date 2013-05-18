@@ -2935,6 +2935,18 @@ public final class Settings {
         public static final String STATUS_BAR_NOTIF_COUNT = "status_bar_notif_count";
 
         /**
+         * Give MMS Notifications a breathing effect
+         * @hide
+         */
+        public static final String MMS_BREATH = "mms_breath";
+
+        /**
+         * Give MMS Notifications a breathing effect
+         * @hide
+         */
+        public static final String MISSED_CALL_BREATH = "missed_call_breath";
+
+        /**
          * Show the pending notification counts as overlays on the status bar
          * @hide
          */
