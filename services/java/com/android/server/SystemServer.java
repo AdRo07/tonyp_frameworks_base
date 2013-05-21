@@ -70,7 +70,6 @@ import com.android.server.pm.PackageManagerService;
 import com.android.server.pm.UserManagerService;
 import com.android.server.power.PowerManagerService;
 import com.android.server.power.ShutdownThread;
-import com.android.server.privacy.PrivacyManager;
 import com.android.server.usb.UsbService;
 import com.android.server.wm.WindowManagerService;
 
@@ -175,7 +174,6 @@ class ServerThread extends Thread {
         UiModeManagerService uiMode = null;
         RecognitionManagerService recognition = null;
         ThrottleService throttle = null;
-        PrivacyManager privacy = null;
         NetworkTimeUpdateService networkTimeUpdater = null;
         CommonTimeManagementService commonTimeMgmtService = null;
         InputManagerService inputManager = null;
@@ -586,16 +584,6 @@ class ServerThread extends Thread {
             } catch (Throwable e) {
                 Slog.e(TAG, "Failure starting FM transmitter Service", e);
             }
-
-            try {
-                Slog.i(TAG, "PrivacyManager Service");
-                privacy = new PrivacyManager(context);
-                ServiceManager.addService(
-                        PrivacyManager.SERVICE_NAME, privacy);
-            } catch (Throwable e) {
-                reportWtf("starting PrivacyManager", e);
-            }
-
             try {
                 Slog.i(TAG, "UpdateLock Service");
                 ServiceManager.addService(Context.UPDATE_LOCK_SERVICE,
@@ -961,7 +949,6 @@ class ServerThread extends Thread {
         final RotationSwitchObserver rotateSwitchF = rotateSwitch;
         final UsbService usbF = usb;
         final ThrottleService throttleF = throttle;
-        final PrivacyManager privacyF = privacy;
         final TwilightService twilightF = twilight;
         final UiModeManagerService uiModeF = uiMode;
         final AppWidgetService appWidgetF = appWidget;
@@ -1082,11 +1069,6 @@ class ServerThread extends Thread {
                     if (throttleF != null) throttleF.systemReady();
                 } catch (Throwable e) {
                     reportWtf("making Throttle Service ready", e);
-                }
-                try {
-                    if (privacyF != null) privacyF.systemReady();
-                } catch (Throwable e) {
-                    reportWtf("making PrivacyManager Service ready", e);
                 }
                 try {
                     if (networkTimeUpdaterF != null) networkTimeUpdaterF.systemReady();
