@@ -321,6 +321,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private int mIsStatusBarBrightNess;
     private boolean mIsAutoBrightNess;
     private Float mPropFactor;
+    private int mMaxBrightness = android.os.PowerManager.BRIGHTNESS_ON;
 
     private int mNavigationIconHints = 0;
     private final Animator.AnimatorListener mMakeIconsInvisible = new AnimatorListenerAdapter() {
@@ -3082,13 +3083,16 @@ public class PhoneStatusBar extends BaseStatusBar {
         } catch (NullPointerException e2) {
             return;
         }
-        double percent = ((screenBrightness / (double) 255) * 100) + 0.5;
+        mMaxBrightness = mContext.getResources().getInteger(
+                com.android.internal.R.integer.config_screenBrightnessSettingMaximum);
+        double percent = ((screenBrightness / (double) mMaxBrightness) * 100) + 0.5;
 
     }
 
     private int checkMinMax(int brightness) {
         int min = 0;
-        int max = 255;
+        int max = mContext.getResources().getInteger(
+                com.android.internal.R.integer.config_screenBrightnessSettingMaximum);
 
         if (min > brightness) // brightness < 0x1E
             return min;
