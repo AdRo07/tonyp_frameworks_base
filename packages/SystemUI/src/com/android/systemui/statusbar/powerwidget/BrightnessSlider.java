@@ -37,7 +37,7 @@ import com.android.systemui.statusbar.policy.CurrentUserTracker;
 public class BrightnessSlider implements ToggleSlider.Listener {
     private static final String TAG = "StatusBar.BrightnessController";
 
-    private static final int MAXIMUM_BACKLIGHT = android.os.PowerManager.BRIGHTNESS_ON;
+    private int mMaxBrightness = android.os.PowerManager.BRIGHTNESS_ON;
 
     private Context mContext;
     private ToggleSlider mControl;
@@ -53,6 +53,8 @@ public class BrightnessSlider implements ToggleSlider.Listener {
     public BrightnessSlider(Context context) {
         mContext = context;
         mView = View.inflate(mContext, R.layout.brightness_slider, null);
+        mMaxBrightness = context.getResources().getInteger(
+                com.android.internal.R.integer.config_screenBrightnessSettingMaximum);
 
         mControl = (ToggleSlider) mView.findViewById(R.id.brightness);
 
@@ -85,10 +87,10 @@ public class BrightnessSlider implements ToggleSlider.Listener {
                     Settings.System.SCREEN_BRIGHTNESS,
                     mUserTracker.getCurrentUserId());
         } catch (SettingNotFoundException ex) {
-            value = MAXIMUM_BACKLIGHT;
+            value = mMaxBrightness;
         }
 
-        mControl.setMax(MAXIMUM_BACKLIGHT);
+        mControl.setMax(mMaxBrightness);
         mControl.setValue(value);
 
         mControl.setOnChangedListener(this);
