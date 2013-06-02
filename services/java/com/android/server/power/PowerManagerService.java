@@ -524,7 +524,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                     false, mSettingsObserver, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SYSTEM_POWER_ENABLE_CRT_OFF),
-                    Settings.System.AUTO_BRIGHTNESS_RESPONSIVENESS),
                     false, mSettingsObserver, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SYSTEM_POWER_CRT_MODE),
