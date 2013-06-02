@@ -2637,7 +2637,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
         if (mTouchModeReset != null) {
             removeCallbacks(mTouchModeReset);
-            mTouchModeReset.run();
+            mTouchModeReset = null;
         }
         mIsAttached = false;
     }
@@ -3422,7 +3422,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                                     if (!mDataChanged) {
                                         performClick.run();
                                     }
-                                    mTouchModeReset = null;
                                 }
                             };
                             postDelayed(mTouchModeReset,
