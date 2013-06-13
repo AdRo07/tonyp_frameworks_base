@@ -30,7 +30,6 @@ import android.app.Profile;
 import android.app.ProfileManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -285,7 +284,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         };
         onAirplaneModeChanged();
 
-        final ContentResolver cr = mContext.getContentResolver();
         mItems = new ArrayList<Action>();
 
         // first: power off
@@ -310,9 +308,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         // next: reboot
         // only shown if enabled, enabled by default
-        boolean showReboot = Settings.System.getIntForUser(cr,
-                Settings.System.POWER_MENU_REBOOT_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
-        if (showReboot) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_REBOOT_ENABLED, 1) == 1) {
             mItems.add(
                 new SinglePressAction(R.drawable.ic_lock_reboot, R.string.global_action_reboot) {
                     public void onPress() {
@@ -336,12 +333,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         // next: profile
         // only shown if both system profiles and the menu item is enabled, enabled by default
-        boolean showProfiles =
-                Settings.System.getIntForUser(cr,
-                        Settings.System.SYSTEM_PROFILES_ENABLED, 1, UserHandle.USER_CURRENT) == 1
-                && Settings.System.getIntForUser(cr,
-                        Settings.System.POWER_MENU_PROFILES_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
-        if (showProfiles) {
+        if ((Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SYSTEM_PROFILES_ENABLED, 1) == 1) &&
+                (Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.POWER_MENU_PROFILES_ENABLED, 1) == 1)) {
             mItems.add(
                 new ProfileChooseAction() {
                     public void onPress() {
@@ -364,9 +359,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         // next: screenshot
         // only shown if enabled, disabled by default
-        boolean showScreenshot = Settings.System.getIntForUser(cr,
-                Settings.System.POWER_MENU_SCREENSHOT_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
-        if (showScreenshot) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_SCREENSHOT_ENABLED, 0) == 1) {
             mItems.add(
                 new SinglePressAction(R.drawable.ic_lock_screenshot, R.string.global_action_screenshot) {
                     public void onPress() {
@@ -384,28 +378,21 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
 
         // next: expanded desktop toggle
-        // only shown if enabled and expanded desktop is enabled, disabled by default
-        boolean showExpandedDesktop =
-                Settings.System.getIntForUser(cr,
-                        Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) != 0
-                && Settings.System.getIntForUser(cr,
-                        Settings.System.POWER_MENU_EXPANDED_DESKTOP_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
-
-        if (showExpandedDesktop) {
+        // only shown if enabled, disabled by default
+        if(Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_EXPANDED_DESKTOP_ENABLED, 0) == 1){
             mItems.add(mExpandDesktopModeOn);
         }
 
         // next: airplane mode
-        boolean showAirplaneMode = Settings.System.getIntForUser(cr,
-                Settings.System.POWER_MENU_AIRPLANE_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
-        if (showAirplaneMode) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_AIRPLANE_ENABLED, 1) == 1) {
             mItems.add(mAirplaneModeOn);
         }
 
         // next: bug report, if enabled
-        boolean showBugReport = Settings.Secure.getIntForUser(cr,
-                Settings.Secure.BUGREPORT_IN_POWER_MENU, 0, UserHandle.USER_CURRENT) != 0;
-        if (showBugReport) {
+        if (Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.BUGREPORT_IN_POWER_MENU, 0) != 0) {
             mItems.add(
                 new SinglePressAction(com.android.internal.R.drawable.stat_sys_adb,
                         R.string.global_action_bug_report) {
@@ -453,16 +440,15 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
 
         // next: optionally add a list of users to switch to
-        boolean showUsers = Settings.System.getIntForUser(cr,
-                Settings.System.POWER_MENU_USER_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
-        if (showUsers) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_USER_ENABLED, 0) == 1) {
             addUsersToMenu(mItems);
         }
 
         // last: silent mode
-        boolean showSoundMode = SHOW_SILENT_TOGGLE && Settings.System.getIntForUser(cr,
-                Settings.System.POWER_MENU_SOUND_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
-        if (showSoundMode) {
+        if ((Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_SOUND_ENABLED, 1) == 1) &&
+                (SHOW_SILENT_TOGGLE)) {
             mItems.add(mSilentModeAction);
         }
 
@@ -1212,10 +1198,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     }
 
     private void onExpandDesktopModeChanged() {
-        boolean expandDesktopModeOn = Settings.System.getIntForUser(
+        boolean expandDesktopModeOn = Settings.System.getInt(
                 mContext.getContentResolver(),
                 Settings.System.EXPANDED_DESKTOP_STATE,
-                0, UserHandle.USER_CURRENT) == 1;
+                0) == 1;
         mExpandDesktopModeOn.updateState(expandDesktopModeOn ? ToggleAction.State.On : ToggleAction.State.Off);
     }
 
@@ -1240,10 +1226,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
      * Change the expand desktop mode system setting
      */
     private void changeExpandDesktopModeSystemSetting(boolean on) {
-        Settings.System.putIntForUser(
+        Settings.System.putInt(
                 mContext.getContentResolver(),
                 Settings.System.EXPANDED_DESKTOP_STATE,
-                on ? 1 : 0, UserHandle.USER_CURRENT);
+                on ? 1 : 0);
     }
 
     private static final class GlobalActionsDialog extends Dialog implements DialogInterface {
