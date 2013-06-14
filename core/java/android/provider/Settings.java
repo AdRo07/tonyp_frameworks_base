@@ -2847,6 +2847,13 @@ public final class Settings {
         public static final String HALO_PAUSE = "halo_pause";
 
         /**
+         * User Interface State
+         * 1 = Rebuild UI, resets to 0 automatically
+         * @hide
+         */
+        public static final String USER_INTERFACE_STATE = "user_interface_state";
+
+        /**
          * Whether to use a separate delay for "slide to unlock" and security
          * lock
          * @hide
@@ -3274,7 +3281,7 @@ public final class Settings {
          * @hide
           */
         public static final String KG_CAMERA_WIDGET = "kg_camera_widget";
-        
+
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
