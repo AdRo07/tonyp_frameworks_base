@@ -23,6 +23,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.ExtendedPropertiesUtils;
 import android.view.DisplayInfo;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -124,21 +125,17 @@ public class NavbarEditor implements View.OnTouchListener {
         }
     }
 
-    public static boolean isDevicePhone(Context context) {
-        if (sIsDevicePhone == null) {
-            WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            DisplayInfo outDisplayInfo = new DisplayInfo();
-
-            wm.getDefaultDisplay().getDisplayInfo(outDisplayInfo);
-
-            int shortSize = Math.min(outDisplayInfo.logicalHeight, outDisplayInfo.logicalWidth);
-            int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / outDisplayInfo.logicalDensityDpi;
-
-            // 0-599dp: "phone" UI with a separate status & navigation bar
-            sIsDevicePhone = shortSizeDp < 600;
+    protected static boolean isDevicePhone() {
+        int mSysUILayout = ExtendedPropertiesUtils.getActualProperty(
+                "com.android.systemui.layout");
+        if (mIsDevicePhone == null) {
+            if (mSysUILayout < 600) {
+                mIsDevicePhone = true;
+            } else {
+                mIsDevicePhone = false;
+            }
         }
-
-        return sIsDevicePhone;
+        return mIsDevicePhone;
     }
 
     /**
@@ -311,8 +308,7 @@ public class NavbarEditor implements View.OnTouchListener {
             button.setTranslationX(0);
             mButtonViews.set(i, button);
         }
-
-        if (isDevicePhone(mContext)) {
+        if (isDevicePhone()) {
             adjustPadding(visibleCount);
         }
         updateLowLights(visibleCount);
