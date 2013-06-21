@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2010 The Android Open Source Project
- * Copyright (C) 2013 Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,10 +106,6 @@ class BluetoothBondState {
         loadBondState();
     }
 
-    public synchronized void deinitBondState() {
-        closeProfileProxy();
-    }
-
     private void loadBondState() {
         if (mService.getBluetoothStateInternal() !=
                 BluetoothAdapter.STATE_TURNING_ON) {
@@ -124,25 +119,11 @@ class BluetoothBondState {
         if (bonds == null) {
             return;
         }
-        String address = null;
         mState.clear();
         if (DBG) Log.d(TAG, "found " + bonds.length + " bonded devices");
         for (String device : bonds) {
-            address = mService.getAddressFromObjectPath(device);
-            if (address == null) {
-                Log.e(TAG, "error! address is null");
-                continue;
-            }
-            String pairState = mService.getUpdatedRemoteDeviceProperty(address, "Paired");
-            Log.d(TAG, "The paired state of the remote device is " + pairState);
-            if (pairState == null) {
-                Log.e(TAG, "error! pairState is null");
-                continue;
-            }
-            if(pairState.equals("true")) {
-                Log.d(TAG, "The paired state of the remote device is true");
-                mState.put(address.toUpperCase(), BluetoothDevice.BOND_BONDED);
-            }
+            mState.put(mService.getAddressFromObjectPath(device).toUpperCase(),
+                    BluetoothDevice.BOND_BONDED);
         }
     }
 
@@ -152,7 +133,7 @@ class BluetoothBondState {
 
     /** reason is ignored unless state == BOND_NOT_BONDED */
     public synchronized void setBondState(String address, int state, int reason) {
-        if (DBG) Log.d(TAG, "setBondState " + "address" + " " + state + "reason: " + reason);
+        if (DBG) Log.d(TAG, "setBondState: " + address + " " + BluetoothDevice.getBondStateName(state) + " reason: " + reason);
 
         int oldState = getBondState(address);
         if (oldState == state) {
@@ -180,13 +161,12 @@ class BluetoothBondState {
             }
         } else if (state == BluetoothDevice.BOND_NONE) {
             mPairingRequestRcvd.remove(address);
-            mService.removeProfileState(address);
         }
 
         setProfilePriorities(address, state);
 
         if (DBG) {
-            Log.d(TAG, address + " bond state " + oldState + " -> " + state
+            Log.d(TAG, address + " bond state " + BluetoothDevice.getBondStateName(oldState) + " -> " + BluetoothDevice.getBondStateName(state)
                 + " (" + reason + ")");
         }
         Intent intent = new Intent(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
@@ -354,17 +334,9 @@ class BluetoothBondState {
 
         public void onServiceDisconnected(int profile) {
             if (profile == BluetoothProfile.A2DP) {
-                if (mA2dpProxy != null) {
-                    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-                    bluetoothAdapter.closeProfileProxy(BluetoothProfile.A2DP, mA2dpProxy);
-                    mA2dpProxy = null;
-                }
+                mA2dpProxy = null;
             } else if (profile == BluetoothProfile.HEADSET) {
-                if (mHeadsetProxy != null) {
-                    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-                    bluetoothAdapter.closeProfileProxy(BluetoothProfile.HEADSET, mHeadsetProxy);
-                    mHeadsetProxy = null;
-                }
+                mHeadsetProxy = null;
             }
         }
     };

@@ -23,8 +23,6 @@
 #include "jni.h"
 #include "utils/Log.h"
 #include "utils/misc.h"
-#include <cutils/properties.h>
-#include <string.h>
 
 #define USE_ACCEPT_DIRECTLY (0)
 #define USE_SELECT (0) /* 1 for select(), 0 for poll(); used only when
@@ -474,7 +472,6 @@ static jboolean setUpListeningSocketsNative(JNIEnv* env, jobject object) {
 static int setup_listening_socket(int dev, int channel) {
     struct sockaddr_rc laddr;
     int sk, lm;
-    char value[PROPERTY_VALUE_MAX] = "";
 
     sk = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
     if (sk < 0) {
@@ -486,12 +483,6 @@ static int setup_listening_socket(int dev, int channel) {
         lm = RFCOMM_LM_AUTH;
     } else {
         lm = RFCOMM_LM_AUTH | RFCOMM_LM_ENCRYPT;
-    }
-    /* By default we request to be the MASTER of connection */
-    property_get("ro.bluetooth.request.master", value, "true");
-    if (!strcmp("true", value)) {
-        ALOGI("Setting Master socket option");
-        lm |= RFCOMM_LM_MASTER;
     }
 
     if (lm && setsockopt(sk, SOL_RFCOMM, RFCOMM_LM, &lm, sizeof(lm)) < 0) {

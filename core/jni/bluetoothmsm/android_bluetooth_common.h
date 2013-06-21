@@ -18,14 +18,7 @@
 #define ANDROID_BLUETOOTH_COMMON_H
 
 // Set to 0 to enable verbose bluetooth logging
-//#define LOG_NDEBUG 1
-
-
-//#undef NDEBUG
-
-//#define LOG_NIDEBUG 0
-//#define LOG_NDEBUG 0
-//#define LOG_NDDEBUG 0
+#define LOG_NDEBUG 1
 
 #include "jni.h"
 #include "utils/Log.h"
@@ -46,7 +39,6 @@ namespace android {
 #define BLUEZ_DBUS_BASE_PATH      "/org/bluez"
 #define BLUEZ_DBUS_BASE_IFC       "org.bluez"
 #define BLUEZ_ERROR_IFC           "org.bluez.Error"
-#define FRAMEWORKS_BASE_IFC       "android.frameworks"
 
 // It would be nicer to retrieve this from bluez using GetDefaultAdapter,
 // but this is only possible when the adapter is up (and hcid is running).
@@ -107,22 +99,6 @@ struct _Properties {
 };
 typedef struct _Properties Properties;
 
-typedef struct {
-    void (*user_cb)(DBusMessage *, void *, void *);
-    void *user;
-    void *nat;
-    JNIEnv *env;
-} dbus_async_call_t;
-
-struct set_characteristic_property_t {
-    char * path;
-    char * property;
-};
-
-struct set_indicate_info_t {
-    char *path;
-};
-
 dbus_bool_t dbus_func_args_async(JNIEnv *env,
                                  DBusConnection *conn,
                                  int timeout_ms,
@@ -137,15 +113,6 @@ dbus_bool_t dbus_func_args_async(JNIEnv *env,
 
 DBusMessage * dbus_func_args(JNIEnv *env,
                              DBusConnection *conn,
-                             const char *path,
-                             const char *ifc,
-                             const char *func,
-                             int first_arg_type,
-                             ...);
-
-DBusMessage * dbus_func_args_generic(JNIEnv *env,
-                             DBusConnection *conn,
-                             const char *service,
                              const char *path,
                              const char *ifc,
                              const char *func,
@@ -180,8 +147,6 @@ DBusMessage * dbus_func_args_timeout_valist(JNIEnv *env,
                                             int first_arg_type,
                                             va_list args);
 
-void dbus_func_args_async_callback(DBusPendingCall *call, void *data);
-
 jint dbus_returns_int32(JNIEnv *env, DBusMessage *reply);
 jint dbus_returns_uint32(JNIEnv *env, DBusMessage *reply);
 jint dbus_returns_unixfd(JNIEnv *env, DBusMessage *reply);
@@ -197,8 +162,6 @@ jobjectArray parse_property_change(JNIEnv *env, DBusMessage *msg,
                                    Properties *properties, int max_num_properties);
 jobjectArray parse_adapter_properties(JNIEnv *env, DBusMessageIter *iter);
 jobjectArray parse_remote_device_properties(JNIEnv *env, DBusMessageIter *iter);
-jobjectArray parse_gatt_service_properties(JNIEnv *env, DBusMessageIter *iter);
-jobjectArray parse_gatt_characteristic_properties(JNIEnv *env, DBusMessageIter *iter);
 jobjectArray parse_remote_device_property_change(JNIEnv *env, DBusMessage *msg);
 jobjectArray parse_adapter_property_change(JNIEnv *env, DBusMessage *msg);
 jobjectArray parse_input_properties(JNIEnv *env, DBusMessageIter *iter);
@@ -210,14 +173,11 @@ jobjectArray parse_health_device_property_change(JNIEnv *env, DBusMessage *msg);
 
 void append_dict_args(DBusMessage *reply, const char *first_key, ...);
 void append_variant(DBusMessageIter *iter, int type, void *val);
-void append_array_variant(DBusMessageIter *iter, int type, void *val, int n_elements);
 int get_bdaddr(const char *str, bdaddr_t *ba);
 void get_bdaddr_as_string(const bdaddr_t *ba, char *str);
 
 bool debug_no_encrypt();
 
-int register_gatt_path(event_loop_native_data_t *nat, const char *gatt_path);
-int unregister_gatt_path(event_loop_native_data_t *nat, const char *gatt_path);
 
 // Result codes from Bluez DBus calls
 #define BOND_RESULT_ERROR                      -1
@@ -248,14 +208,6 @@ int unregister_gatt_path(event_loop_native_data_t *nat, const char *gatt_path);
 #define HEALTH_OPERATION_GENERIC_FAILURE       6003
 #define HEALTH_OPERATION_NOT_FOUND             6004
 #define HEALTH_OPERATION_NOT_ALLOWED           6005
-
-#define GATT_OPERATION_SUCCESS               0
-#define GATT_OPERATION_TIMEOUT                1
-#define GATT_OPERATION_GENERIC_FAILURE   2
-#define GATT_OPERATION_BUSY                     3
-#define GATT_OPERATION_NOT_CONNECTED   4
-#define GATT_ALREADY_CONNECTED              5
-#define GATT_OPERATION_NOT_SUPPORTED   6
 
 #endif
 } /* namespace android */

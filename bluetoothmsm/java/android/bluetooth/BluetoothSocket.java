@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- * Copyright (c) 2011, The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,13 +85,6 @@ public final class BluetoothSocket implements Closeable {
     /*package*/ static final int TYPE_RFCOMM = 1;
     /*package*/ static final int TYPE_SCO = 2;
     /*package*/ static final int TYPE_L2CAP = 3;
-    /*package*/ static final int TYPE_EL2CAP = 4;
-    /*package*/ static final int TYPE_SCO_WBS = 5;
-
-    /** Keep BT_AMP_POLICY fields in sync with bluetooth/bluetooth.h */
-    /** @hide */ public static final int BT_AMP_POLICY_REQUIRE_BR_EDR = 0;
-    /** @hide */ public static final int BT_AMP_POLICY_PREFER_BR_EDR = 1;
-    /** @hide */ public static final int BT_AMP_POLICY_PREFER_AMP = 2;
 
     /*package*/ static final int EBADFD = 77;
     /*package*/ static final int EADDRINUSE = 98;
@@ -105,7 +97,6 @@ public final class BluetoothSocket implements Closeable {
     private final BluetoothInputStream mInputStream;
     private final BluetoothOutputStream mOutputStream;
     private final SdpHelper mSdp;
-    private final AmpPolicyHelper mAmpPolicy;
 
     private int mPort;  /* RFCOMM channel or L2CAP psm */
 
@@ -163,14 +154,6 @@ public final class BluetoothSocket implements Closeable {
             initSocketNative();
         } else {
             initSocketFromFdNative(fd);
-        }
-        /* Register with the Bluetooth connection manager
-         * and set the initial socket AMP policy
-         */
-        if (type == BluetoothSocket.TYPE_EL2CAP) {
-            mAmpPolicy = new AmpPolicyHelper(BT_AMP_POLICY_REQUIRE_BR_EDR);
-        } else {
-            mAmpPolicy = null;
         }
         mInputStream = new BluetoothInputStream(this);
         mOutputStream = new BluetoothOutputStream(this);
@@ -250,9 +233,6 @@ public final class BluetoothSocket implements Closeable {
             if (mSdp != null) {
                 mSdp.cancel();
             }
-            if (mAmpPolicy != null) {
-                mAmpPolicy.deregister();
-            }
             abortNative();
         } finally {
             mLock.readLock().unlock();
@@ -267,22 +247,6 @@ public final class BluetoothSocket implements Closeable {
         } finally {
             mLock.writeLock().unlock();
         }
-    }
-
-    /**
-     * Set the desired AMP Policy for EL2CAP type sockets
-     *
-     * @hide
-     */
-    public boolean setDesiredAmpPolicy(int policy) {
-        boolean result = false;
-        if (mAmpPolicy != null) {
-            IBluetooth service = BluetoothDevice.getService();
-            try {
-                result = service.setDesiredAmpPolicy(mAmpPolicy.mHandle, policy);
-            } catch (RemoteException e) {Log.e(TAG, "", e);}
-        }
-        return result;
     }
 
     /**
@@ -323,23 +287,6 @@ public final class BluetoothSocket implements Closeable {
      */
     public boolean isConnected() {
         return (mSocketState == SocketState.CONNECTED);
-    }
-
-    /**
-     * Gets the MTU for the socket (if RFCOMM, returns 65K)
-     *
-     * @hide
-     */
-    public int getMtu() {
-        int ret = 0;
-        try {
-            ret = getMtuNative();
-        } catch (IOException e) {
-            Log.e(TAG, "", e);
-        }
-
-        Log.d(TAG, "getMtu " + Integer.toString(ret));
-        return ret;
     }
 
     /**
@@ -384,9 +331,6 @@ public final class BluetoothSocket implements Closeable {
         try {
             if (mSocketState == SocketState.CLOSED) throw new IOException("socket closed");
             return readNative(b, offset, length);
-        } catch (IOException e) {
-            Log.e(TAG, "", e);
-            throw e;
         } finally {
             mLock.readLock().unlock();
         }
@@ -397,9 +341,6 @@ public final class BluetoothSocket implements Closeable {
         try {
             if (mSocketState == SocketState.CLOSED) throw new IOException("socket closed");
             return writeNative(b, offset, length);
-        } catch (IOException e) {
-            Log.e(TAG, "", e);
-            throw e;
         } finally {
             mLock.readLock().unlock();
         }
@@ -415,9 +356,6 @@ public final class BluetoothSocket implements Closeable {
     private native int writeNative(byte[] b, int offset, int length) throws IOException;
     private native void abortNative() throws IOException;
     private native void destroyNative() throws IOException;
-    private native void setAmpPolicyNative(int amppol) throws IOException;
-    private native int getMtuNative() throws IOException;
-
     /**
      * Throws an IOException for given posix errno. Done natively so we can
      * use strerr to convert to string error.
@@ -479,52 +417,6 @@ public final class BluetoothSocket implements Closeable {
                 this.channel = channel;
                 notifyAll();  // unblock
             }
-        }
-        /** Stub function, unused for SDP lookup */
-        public synchronized void onAmpPolicyChange(int newPolicy) {
-        }
-    }
-
-    /**
-     * Helper to handle AMP policy changes from Bluetooth connection manager
-     */
-    private class AmpPolicyHelper extends IBluetoothCallback.Stub {
-        private final IBluetooth service;
-        private int mHandle = 0;
-
-        public AmpPolicyHelper(int initialPolicy) {
-            service = BluetoothDevice.getService();
-
-            try {
-                mHandle = service.registerEl2capConnection(this, initialPolicy);
-
-                // Configure initial AMP policy.  Note: this
-                // assumes the socket has been initialized.
-                setAmpPolicyNative(service.getEffectiveAmpPolicy(initialPolicy));
-            } catch (RemoteException e) {
-                Log.e(TAG, "", e);
-            } catch (IOException e) {
-                Log.e(TAG, "", e);
-            }
-        }
-
-        public synchronized void deregister() {
-            try {
-                service.deregisterEl2capConnection(mHandle);
-            } catch (RemoteException e) {Log.e(TAG, "", e);}
-        }
-
-
-        public synchronized void onAmpPolicyChange(int newPolicy) {
-            try {
-                setAmpPolicyNative(newPolicy);
-            } catch (IOException e) {
-                Log.e(TAG, "", e);
-            }
-        }
-
-        /** Stub function, unused for AMP policy changes */
-        public synchronized void onRfcommChannelFound(int channel) {
         }
     }
 }
