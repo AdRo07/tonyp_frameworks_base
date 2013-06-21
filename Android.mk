@@ -263,9 +263,6 @@ LOCAL_SRC_FILES += \
 	bluetoothmsm/java/android/bluetooth/IBluetooth.aidl \
 	bluetoothmsm/java/android/bluetooth/IBluetoothA2dp.aidl \
 	bluetoothmsm/java/android/bluetooth/IBluetoothCallback.aidl \
-	bluetoothmsm/java/android/bluetooth/IBluetoothGattCallback.aidl \
-	bluetoothmsm/java/android/bluetooth/IBluetoothGattProfile.aidl \
-	bluetoothmsm/java/android/bluetooth/IBluetoothGattService.aidl \
 	bluetoothmsm/java/android/bluetooth/IBluetoothHeadset.aidl \
 	bluetoothmsm/java/android/bluetooth/IBluetoothHeadsetPhone.aidl \
 	bluetoothmsm/java/android/bluetooth/IBluetoothHealthCallback.aidl \
@@ -387,7 +384,6 @@ aidl_files := \
 ifeq ($(BOARD_HAVE_BLUETOOTH_BLUEZ), true)
 aidl_files += \
 	frameworks/base/bluetoothmsm/java/android/bluetooth/BluetoothDevice.aidl \
-	frameworks/base/bluetoothmsm/java/android/bluetooth/BluetoothGattAppConfiguration.aidl \
 	frameworks/base/bluetoothmsm/java/android/bluetooth/BluetoothHealthAppConfiguration.aidl
 else
 aidl_files += \

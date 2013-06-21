@@ -165,13 +165,13 @@ again:
 
     *bufit = 0;
 
-    // According to ITU V.250 section 5.1, IA5 7 bit chars are used,
+    // According to ITU V.250 section 5.1, IA5 7 bit chars are used, 
     //   the eighth bit or higher bits are ignored if they exists
     // We mask out only eighth bit, no higher bit, since we do char
     // string here, not wide char.
     // We added this processing due to 2 real world problems.
     // 1 BMW 2005 E46 which sends binary junk
-    // 2 Audi 2010 A3, dial command use 0xAD (soft-hyphen) as number
+    // 2 Audi 2010 A3, dial command use 0xAD (soft-hyphen) as number 
     //   formater, which was rejected by the AT handler
     mask_eighth_bit(buf);
 

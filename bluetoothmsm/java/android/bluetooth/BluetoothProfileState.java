@@ -88,6 +88,19 @@ public class BluetoothProfileState extends StateMachine {
         }
     };
 
+    public static String getProfileName(int state_id) {
+        switch (state_id) {
+            case HFP:
+                return "HFP";
+            case A2DP:
+                return "A2DP";
+            case HID:
+                return "HID";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     public BluetoothProfileState(Context context, int profile) {
         super("BluetoothProfileState:" + profile);
         mProfile = profile;
@@ -106,7 +119,7 @@ public class BluetoothProfileState extends StateMachine {
     private class StableState extends State {
         @Override
         public void enter() {
-            log("Entering Stable State");
+            log("Enter State: " + getName());
             mPendingDevice = null;
         }
 
@@ -122,7 +135,7 @@ public class BluetoothProfileState extends StateMachine {
     private class PendingCommandState extends State {
         @Override
         public void enter() {
-            log("Entering PendingCommandState State");
+            log("Enter State: " + getName());
             dispatchMessage(getCurrentMessage());
         }
 
@@ -154,7 +167,7 @@ public class BluetoothProfileState extends StateMachine {
 
     private void log(String message) {
         if (DBG) {
-            Log.i(TAG, "Message:" + message);
+            Log.i(TAG, "Profile: " + getProfileName(mProfile) + " msg: " + message);
         }
     }
 }

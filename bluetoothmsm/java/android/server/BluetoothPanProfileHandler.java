@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2011 The Android Open Source Project
- * Copyright (c) 2013 The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,14 +125,6 @@ final class BluetoothPanProfileHandler {
             return BluetoothPan.STATE_DISCONNECTED;
         }
         return panDevice.mState;
-    }
-
-    public int getPanDeviceRole(BluetoothDevice device) {
-        BluetoothPanDevice panDevice = mPanDevices.get(device);
-        if (panDevice == null) {
-            return 0;
-        }
-        return panDevice.mLocalRole;
     }
 
     boolean connectPanDevice(BluetoothDevice device) {
@@ -313,6 +304,8 @@ final class BluetoothPanProfileHandler {
         mContext.sendBroadcast(intent, BluetoothService.BLUETOOTH_PERM);
 
         debugLog("Pan Device state : device: " + device + " State:" + prevState + "->" + state);
+        mBluetoothService.sendConnectionStateChange(device, BluetoothProfile.PAN, state,
+                                                    prevState);
     }
 
     private class BluetoothPanDevice {
@@ -401,7 +394,6 @@ final class BluetoothPanProfileHandler {
             }
         } catch (Exception e) {
             Log.e(TAG, "Error configuring interface " + iface + ", :" + e);
-            mBluetoothIfaceAddresses.remove(address);
             return null;
         }
         return address;

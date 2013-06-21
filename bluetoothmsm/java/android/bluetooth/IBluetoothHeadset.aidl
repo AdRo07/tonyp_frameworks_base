@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
- * Copyright (c) 2013 The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +35,6 @@ interface IBluetoothHeadset {
     boolean startVoiceRecognition(in BluetoothDevice device);
     boolean stopVoiceRecognition(in BluetoothDevice device);
     boolean isAudioConnected(in BluetoothDevice device);
-    boolean isBluetoothVoiceDialingEnabled(in BluetoothDevice device);
 
     // APIs that can be made public in future
     int getBatteryUsageHint(in BluetoothDevice device);
@@ -50,12 +48,7 @@ interface IBluetoothHeadset {
     boolean disconnectHeadsetInternal(in BluetoothDevice device);
     boolean setAudioState(in BluetoothDevice device, int state);
     int getAudioState(in BluetoothDevice device);
-    boolean isAudioOn();
-    boolean connectAudio();
-    boolean disconnectAudio();
-    void phoneStateChanged(int numActive, int numHeld, int callState, String number, int type);
-    void roamChanged(boolean roam);
-    void clccResponse(int index, int direction, int status, int mode, boolean mpty, String number, int type);
+
     boolean startScoUsingVirtualVoiceCall(in BluetoothDevice device);
     boolean stopScoUsingVirtualVoiceCall(in BluetoothDevice device);
 }

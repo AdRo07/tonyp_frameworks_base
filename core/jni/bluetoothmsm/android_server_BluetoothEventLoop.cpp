@@ -1,6 +1,5 @@
 /*
 ** Copyright 2008, The Android Open Source Project
-** Copyright (C) 2011 The Linux Foundation. All rights reserved.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -31,7 +30,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <cutils/properties.h>
 #ifdef HAVE_BLUETOOTH
 #include <dbus/dbus.h>
 #endif
@@ -41,11 +39,6 @@ namespace android {
 #define CREATE_DEVICE_ALREADY_EXISTS 1
 #define CREATE_DEVICE_SUCCESS 0
 #define CREATE_DEVICE_FAILED -1
-#define SAP_UUID "0000112D-0000-1000-8000-00805F9B34FB"
-#define DUN_UUID "00001103-0000-1000-8000-00805F9B34FB"
-
-/* Following macro definition is aligned with that defined in BlueZ */
-#define MAX_PATH_LENGTH 64
 
 #ifdef HAVE_BLUETOOTH
 static jfieldID field_mNativeData;
@@ -62,31 +55,8 @@ static jmethodID method_onNetworkDeviceConnected;
 
 static jmethodID method_onCreatePairedDeviceResult;
 static jmethodID method_onCreateDeviceResult;
-
-static jmethodID method_onAddToPreferredDeviceListResult;
-static jmethodID method_onRemoveFromPreferredDeviceListResult;
-static jmethodID method_onClearPreferredDeviceListResult;
-static jmethodID method_onGattConnectToPreferredDeviceListResult;
-static jmethodID method_onGattCancelConnectToPreferredDeviceListResult;
-
 static jmethodID method_onDiscoverServicesResult;
 static jmethodID method_onGetDeviceServiceChannelResult;
-
-static jmethodID method_onDiscoverCharacteristicsResult;
-static jmethodID method_onSetCharacteristicPropertyResult;
-static jmethodID method_onUpdateCharacteristicValueResult;
-static jmethodID method_onWatcherValueChanged;
-static jmethodID method_onGattDiscoverPrimaryRequest;
-static jmethodID method_onGattDiscoverPrimaryByUuidRequest;
-static jmethodID method_onGattDiscoverIncludedRequest;
-static jmethodID method_onGattDiscoverCharacteristicsRequest;
-static jmethodID method_onGattFindInfoRequest;
-static jmethodID method_onGattReadByTypeRequest;
-static jmethodID method_onGattReadRequest;
-static jmethodID method_onGattWriteCommand;
-static jmethodID method_onGattWriteRequest;
-static jmethodID method_onGattSetClientConfigDescriptor;
-static jmethodID method_onIndicateResponse;
 
 static jmethodID method_onRequestPinCode;
 static jmethodID method_onRequestPasskey;
@@ -97,11 +67,6 @@ static jmethodID method_onRequestOobData;
 static jmethodID method_onAgentOutOfBandDataAvailable;
 static jmethodID method_onAgentAuthorize;
 static jmethodID method_onAgentCancel;
-static jmethodID method_onSapAuthorize;
-static jmethodID method_onSapStateChanged;
-static jmethodID method_onDUNAuthorize;
-static jmethodID method_onDUNStateChanged;
-
 
 static jmethodID method_onInputDevicePropertyChanged;
 static jmethodID method_onInputDeviceConnectionResult;
@@ -151,69 +116,16 @@ static void classInitNative(JNIEnv* env, jclass clazz) {
                                                          "(Ljava/lang/String;I)V");
     method_onCreateDeviceResult = env->GetMethodID(clazz, "onCreateDeviceResult",
                                                          "(Ljava/lang/String;I)V");
-
-    method_onAddToPreferredDeviceListResult = env->GetMethodID(clazz, "onAddToPreferredDeviceListResult",
-                                                             "(I)V");
-    method_onRemoveFromPreferredDeviceListResult = env->GetMethodID(clazz, "onRemoveFromPreferredDeviceListResult",
-                                                                 "(I)V");
-    method_onClearPreferredDeviceListResult = env->GetMethodID(clazz, "onClearPreferredDeviceListResult",
-                                                                 "(I)V");
-    method_onGattConnectToPreferredDeviceListResult = env->GetMethodID(clazz, "onGattConnectToPreferredDeviceListResult",
-                                                                 "(I)V");
-    method_onGattCancelConnectToPreferredDeviceListResult = env->GetMethodID(clazz,
-                                                                 "onGattCancelConnectToPreferredDeviceListResult",
-                                                                 "(I)V");
-
     method_onDiscoverServicesResult = env->GetMethodID(clazz, "onDiscoverServicesResult",
                                                          "(Ljava/lang/String;Z)V");
 
-    method_onDiscoverCharacteristicsResult = env->GetMethodID(clazz, "onDiscoverCharacteristicsResult",
-                                                         "(Ljava/lang/String;Z)V");
-    method_onSetCharacteristicPropertyResult = env->GetMethodID(clazz, "onSetCharacteristicPropertyResult",
-                                                         "(Ljava/lang/String;Ljava/lang/String;Z)V");
-    method_onUpdateCharacteristicValueResult = env->GetMethodID(clazz, "onUpdateCharacteristicValueResult",
-                                                         "(Ljava/lang/String;Z)V");
-    method_onIndicateResponse = env->GetMethodID(clazz, "onIndicateResponse",
-                                                         "(Ljava/lang/String;Z)V");
-
-    method_onWatcherValueChanged = env->GetMethodID(clazz, "onWatcherValueChanged",
-                                                         "(Ljava/lang/String;Ljava/lang/String;)V");
-
-    method_onGattDiscoverPrimaryRequest = env->GetMethodID(clazz, "onGattDiscoverPrimaryRequest",
-                                                         "(Ljava/lang/String;III)V");
-    method_onGattDiscoverPrimaryByUuidRequest = env->GetMethodID(clazz, "onGattDiscoverPrimaryByUuidRequest",
-                                                         "(Ljava/lang/String;Ljava/lang/String;III)V");
-    method_onGattDiscoverIncludedRequest = env->GetMethodID(clazz, "onGattDiscoverIncludedRequest",
-                                                         "(Ljava/lang/String;III)V");
-    method_onGattDiscoverCharacteristicsRequest = env->GetMethodID(clazz, "onGattDiscoverCharacteristicsRequest",
-                                                         "(Ljava/lang/String;III)V");
-    method_onGattFindInfoRequest = env->GetMethodID(clazz, "onGattFindInfoRequest",
-                                                         "(Ljava/lang/String;III)V");
-    method_onGattReadByTypeRequest = env->GetMethodID(clazz, "onGattReadByTypeRequest",
-                                                         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;III)V");
-    method_onGattReadRequest = env->GetMethodID(clazz, "onGattReadRequest",
-                                                         "(Ljava/lang/String;Ljava/lang/String;II)V");
-    method_onGattWriteCommand = env->GetMethodID(clazz, "onGattWriteCommand",
-                                                         "(Ljava/lang/String;Ljava/lang/String;I[B)V");
-    method_onGattWriteRequest = env->GetMethodID(clazz, "onGattWriteRequest",
-                                                         "(Ljava/lang/String;Ljava/lang/String;I[BII)V");
-    method_onGattSetClientConfigDescriptor = env->GetMethodID(clazz, "onGattSetClientConfigDescriptor",
-                                                         "(Ljava/lang/String;II[B)V");
     method_onAgentAuthorize = env->GetMethodID(clazz, "onAgentAuthorize",
-                                               "(Ljava/lang/String;Ljava/lang/String;I)V");
-    method_onSapAuthorize = env->GetMethodID(clazz, "onSapAuthorize",
-                                               "(Ljava/lang/String;Ljava/lang/String;I)V");
-    method_onSapStateChanged = env->GetMethodID(clazz, "onSapStateChanged",
-                                               "(Ljava/lang/String;Ljava/lang/String;I)V");
-    method_onDUNAuthorize = env->GetMethodID(clazz, "onDUNAuthorize",
-                                               "(Ljava/lang/String;Ljava/lang/String;I)V");
-    method_onDUNStateChanged = env->GetMethodID(clazz, "onDUNStateChanged",
                                                "(Ljava/lang/String;Ljava/lang/String;I)V");
     method_onAgentOutOfBandDataAvailable = env->GetMethodID(clazz, "onAgentOutOfBandDataAvailable",
                                                "(Ljava/lang/String;)Z");
     method_onAgentCancel = env->GetMethodID(clazz, "onAgentCancel", "()V");
     method_onRequestPinCode = env->GetMethodID(clazz, "onRequestPinCode",
-                                               "(Ljava/lang/String;IZ)V");
+                                               "(Ljava/lang/String;I)V");
     method_onRequestPasskey = env->GetMethodID(clazz, "onRequestPasskey",
                                                "(Ljava/lang/String;I)V");
     method_onRequestPasskeyConfirmation = env->GetMethodID(clazz, "onRequestPasskeyConfirmation",
@@ -266,12 +178,6 @@ static void initializeNativeDataNative(JNIEnv* env, jobject object) {
             ALOGE("%s: Could not get onto the system bus!", __FUNCTION__);
             dbus_error_free(&err);
         }
-    dbus_bus_request_name(nat->conn, FRAMEWORKS_BASE_IFC,
-                    DBUS_NAME_FLAG_DO_NOT_QUEUE, &err);
-        if (dbus_error_is_set(&err)) {
-            ALOGE("%s: Could not get requested name", __FUNCTION__);
-            dbus_error_free(&err);
-        }
         dbus_connection_set_exit_on_disconnect(nat->conn, FALSE);
     }
 #endif
@@ -297,26 +203,11 @@ static DBusHandlerResult event_filter(DBusConnection *conn, DBusMessage *msg,
 DBusHandlerResult agent_event_filter(DBusConnection *conn,
                                      DBusMessage *msg,
                                      void *data);
-DBusHandlerResult watcher_event_filter(DBusConnection *conn,
-                                     DBusMessage *msg,
-                                     void *data);
-DBusHandlerResult gatt_event_filter(DBusConnection *conn,
-                                     DBusMessage *msg,
-                                     void *data);
 static int register_agent(native_data_t *nat,
                           const char *agent_path, const char *capabilities);
-static int register_watcher_path(native_data_t *nat, const char *watcher_path);
 
 static const DBusObjectPathVTable agent_vtable = {
     NULL, agent_event_filter, NULL, NULL, NULL, NULL
-};
-
-static const DBusObjectPathVTable watcher_vtable = {
-    NULL, watcher_event_filter, NULL, NULL, NULL, NULL
-};
-
-static const DBusObjectPathVTable gatt_vtable = {
-    NULL, gatt_event_filter, NULL, NULL, NULL, NULL
 };
 
 static unsigned int unix_events_to_dbus_flags(short events) {
@@ -342,7 +233,7 @@ static jboolean setUpEventLoop(native_data_t *nat) {
         dbus_error_init(&err);
 
         const char *agent_path = "/android/bluetooth/agent";
-        const char *capabilities = "KeyboardDisplay";
+        const char *capabilities = "DisplayYesNo";
         if (register_agent(nat, agent_path, capabilities) < 0) {
             dbus_connection_unregister_object_path (nat->conn, agent_path);
             return JNI_FALSE;
@@ -396,30 +287,6 @@ static jboolean setUpEventLoop(native_data_t *nat) {
             LOG_AND_FREE_DBUS_ERROR(&err);
             return JNI_FALSE;
         }
-        dbus_bus_add_match(nat->conn,
-                "type='signal',interface='"BLUEZ_DBUS_BASE_IFC".Control'",
-                &err);
-        if (dbus_error_is_set(&err)) {
-            LOG_AND_FREE_DBUS_ERROR(&err);
-            return JNI_FALSE;
-        }
-        dbus_bus_add_match(nat->conn,
-                "type='signal',interface='org.qcom.sap'",
-                &err);
-        if (dbus_error_is_set(&err)) {
-            ALOGE("Not able to register to get the org.qcom.sap");
-            LOG_AND_FREE_DBUS_ERROR(&err);
-            return JNI_FALSE;
-        }
-
-        dbus_bus_add_match(nat->conn,
-              "type='signal',interface='org.qcom.bluetooth.dun'",
-              &err);
-        if (dbus_error_is_set(&err)) {
-            ALOGE("Not able to register to get the org.qcom.bluetooth.dun");
-            LOG_AND_FREE_DBUS_ERROR(&err);
-            return JNI_FALSE;
-        }
 
         dbus_bus_add_match(nat->conn,
                 "type='signal',interface='"BLUEZ_DBUS_BASE_IFC".HealthDevice'",
@@ -437,13 +304,7 @@ static jboolean setUpEventLoop(native_data_t *nat) {
             return JNI_FALSE;
         }
 
-        const char *watcher_path = "/android/bluetooth/watcher";
-        if (register_watcher_path(nat, watcher_path) < 0) {
-            dbus_connection_unregister_object_path (nat->conn, watcher_path);
-            return JNI_FALSE;
-        }
         return JNI_TRUE;
-
     }
     return JNI_FALSE;
 }
@@ -453,7 +314,6 @@ const char * get_adapter_path(DBusConnection *conn) {
     DBusMessage *msg = NULL, *reply = NULL;
     DBusError err;
     const char *device_path = NULL;
-    static char device_path_cp[MAX_PATH_LENGTH];
     int attempt = 0;
 
     for (attempt = 0; attempt < 1000 && reply == NULL; attempt ++) {
@@ -497,15 +357,11 @@ const char * get_adapter_path(DBusConnection *conn) {
         }
         goto failed;
     }
-    strncpy(device_path_cp, device_path, sizeof(device_path_cp));
     dbus_message_unref(msg);
-    dbus_message_unref(reply);
-    return device_path_cp;
+    return device_path;
 
 failed:
     dbus_message_unref(msg);
-    if (reply)
-       dbus_message_unref(reply);
     return NULL;
 }
 
@@ -515,9 +371,6 @@ static int register_agent(native_data_t *nat,
     DBusMessage *msg, *reply;
     DBusError err;
     dbus_bool_t oob = TRUE;
-    const char *sender = NULL;
-    char sender_conn[PROPERTY_VALUE_MAX];
-    char value[PROPERTY_VALUE_MAX];
 
     if (!dbus_connection_register_object_path(nat->conn, agent_path,
             &agent_vtable, nat)) {
@@ -544,16 +397,7 @@ static int register_agent(native_data_t *nat,
     dbus_error_init(&err);
     reply = dbus_connection_send_with_reply_and_block(nat->conn, msg, -1, &err);
     dbus_message_unref(msg);
-    sender = dbus_bus_get_unique_name(nat->conn);
-    ALOGV("Sender is %s", sender);
-    if ((sender != NULL) && (strlen(sender) < PROPERTY_VALUE_MAX)) {
 
-               strcpy(sender_conn, sender);
-               sender_conn[strlen(sender)]='\0';
-               ALOGV("Sender conn is %s", sender_conn);
-               int ret = property_set("bluetooth.eventloop.dbus", sender_conn);
-               ALOGV("Ret is %d", ret);
-    }
     if (!reply) {
         ALOGE("%s: Can't register agent!", __FUNCTION__);
         if (dbus_error_is_set(&err)) {
@@ -568,69 +412,6 @@ static int register_agent(native_data_t *nat,
     return 0;
 }
 
-static int register_watcher_path(native_data_t *nat, const char * watcher_path)
-{
-    DBusMessage *msg, *reply;
-    DBusError err;
-    bool oob = TRUE;
-
-    if (!dbus_connection_register_object_path(nat->conn, watcher_path,
-            &watcher_vtable, nat)) {
-        ALOGE("%s: Can't register object path %s for watcher!",
-              __FUNCTION__, watcher_path);
-        return -1;
-    }
-    return 0;
-}
-
-int register_gatt_path(native_data_t *nat, const char * gatt_path)
-{
-    DBusMessage *msg, *reply;
-    DBusError err;
-    dbus_error_init(&err);
-    dbus_bool_t result = FALSE;
-    const char *name = NULL;
-
-    ALOGE("%s: Inside register_gatt_path ",__FUNCTION__);
-
-    if(!nat) {
-        ALOGE("%s: Can't register object path nat is null!",
-              __FUNCTION__);
-        return -1;
-    }
-
-    if (!dbus_connection_try_register_object_path(nat->conn, gatt_path,
-                                                  &gatt_vtable, nat, &err)) {
-        ALOGE("%s: Can't register object path %s for Gatt!",
-              __FUNCTION__, gatt_path);
-
-        ALOGE("DBus error name: %s message: %s", err.name, err.message);
-        if (strcmp(err.name, DBUS_ERROR_OBJECT_PATH_IN_USE) != 0)
-            return -1;
-    }
-
-    name = dbus_bus_get_unique_name(nat->conn);
-    ALOGE("!!! Gatt connection name : %s", name);
-
-    return 0;
-}
-
-int unregister_gatt_path(native_data_t *nat, const char *gatt_path)
-{
-    if(!nat) {
-        ALOGE("%s: Can't unregister object path nat is null!",
-              __FUNCTION__);
-        return -1;
-    }
-
-    if (!dbus_connection_unregister_object_path(nat->conn, gatt_path)) {
-        ALOGE("%s: Can't unregister object path %s for Gatt!",
-              __FUNCTION__, gatt_path);
-        return -1;
-    }
-    return 0;
-}
-
 static void tearDownEventLoop(native_data_t *nat) {
     ALOGV("%s", __FUNCTION__);
     if (nat != NULL && nat->conn != NULL) {
@@ -639,7 +420,6 @@ static void tearDownEventLoop(native_data_t *nat) {
         DBusError err;
         dbus_error_init(&err);
         const char * agent_path = "/android/bluetooth/agent";
-        const char * watcher_path = "/android/bluetooth/watcher";
 
         msg = dbus_message_new_method_call("org.bluez",
                                            nat->adapter,
@@ -666,28 +446,6 @@ static void tearDownEventLoop(native_data_t *nat) {
 
         dbus_connection_flush(nat->conn);
         dbus_connection_unregister_object_path(nat->conn, agent_path);
-        dbus_connection_unregister_object_path(nat->conn, watcher_path);
-
-        dbus_bus_remove_match(nat->conn,
-                "type='signal',interface='"BLUEZ_DBUS_BASE_IFC".Control'",
-                &err);
-        if (dbus_error_is_set(&err)) {
-            LOG_AND_FREE_DBUS_ERROR(&err);
-        }
-
-        dbus_bus_remove_match(nat->conn,
-                "type='signal',interface='org.qcom.sap'",
-                &err);
-        if (dbus_error_is_set(&err)) {
-            LOG_AND_FREE_DBUS_ERROR(&err);
-        }
-
-        dbus_bus_remove_match(nat->conn,
-             "type='signal',interface='org.qcom.bluetooth.dun'",
-             &err);
-        if (dbus_error_is_set(&err)) {
-            LOG_AND_FREE_DBUS_ERROR(&err);
-        }
 
         dbus_bus_remove_match(nat->conn,
                 "type='signal',interface='"BLUEZ_DBUS_BASE_IFC".AudioSink'",
@@ -1314,41 +1072,6 @@ static DBusHandlerResult event_filter(DBusConnection *conn, DBusMessage *msg,
            LOG_AND_FREE_DBUS_ERROR_WITH_MSG(&err, msg);
        }
        goto success;
-    }  else if (dbus_message_is_signal(msg,
-                                      "org.qcom.sap",
-                                      "SapStateChanged")) {
-        const char *remote_device_path = dbus_message_get_path(msg);
-        const char *state;
-        ALOGV("Got the SAP state changed :dev: %s \n", remote_device_path );
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_OBJECT_PATH, &remote_device_path,
-                                   DBUS_TYPE_STRING, &state,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for SapStateChanged() method", __FUNCTION__);
-        }
-        ALOGV("<SAP>SapState: %s\n", state);
-        env->CallVoidMethod(nat->me, method_onSapStateChanged,
-                                       env->NewStringUTF(remote_device_path),
-                                       env->NewStringUTF(state),
-                                       int(msg));
-        goto success;
-    }  else if (dbus_message_is_signal(msg,
-                                      "org.qcom.bluetooth.dun",
-                                      "DunStateChanged")) {
-        const char *remote_device_path = dbus_message_get_path(msg);
-        const char *state;
-        ALOGV("Got the DUN state changed :dev: %s \n", remote_device_path );
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_OBJECT_PATH, &remote_device_path,
-                                   DBUS_TYPE_STRING, &state,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for DUNStateChanged() method", __FUNCTION__);
-        }
-        env->CallVoidMethod(nat->me, method_onDUNStateChanged,
-                                       env->NewStringUTF(remote_device_path),
-                                       env->NewStringUTF(state),
-                                       int(msg));
-        goto success;
     }
 
     ret = a2dp_event_filter(msg, env);
@@ -1404,25 +1127,6 @@ DBusHandlerResult agent_event_filter(DBusConnection *conn,
 
         ALOGV("... object_path = %s", object_path);
         ALOGV("... uuid = %s", uuid);
-        if (!strcmp(uuid, SAP_UUID)) {
-            ALOGV("Received SAP authorization request");
-            dbus_message_ref(msg);  // increment refcount because we pass to java
-            env->CallVoidMethod(nat->me, method_onSapAuthorize,
-                                       env->NewStringUTF(object_path),
-                                       env->NewStringUTF(uuid),
-                                       int(msg));
-            goto success;
-        }
-
-        if (!strcmp(uuid, DUN_UUID)) {
-            ALOGV("Received DUN authorization request");
-            dbus_message_ref(msg);  // increment refcount because we pass to java
-            env->CallVoidMethod(nat->me, method_onDUNAuthorize,
-                                       env->NewStringUTF(object_path),
-                                       env->NewStringUTF(uuid),
-                                       int(msg));
-            goto success;
-        }
 
         dbus_message_ref(msg);  // increment refcount because we pass to java
         env->CallVoidMethod(nat->me, method_onAgentAuthorize,
@@ -1470,20 +1174,17 @@ DBusHandlerResult agent_event_filter(DBusConnection *conn,
     } else if (dbus_message_is_method_call(msg,
             "org.bluez.Agent", "RequestPinCode")) {
         char *object_path;
-        dbus_bool_t secure;
         if (!dbus_message_get_args(msg, NULL,
                                    DBUS_TYPE_OBJECT_PATH, &object_path,
-                                   DBUS_TYPE_BOOLEAN, &secure,
                                    DBUS_TYPE_INVALID)) {
             ALOGE("%s: Invalid arguments for RequestPinCode() method", __FUNCTION__);
             goto failure;
         }
-        ALOGV("Secure Pairing %d", secure);
 
         dbus_message_ref(msg);  // increment refcount because we pass to java
         env->CallVoidMethod(nat->me, method_onRequestPinCode,
                                        env->NewStringUTF(object_path),
-                                       int(msg), secure);
+                                       int(msg));
         goto success;
     } else if (dbus_message_is_method_call(msg,
             "org.bluez.Agent", "RequestPasskey")) {
@@ -1576,423 +1277,6 @@ DBusHandlerResult agent_event_filter(DBusConnection *conn,
         }
         dbus_connection_send(nat->conn, reply, NULL);
         dbus_message_unref(reply);
-        goto success;
-    } else {
-        ALOGV("%s:%s is ignored", dbus_message_get_interface(msg), dbus_message_get_member(msg));
-    }
-
-failure:
-    env->PopLocalFrame(NULL);
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-
-success:
-    env->PopLocalFrame(NULL);
-    return DBUS_HANDLER_RESULT_HANDLED;
-
-}
-
-// Called by dbus during WaitForAndDispatchEventNative()
-DBusHandlerResult watcher_event_filter(DBusConnection *conn,
-                                     DBusMessage *msg, void *data) {
-    native_data_t *nat = (native_data_t *)data;
-    JNIEnv *env;
-    if (dbus_message_get_type(msg) != DBUS_MESSAGE_TYPE_METHOD_CALL) {
-        ALOGV("%s: not interested (not a method call).", __FUNCTION__);
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-    ALOGE("%s: WatcherEventFilter Received method %s:%s", __FUNCTION__,
-         dbus_message_get_interface(msg), dbus_message_get_member(msg));
-
-    if (nat == NULL) return DBUS_HANDLER_RESULT_HANDLED;
-
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-    env->PushLocalFrame(EVENT_LOOP_REFS);
-
-    if (dbus_message_is_method_call(msg,
-            "org.bluez.Watcher", "ValueChanged")) {
-        char *object_path;
-        uint8_t *value;
-        int vlen;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_OBJECT_PATH, &object_path,
-                                   DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &value, &vlen,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for ValueChanged() method", __FUNCTION__);
-            goto failure;
-        }
-
-        char *tmpValueArray = (char *) malloc(sizeof(char) * ( (2*vlen) + 1 ));
-        char *tmpPos = tmpValueArray;
-        for (int j=0; j<vlen; j++) {
-            sprintf(tmpPos, "%02x", value[j]);
-            tmpPos+=2;
-        }
-        tmpValueArray[2*vlen] = '\0';
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onWatcherValueChanged,
-                                       env->NewStringUTF(object_path),
-                                       env->NewStringUTF(tmpValueArray)
-                                       );
-        free(tmpValueArray);
-
-        goto success;
-    } else {
-        ALOGV("%s:%s is ignored", dbus_message_get_interface(msg), dbus_message_get_member(msg));
-    }
-
-failure:
-    env->PopLocalFrame(NULL);
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-
-success:
-    env->PopLocalFrame(NULL);
-    return DBUS_HANDLER_RESULT_HANDLED;
-
-}
-// Called by dbus during WaitForAndDispatchEventNative()
-DBusHandlerResult gatt_event_filter(DBusConnection *conn,
-                                     DBusMessage *msg, void *data) {
-    native_data_t *nat = (native_data_t *)data;
-    JNIEnv *env;
-    if (dbus_message_get_type(msg) != DBUS_MESSAGE_TYPE_METHOD_CALL) {
-        ALOGV("%s: not interested (not a method call).", __FUNCTION__);
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-    ALOGE("%s: gatt_event_filter Received method %s:%s", __FUNCTION__,
-         dbus_message_get_interface(msg), dbus_message_get_member(msg));
-
-    if (nat == NULL) return DBUS_HANDLER_RESULT_HANDLED;
-
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-    env->PushLocalFrame(EVENT_LOOP_REFS);
-
-    if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "ReadByGroup")) {
-        const char *uuid_str, *objPath;
-        uint16_t start;
-        uint16_t end;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &start,
-                                   DBUS_TYPE_UINT16, &end,
-                                   DBUS_TYPE_STRING, &uuid_str,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for ReadByGroup() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattDiscoverPrimaryRequest,
-                            env->NewStringUTF(objPath),
-                            start, end,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "FindByPrim")) {
-        const char *uuid_str, *objPath;
-        uint16_t start;
-        uint16_t end;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &start,
-                                   DBUS_TYPE_UINT16, &end,
-                                   DBUS_TYPE_STRING, &uuid_str,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for FindByType() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattDiscoverPrimaryByUuidRequest,
-                            env->NewStringUTF(objPath),
-                            env->NewStringUTF(uuid_str),
-                            start, end,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "ReadByInc")) {
-        const char *objPath;
-        uint16_t start;
-        uint16_t end;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &start,
-                                   DBUS_TYPE_UINT16, &end,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for ReadByInc() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattDiscoverIncludedRequest,
-                            env->NewStringUTF(objPath),
-                            start, end,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "ReadByChar")) {
-        const char *objPath;
-        uint16_t start;
-        uint16_t end;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &start,
-                                   DBUS_TYPE_UINT16, &end,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for ReadByChar() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattDiscoverCharacteristicsRequest,
-                            env->NewStringUTF(objPath),
-                            start, end,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "ReadByType")) {
-        const char *uuid_str, *objPath, *auth;
-        uint16_t start;
-        uint16_t end;
-
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &start,
-                                   DBUS_TYPE_UINT16, &end,
-                                   DBUS_TYPE_STRING, &uuid_str,
-                                   DBUS_TYPE_STRING, &auth,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for FindByType() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattReadByTypeRequest,
-                            env->NewStringUTF(objPath),
-                            env->NewStringUTF(uuid_str),
-                            env->NewStringUTF(auth),
-                            start, end,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "FindInfo")) {
-        const char *objPath;
-        uint16_t start;
-        uint16_t end;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &start,
-                                   DBUS_TYPE_UINT16, &end,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for FindInfo() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattFindInfoRequest,
-                            env->NewStringUTF(objPath),
-                            start, end,
-                            int(msg)
-                            );
-        goto success;
-    }  else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "Read")) {
-        const char *objPath, *auth;
-        uint16_t handle;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &handle,
-                                   DBUS_TYPE_STRING, &auth,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for FindByType() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattReadRequest,
-                            env->NewStringUTF(objPath),
-                            env->NewStringUTF(auth),
-                            handle,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "Write")) {
-        const char *objPath, *auth;
-        int sessionHandle;
-        uint16_t handle;
-        jbyte *value;
-        int vlen;
-        jbyteArray byteArray = NULL;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT32, &sessionHandle,
-                                   DBUS_TYPE_UINT16, &handle,
-                                   DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &value, &vlen,
-                                   DBUS_TYPE_STRING, &auth,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for Write() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        if (vlen != 0) {
-            byteArray = env->NewByteArray(vlen);
-            if (byteArray)
-                env->SetByteArrayRegion(byteArray, 0, vlen, value);
-            else
-                goto failure;
-        }
-
-        dbus_message_ref(msg);  // increment refcount because we pass to java
-
-        env->CallVoidMethod(nat->me, method_onGattWriteRequest,
-                            env->NewStringUTF(objPath),
-                            env->NewStringUTF(auth),
-                            handle,
-                            byteArray,
-                            sessionHandle,
-                            int(msg)
-                            );
-        goto success;
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "WriteCmd")) {
-        const char *objPath, *auth;
-        uint16_t handle;
-        jbyte *value;
-        int vlen;
-        jbyteArray byteArray = NULL;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT16, &handle,
-                                   DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &value, &vlen,
-                                   DBUS_TYPE_STRING, &auth,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for Write() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        if (vlen != 0) {
-            byteArray = env->NewByteArray(vlen);
-        }
-        if (byteArray) {
-            env->SetByteArrayRegion(byteArray, 0, vlen, value);
-        } else
-            goto failure;
-
-        env->CallVoidMethod(nat->me, method_onGattWriteCommand,
-                            env->NewStringUTF(objPath),
-                            env->NewStringUTF(auth),
-                            handle,
-                            byteArray);
-        goto success;
-
-    } else if (dbus_message_is_method_call(msg,
-            "org.bluez.GattServer", "UpdateClientConfig")) {
-        const char *objPath;
-        int sessionHandle;
-        uint16_t handle;
-        jbyte *value;
-        int vlen;
-        jbyteArray byteArray = NULL;
-
-        if (!dbus_message_get_args(msg, NULL,
-                                   DBUS_TYPE_UINT32, &sessionHandle,
-                                   DBUS_TYPE_UINT16, &handle,
-                                   DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &value, &vlen,
-                                   DBUS_TYPE_INVALID)) {
-            ALOGE("%s: Invalid arguments for UpdateClientConfig() method", __FUNCTION__);
-            goto failure;
-        }
-
-        objPath = dbus_message_get_path(msg);
-        if(objPath == NULL) {
-            ALOGE("%s: Gatt object path is null", __FUNCTION__);
-            goto failure;
-        }
-
-        if (vlen != 0) {
-            byteArray = env->NewByteArray(vlen);
-        }
-        if (byteArray) {
-            env->SetByteArrayRegion(byteArray, 0, vlen, value);
-        } else
-            goto failure;
-
-        env->CallVoidMethod(nat->me, method_onGattSetClientConfigDescriptor,
-                            env->NewStringUTF(objPath),
-                            sessionHandle,
-                            handle,
-                            byteArray
-                            );
         goto success;
     } else {
         ALOGV("%s:%s is ignored", dbus_message_get_interface(msg), dbus_message_get_member(msg));
@@ -2111,119 +1395,6 @@ void onCreateDeviceResult(DBusMessage *msg, void *user, void *n) {
     free(user);
 }
 
-void onAddToPreferredDeviceListResult(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    const char *address= (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    jint result = CREATE_DEVICE_SUCCESS;
-    if (dbus_set_error_from_message(&err, msg)) {
-        if (dbus_error_has_name(&err, "org.bluez.Error.AlreadyExists")) {
-            result = CREATE_DEVICE_ALREADY_EXISTS;
-        } else {
-            result = CREATE_DEVICE_FAILED;
-        }
-        LOG_AND_FREE_DBUS_ERROR(&err);
-    }
-
-    env->CallVoidMethod(nat->me,
-                        method_onAddToPreferredDeviceListResult,
-                        result);
-    free(user);
-}
-void onRemoveFromPreferredDeviceListResult(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    const char *address= (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    jint result = CREATE_DEVICE_SUCCESS;
-    if (dbus_set_error_from_message(&err, msg)) {
-        if (dbus_error_has_name(&err, "org.bluez.Error.AlreadyExists")) {
-            result = CREATE_DEVICE_ALREADY_EXISTS;
-        } else {
-            result = CREATE_DEVICE_FAILED;
-        }
-        LOG_AND_FREE_DBUS_ERROR(&err);
-    }
-    env->CallVoidMethod(nat->me,
-                        method_onRemoveFromPreferredDeviceListResult,
-                        result);
-    free(user);
-}
-void onClearPreferredDeviceListResult(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    const char *address= (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    jint result = CREATE_DEVICE_SUCCESS;
-    if (dbus_set_error_from_message(&err, msg)) {
-        if (dbus_error_has_name(&err, "org.bluez.Error.AlreadyExists")) {
-            result = CREATE_DEVICE_ALREADY_EXISTS;
-        } else {
-            result = CREATE_DEVICE_FAILED;
-        }
-        LOG_AND_FREE_DBUS_ERROR(&err);
-    }
-
-    env->CallVoidMethod(nat->me,
-                        method_onClearPreferredDeviceListResult,
-                        result);
-    free(user);
-}
-void onGattConnectToPreferredDeviceListResult(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    const char *address= (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    jint result = CREATE_DEVICE_SUCCESS;
-    if (dbus_set_error_from_message(&err, msg)) {
-        if (dbus_error_has_name(&err, "org.bluez.Error.AlreadyExists")) {
-            result = CREATE_DEVICE_ALREADY_EXISTS;
-        } else {
-            result = CREATE_DEVICE_FAILED;
-        }
-        LOG_AND_FREE_DBUS_ERROR(&err);
-    }
-    env->CallVoidMethod(nat->me,
-                        method_onGattConnectToPreferredDeviceListResult,
-                        result);
-    free(user);
-}
-void onGattCancelConnectToPreferredDeviceListResult(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    const char *address= (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-    jint result = CREATE_DEVICE_SUCCESS;
-
-    if (dbus_set_error_from_message(&err, msg)) {
-        if (dbus_error_has_name(&err, "org.bluez.Error.AlreadyExists")) {
-            result = CREATE_DEVICE_ALREADY_EXISTS;
-        } else {
-            result = CREATE_DEVICE_FAILED;
-        }
-        LOG_AND_FREE_DBUS_ERROR(&err);
-    }
-    env->CallVoidMethod(nat->me,
-                        method_onGattCancelConnectToPreferredDeviceListResult,
-                        result);
-    free(user);
-}
-
 void onDiscoverServicesResult(DBusMessage *msg, void *user, void *n) {
     ALOGV("%s", __FUNCTION__);
 
@@ -2322,32 +1493,6 @@ void onInputDeviceConnectionResult(DBusMessage *msg, void *user, void *n) {
     free(user);
 }
 
-void onDiscoverCharacteristicsResult(DBusMessage *msg, void *user, void *n) {
-    ALOGV(__FUNCTION__);
-
-    native_data_t *nat = (native_data_t *)n;
-    const char *path = (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    ALOGV("... GATT Service Path = %s", path);
-
-    bool result = JNI_TRUE;
-    if (dbus_set_error_from_message(&err, msg)) {
-        LOG_AND_FREE_DBUS_ERROR(&err);
-        result = JNI_FALSE;
-    }
-    jstring jPath = env->NewStringUTF(path);
-    env->CallVoidMethod(nat->me,
-                        method_onDiscoverCharacteristicsResult,
-                        jPath,
-                        result);
-    env->DeleteLocalRef(jPath);
-    free(user);
-}
-
 void onPanDeviceConnectionResult(DBusMessage *msg, void *user, void *n) {
     ALOGV("%s", __FUNCTION__);
 
@@ -2420,97 +1565,6 @@ void onHealthDeviceConnectionResult(DBusMessage *msg, void *user, void *n) {
                         result);
     free(user);
 }
-
-void onSetCharacteristicPropertyResult(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    DBusError err;
-    uint8_t status;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    struct set_characteristic_property_t *prop = (set_characteristic_property_t *)user;
-
-    char *c_object_path;
-    bool result = JNI_TRUE;
-    if (dbus_set_error_from_message(&err, msg)) {
-        LOG_AND_FREE_DBUS_ERROR(&err);
-        result = JNI_FALSE;
-    }
-
-    jstring jPath = env->NewStringUTF(prop->path);
-    jstring jProperty = env->NewStringUTF(prop->property);
-    env->CallVoidMethod(nat->me,
-                        method_onSetCharacteristicPropertyResult,
-                        jPath,
-                        jProperty,
-                        result);
-    env->DeleteLocalRef(jPath);
-    env->DeleteLocalRef(jProperty);
-
-    free(prop->path);
-    free(prop->property);
-    free(user);
-}
-
-void onIndicateResponse(DBusMessage *msg, void *user, void *n) {
-    native_data_t *nat = (native_data_t *)n;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-    ALOGE("%s", __FUNCTION__);
-
-    struct set_indicate_info_t *prop = (set_indicate_info_t *)user;
-    bool result = JNI_TRUE;
-    if (dbus_set_error_from_message(&err, msg)) {
-        LOG_AND_FREE_DBUS_ERROR(&err);
-        result = JNI_FALSE;
-    }
-
-    jstring jPath = env->NewStringUTF(prop->path);
-    env->CallVoidMethod(nat->me,
-                        method_onIndicateResponse,
-                        jPath,
-                        result);
-    env->DeleteLocalRef(jPath);
-
-    free(prop->path);
-    free(user);
-}
-
-void onUpdateCharacteristicValueResult(DBusMessage *msg, void *user, void *n) {
-    ALOGV(__FUNCTION__);
-
-    native_data_t *nat = (native_data_t *)n;
-    const char *path = (const char *)user;
-    DBusError err;
-    dbus_error_init(&err);
-    JNIEnv *env;
-    jbyte *char_val;
-    int char_vlen;
-    bool result = JNI_TRUE;
-
-    nat->vm->GetEnv((void**)&env, nat->envVer);
-
-    ALOGV("... GATT Characteristic Path = %s", path);
-
-    if (dbus_set_error_from_message(&err, msg)){
-        ALOGE("%s: D-Bus error: %s (%s)\n", __FUNCTION__, err.name, err.message);
-
-        LOG_AND_FREE_DBUS_ERROR(&err);
-        result = JNI_FALSE;
-    }
-
-    jstring jPath = env->NewStringUTF(path);
-    env->CallVoidMethod(nat->me,
-                        method_onUpdateCharacteristicValueResult,
-                        jPath,
-                        result);
-    env->DeleteLocalRef(jPath);
-    free(user);
- }
-
 #endif
 
 static JNINativeMethod sMethods[] = {
