@@ -135,8 +135,8 @@ final class BluetoothInputProfileHandler {
     }
 
     int getInputDevicePriority(BluetoothDevice device) {
-        return Settings.Secure.getInt(mContext.getContentResolver(),
-                Settings.Secure.getBluetoothInputDevicePriorityKey(device.getAddress()),
+        return Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.getBluetoothInputDevicePriorityKey(device.getAddress()),
                 BluetoothInputDevice.PRIORITY_UNDEFINED);
     }
 
@@ -144,8 +144,8 @@ final class BluetoothInputProfileHandler {
         if (!BluetoothAdapter.checkBluetoothAddress(device.getAddress())) {
             return false;
         }
-        return Settings.Secure.putInt(mContext.getContentResolver(),
-                Settings.Secure.getBluetoothInputDevicePriorityKey(device.getAddress()),
+        return Settings.Global.putInt(mContext.getContentResolver(),
+                Settings.Global.getBluetoothInputDevicePriorityKey(device.getAddress()),
                 priority);
     }
 
