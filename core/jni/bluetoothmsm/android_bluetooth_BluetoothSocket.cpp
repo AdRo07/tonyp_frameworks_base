@@ -254,7 +254,7 @@ static void setAmpPolicyNative(JNIEnv *env, jobject obj, jint amppol) {
         return;
 
     int err;
-//temporary workaround:    err = setsockopt(s->fd, SOL_BLUETOOTH, BT_AMP_POLICY, &amppol, sizeof(amppol));
+    err = setsockopt(s->fd, SOL_BLUETOOTH, BT_AMP_POLICY, &amppol, sizeof(amppol));
     if (err) {
         ALOGV("setsockopt() failed, throwing");
         jniThrowIOException(env, errno);
@@ -341,7 +341,7 @@ static void connectNative(JNIEnv *env, jobject obj) {
 
         memset(addr, 0, addr_sz);
         addr_sco.sco_family = AF_BLUETOOTH;
-//temporary workaround:        addr_sco.is_wbs = (type == TYPE_SCO_WBS);
+        addr_sco.is_wbs = (type == TYPE_SCO_WBS);
         memcpy(&addr_sco.sco_bdaddr, &bdaddress, sizeof(bdaddr_t));
 
         break;
