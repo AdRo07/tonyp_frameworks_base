@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (c) 2013 The Linux Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,19 +134,19 @@ final class BluetoothInputProfileHandler {
         List<BluetoothDevice> devices = lookupInputDevicesMatchingStates(states);
         return devices;
     }
-
+    //MR1 Change
     int getInputDevicePriority(BluetoothDevice device) {
         return Settings.Secure.getInt(mContext.getContentResolver(),
-                Settings.Secure.getBluetoothInputDevicePriorityKey(device.getAddress()),
+                Settings.Global.getBluetoothInputDevicePriorityKey(device.getAddress()),
                 BluetoothInputDevice.PRIORITY_UNDEFINED);
     }
-
+    //MR1 change
     boolean setInputDevicePriority(BluetoothDevice device, int priority) {
         if (!BluetoothAdapter.checkBluetoothAddress(device.getAddress())) {
             return false;
         }
         return Settings.Secure.putInt(mContext.getContentResolver(),
-                Settings.Secure.getBluetoothInputDevicePriorityKey(device.getAddress()),
+                Settings.Global.getBluetoothInputDevicePriorityKey(device.getAddress()),
                 priority);
     }
 
@@ -192,8 +193,6 @@ final class BluetoothInputProfileHandler {
         mContext.sendBroadcast(intent, BluetoothService.BLUETOOTH_PERM);
 
         debugLog("InputDevice state : device: " + device + " State:" + prevState + "->" + state);
-        mBluetoothService.sendConnectionStateChange(device, BluetoothProfile.INPUT_DEVICE, state,
-                                                    prevState);
     }
 
     void handleInputDevicePropertyChange(String address, boolean connected) {

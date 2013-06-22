@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,7 +346,18 @@ public final class BluetoothAdapter {
     /** @hide */
     public static final String BLUETOOTH_SERVICE = "bluetooth";
 
+    /**
+     * Dummy BLUETOOTH_MANAGER_SERVICE for JB MR1
+     * @hide
+     */
+    public static final String BLUETOOTH_MANAGER_SERVICE = "bluetooth_manager";
+
     private static final int ADDRESS_LENGTH = 17;
+
+    /** @hide */ public static final int HOST_PATCH_DONT_REMOVE_SERVICE = 1;
+    /** @hide */ public static final int HOST_PATCH_AVOID_CONNECT_ON_PAIR = 2;
+    /** @hide */ public static final int HOST_PATCH_AVOID_AUTO_CONNECT = 3;
+    /** @hide */ public static final int HOST_PATCH_ENABLE_PHOTO_ON_PBAP = 4;
 
     /**
      * Lazily initialized singleton. Guaranteed final after first object
@@ -356,6 +368,14 @@ public final class BluetoothAdapter {
     private final IBluetooth mService;
 
     private Handler mServiceRecordHandler;
+
+    /** @hide */
+    public boolean isHostPatchRequired (BluetoothDevice btDevice, int patch_id) {
+        try {
+            return mService.isHostPatchRequired (btDevice, patch_id);
+        } catch (RemoteException e) {Log.e(TAG, "", e);}
+        return false;
+    }
 
     /**
      * Get a handle to the default local Bluetooth adapter.
@@ -435,6 +455,32 @@ public final class BluetoothAdapter {
         try {
             return mService.isEnabled();
         } catch (RemoteException e) {Log.e(TAG, "", e);}
+        return false;
+    }
+
+    /**
+     * Query the registration state of a service
+     * @return true if the service is registered
+     * @hide
+     */
+    public boolean isServiceRegistered(ParcelUuid uuid) {
+       try {
+           return mService.isServiceRegistered(uuid);
+       } catch (RemoteException e) {Log.e(TAG, "", e);}
+       return false;
+    }
+
+    /**
+     * Register/deregister a service
+     * @param uuid uuid of the service to be registered
+     * @param enable true/false to register/deregister a service
+     * @return true if register/deregister is succeeded
+     * @hide
+     */
+    public boolean registerService(ParcelUuid uuid , boolean enable) {
+      try {
+          return mService.registerService(uuid, enable);
+      } catch (RemoteException e) {Log.e(TAG, "", e);}
         return false;
     }
 
@@ -566,34 +612,18 @@ public final class BluetoothAdapter {
         return null;
     }
 
-    /** @hide */
-    public static String getStateName(int state) {
-        switch (state) {
-            case STATE_OFF:
-                return "STATE_OFF";
-            case STATE_TURNING_ON:
-                return "STATE_TURNING_ON";
-            case STATE_ON:
-                return "STATE_ON";
-            case STATE_TURNING_OFF:
-                return "STATE_TURNING_OFF";
-            default:
-                return "UNKNOWN";
-        }
-    }
-
-    /** @hide */
-    public static String getScanMode(int mode) {
-        switch (mode) {
-            case SCAN_MODE_NONE:
-                return "SCAN_MODE_NONE";
-            case SCAN_MODE_CONNECTABLE:
-                return "SCAN_MODE_CONNECTABLE";
-            case SCAN_MODE_CONNECTABLE_DISCOVERABLE:
-                return "SCAN_MODE_CONNECTABLE_DISCOVERABLE";
-            default:
-                return "UNKNOWN";
-        }
+    /**
+     * Get the Class of Device (COD) of the local Bluetooth adapter.
+     * <p>Requires {@link android.Manifest.permission#BLUETOOTH}
+     *
+     * @return the Bluetooth COD, or null on error
+     * @hide
+     */
+    public String getCOD() {
+        try {
+            return mService.getCOD();
+        } catch (RemoteException e) {Log.e(TAG, "", e);}
+        return null;
     }
 
     /**
@@ -619,8 +649,21 @@ public final class BluetoothAdapter {
         return false;
     }
 
+  /**
+     * Set whether WiFi can be used for Bluetooth transfers
+     * <p>Requires {@link android.Manifest.permission#BLUETOOTH}
+     * @param enable Set true allows WiFi (system default)
+     *
+     * @hide
+     */
+    public void setUseWifi(boolean enable) {
+        try {
+            mService.setUseWifiForBtTransfers(enable);
+        } catch (RemoteException e) {Log.e(TAG, "", e);}
+    }
+
     /**
-     * Get the current Bluetooth scan mode of the local Bluetooth adapter.
+     * Get the current Bluetooth scan mode of the local Bluetooth adaper.
      * <p>The Bluetooth scan mode determines if the local adapter is
      * connectable and/or discoverable from remote Bluetooth devices.
      * <p>Possible values are:
@@ -936,6 +979,62 @@ public final class BluetoothAdapter {
         return socket;
     }
 
+
+    /**
+     * Create a listening, secure L2Cap Bluetooth socket.
+     * <p>A remote device connecting to this socket will be authenticated and
+     * communication on this socket will be encrypted.
+     * <p>Use {@link BluetoothServerSocket#accept} to retrieve incoming
+     * connections from a listening {@link BluetoothServerSocket}.
+     * <p>Requires {@link android.Manifest.permission#BLUETOOTH_ADMIN}
+     * @param psm L2Cap psm to listen on
+     * @return a listening L2Cap BluetoothServerSocket
+     * @throws IOException on error, for example Bluetooth not available, or
+     *                     insufficient permissions, or channel in use.
+     * @hide
+     */
+    public BluetoothServerSocket listenUsingL2capOn(int psm) throws IOException {
+        BluetoothServerSocket socket = new BluetoothServerSocket(
+                BluetoothSocket.TYPE_L2CAP, true, true, psm);
+        int errno = socket.mSocket.bindListen();
+        if (errno != 0) {
+            try {
+                socket.close();
+            } catch (IOException e) {}
+            socket.mSocket.throwErrnoNative(errno);
+        }
+        return socket;
+    }
+
+    /**
+     * Create a listening, secure EL2Cap Bluetooth socket.
+     * <p>A remote device connecting to this socket will be authenticated and
+     * communication on this socket will be encrypted.
+     * <p>Use {@link BluetoothServerSocket#accept} to retrieve incoming
+     * connections from a listening {@link BluetoothServerSocket}.
+     * <p>Requires {@link android.Manifest.permission#BLUETOOTH_ADMIN}
+     * @param psm L2Cap psm to listen on
+     * @return a listening L2Cap BluetoothServerSocket
+     * @throws IOException on error, for example Bluetooth not available, or
+     *                     insufficient permissions, or channel in use.
+     * @hide
+     */
+    public BluetoothServerSocket listenUsingEl2capOn(int psm) throws IOException {
+        BluetoothServerSocket socket = new BluetoothServerSocket(
+                BluetoothSocket.TYPE_EL2CAP, true, true, psm);
+        int errno = socket.mSocket.bindListen();
+        if (errno != 0) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // Intentionally ignoring (give close() a chance, but we're
+                // going to be throwing up an exception regardless (below)).
+            }
+            socket.mSocket.throwErrnoNative(errno);
+        }
+        return socket;
+    }
+
     /**
      * Create a listening, secure RFCOMM Bluetooth socket with Service Record.
      * <p>A remote device connecting to this socket will be authenticated and
@@ -1157,6 +1256,54 @@ public final class BluetoothAdapter {
     }
 
     /**
+     * Construct an unencrypted, unauthenticated, L2Cap server socket.
+     * Call #accept to retrieve connections to this socket.
+     * @param psm L2Cap psm to listen on
+     * @return An L2Cap BluetoothServerSocket
+     * @throws IOException On error, for example Bluetooth not available, or
+     *                     insufficient permissions.
+     * @hide
+     */
+    public BluetoothServerSocket listenUsingInsecureL2capOn(int psm) throws IOException {
+        BluetoothServerSocket socket = new BluetoothServerSocket(
+                BluetoothSocket.TYPE_L2CAP, false, false, psm);
+        int errno = socket.mSocket.bindListen();
+        if (errno != 0) {
+            try {
+                socket.close();
+            } catch (IOException e) {}
+            socket.mSocket.throwErrnoNative(errno);
+        }
+        return socket;
+    }
+
+    /**
+     * Construct an unencrypted, unauthenticated, EL2Cap server socket.
+     * Call #accept to retrieve connections to this socket.
+     * @param psm L2Cap psm to listen on
+     * @return An L2Cap BluetoothServerSocket
+     * @throws IOException On error, for example Bluetooth not available, or
+     *                     insufficient permissions.
+     * @hide
+     */
+    public BluetoothServerSocket listenUsingInsecureEl2capOn(int psm) throws IOException {
+        BluetoothServerSocket socket = new BluetoothServerSocket(
+                BluetoothSocket.TYPE_EL2CAP, false, false, psm);
+        int errno = socket.mSocket.bindListen();
+        if (errno != 0) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // Intentionally ignoring (give close() a chance, but we're
+                // going to be throwing up an exception regardless (below)).
+            }
+            socket.mSocket.throwErrnoNative(errno);
+        }
+        return socket;
+    }
+
+
+    /**
      * Construct a SCO server socket.
      * Call #accept to retrieve connections to this socket.
      * @return A SCO BluetoothServerSocket
@@ -1241,6 +1388,9 @@ public final class BluetoothAdapter {
         } else if (profile == BluetoothProfile.HEALTH) {
             BluetoothHealth health = new BluetoothHealth(context, listener);
             return true;
+        } else if (profile == BluetoothProfile.GATT) {
+            BluetoothGatt gatt = new BluetoothGatt(context, listener);
+            return true;
         } else {
             return false;
         }
@@ -1280,6 +1430,10 @@ public final class BluetoothAdapter {
             case BluetoothProfile.HEALTH:
                 BluetoothHealth health = (BluetoothHealth)proxy;
                 health.close();
+                break;
+           case BluetoothProfile.GATT:
+                BluetoothGatt gatt = (BluetoothGatt)proxy;
+                gatt.close();
                 break;
         }
     }
@@ -1400,4 +1554,110 @@ public final class BluetoothAdapter {
         }
         return true;
     }
+
+    /**
+     * Clear the Preferred Devices List.
+     *
+     * <p>Clears all the devices in the Preferred devices list.
+     *
+     * <p>Requires {@link android.Manifest.permission#BLUETOOTH}
+     *
+     * @param pListCallback The callback to notify the application regarding
+     * whether the Preferred devices list has been cleared or not.
+     * @return false, if internal checks fail; True if the process of
+     *         clearing preferred devices list was started.
+     * @hide
+     */
+    public boolean clearPreferredDeviceList(IBluetoothPreferredDeviceListCallback pListCallback) {
+        Log.d(TAG, "BT adapter clearPreferredDeviceList");
+        try {
+            return mService.clearPreferredDeviceList(pListCallback);
+        } catch (RemoteException e) {
+            Log.e(TAG, "clearPreferredDeviceList", e);
+        }
+        return false;
+    }
+    /**
+     * Create Connection request to the devices in the Preferred Devices list
+     *
+     * @param pListCallback The callback to notify the application regarding
+     * whether the create connection request for the devices in the Preferred devices
+     * list has been sent or not.
+     * @return false, if internal checks fail; True if the process of
+     *         creating connection request to preferred devices list was started.
+     * @hide
+     */
+    public boolean gattConnectToPreferredDeviceList(IBluetoothPreferredDeviceListCallback pListCallback) {
+        Log.d(TAG, "BT adapter gattConnectToPreferredDeviceList");
+        try {
+            return mService.gattConnectToPreferredDeviceList(pListCallback);
+        } catch (RemoteException e) {
+            Log.e(TAG, "gattConnectToPreferredDeviceList", e);
+        }
+        return false;
+    }
+     /**
+      * Cancel create connection request to the devices in the Preferred
+      * devices list
+      *
+      * @param pListCallback The callback to notify the application regarding
+      * whether the cancel create connection request for the devices in the Preferred devices
+      * list has been sent or not.
+      * @return false, if internal checks fail; True if the process of
+      *         cancel create connection request to preferred devices list was started.
+      * @hide
+      */
+    public boolean gattCancelConnectToPreferredDeviceList(IBluetoothPreferredDeviceListCallback pListCallback) {
+        Log.d(TAG, "BT adapter gattCancelConnectToPreferredDeviceList");
+        try {
+            return mService.gattCancelConnectToPreferredDeviceList(pListCallback);
+        } catch (RemoteException e) {
+            Log.e(TAG, "gattCancelConnectToPreferredDeviceList", e);
+        }
+        return false;
+    }
+    /**
+     * Automatic connection request to the devices in the Preferred
+     * devices list
+     *
+     * @param pListCallback The callback to notify the application regarding
+     * whether the Auto Connect request has been sent or not.
+     * @return false, if internal checks fail; True if the process of
+     *         auto connection request for devices in preferred devices list was started.
+     * @hide
+     */
+   public boolean gattAutoConnect(IBluetoothPreferredDeviceListCallback pListCallback,
+           BluetoothDevice btDevice) {
+       Log.d(TAG, "BT adapter gattAutoConnect");
+       boolean status = false;
+       try {
+           //call add device to preferred devices list
+           status = mService.addToPreferredDeviceListWrapper(btDevice, pListCallback, "AutoConnect");
+       } catch (RemoteException e) {
+           Log.e(TAG, "gattAutoConnect", e);
+       }
+       return status;
+   }
+   /**
+    * Automatic connection cancel request to the devices in the Preferred
+    * devices list
+    *
+    * @param pListCallback The callback to notify the application regarding
+    * whether the Auto Connect cancel request has been sent or not.
+    * @return false, if internal checks fail; True if the process of
+    *         auto connect cancel request for devices in preferred devices list was started.
+   * @hide
+   */
+   public boolean gattAutoConnectCancel(IBluetoothPreferredDeviceListCallback pListCallback,
+           BluetoothDevice btDevice) {
+       Log.d(TAG, "BT adapter gattAutoConnectCancel");
+       boolean status = false;
+       try {
+           //Stop the scan
+           status = mService.gattCancelConnectToPreferredDeviceListWrapper(pListCallback, btDevice, "AutoConnectCancel");
+       } catch (RemoteException e) {
+           Log.e(TAG, "gattAutoConnectCancel", e);
+       }
+       return status;
+   }
 }
