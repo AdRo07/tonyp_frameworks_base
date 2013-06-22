@@ -124,11 +124,6 @@ public class BluetoothTetheringDataTracker implements NetworkStateTracker {
         return true;
     }
 
-    @Override
-    public void captivePortalCheckComplete() {
-        // Not implemented
-    }
-
     /**
      * Re-enable connectivity to a network after a {@link #teardown()}.
      */
@@ -144,6 +139,10 @@ public class BluetoothTetheringDataTracker implements NetworkStateTracker {
      */
     public boolean setRadio(boolean turnOn) {
         return true;
+    }
+
+    /* TODO */
+    public void captivePortalCheckComplete() {
     }
 
     /**
@@ -265,11 +264,6 @@ public class BluetoothTetheringDataTracker implements NetworkStateTracker {
     }
 
 
-    public synchronized void startReverseTether(String iface) {
-        // Dummy function for Bluedroid dependent common code compilation
-        Log.e(TAG, "ERROR : Not expected to be called");
-    }
-
     public synchronized void startReverseTether(String iface, BluetoothDevice device) {
         mIface = iface;
         mDevice = device;
@@ -298,16 +292,7 @@ public class BluetoothTetheringDataTracker implements NetworkStateTracker {
         dhcpThread.start();
     }
 
-    public synchronized void stopReverseTether() {
-        // Dummy function for Bluedroid dependent common code compilation
-        Log.e(TAG, "ERROR : Not expected to be called");
-    }
-
     public synchronized void stopReverseTether(String iface) {
-        if (iface == null) {
-            Log.e(TAG, "ERROR : iface is null");
-            return;
-        }
         NetworkUtils.stopDhcp(iface);
 
         mLinkProperties.clear();
