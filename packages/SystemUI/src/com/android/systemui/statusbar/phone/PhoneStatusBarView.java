@@ -328,7 +328,6 @@ public class PhoneStatusBarView extends PanelBar {
         mBar.updateCarrierLabelVisibility(false);
     }
 
-        mBar.updateCarrierLabelVisibility(false);
     /*
      * ]0 < alpha < 1[
      */
