@@ -1658,74 +1658,72 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 DisplayMetrics.DENSITY_DEVICE / mSystemDpi) /
                 DisplayMetrics.DENSITY_DEVICE * mStatusBarDpi;
    
-        float navigationBarHeight = ((float)mContext.getResources().getDimensionPixelSize(
-                com.android.internal.R.dimen.navigation_bar_height) *
-                DisplayMetrics.DENSITY_DEVICE / mSystemDpi) /
-                DisplayMetrics.DENSITY_DEVICE * mNavBarDpi;
-   
-        float navigationBarWidth = ((float)mContext.getResources().getDimensionPixelSize(
-                com.android.internal.R.dimen.navigation_bar_width) *
-                DisplayMetrics.DENSITY_DEVICE / mSystemDpi) /
-                DisplayMetrics.DENSITY_DEVICE * mNavBarDpi;
-   
-        float navigationBarHeightLandscape = ((float)mContext.getResources().getDimensionPixelSize(
-                com.android.internal.R.dimen.navigation_bar_height_landscape) *
-                DisplayMetrics.DENSITY_DEVICE / mSystemDpi) /
-                DisplayMetrics.DENSITY_DEVICE * mNavBarDpi;
-   
         mStatusBarHeight = Math.round(statusBarHeight);
-   
+
         // Height of the navigation bar when presented horizontally at bottom
-        mNavigationBarHeightForRotation[mPortraitRotation] = 
-                mNavigationBarHeightForRotation[mUpsideDownRotation] = Math.round(navigationBarHeight);
-   
+        mNavigationBarHeightForRotation[mPortraitRotation] =
+        mNavigationBarHeightForRotation[mUpsideDownRotation] =
+                mContext.getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.navigation_bar_height);
         mNavigationBarHeightForRotation[mLandscapeRotation] =
-                mNavigationBarHeightForRotation[mSeascapeRotation] = Math.round(navigationBarHeightLandscape);
-   
+        mNavigationBarHeightForRotation[mSeascapeRotation] =
+                mContext.getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.navigation_bar_height_landscape);
+
         // Width of the navigation bar when presented vertically along one side
-        mNavigationBarWidthForRotation[mPortraitRotation] = mNavigationBarWidthForRotation[mUpsideDownRotation] =
-                mNavigationBarWidthForRotation[mLandscapeRotation] = mNavigationBarWidthForRotation[mSeascapeRotation] =
-                Math.round(navigationBarWidth);
-   
-        if (mSystemUiLayout < 600) {
+        mNavigationBarWidthForRotation[mPortraitRotation] =
+        mNavigationBarWidthForRotation[mUpsideDownRotation] =
+        mNavigationBarWidthForRotation[mLandscapeRotation] =
+        mNavigationBarWidthForRotation[mSeascapeRotation] =
+                mContext.getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.navigation_bar_width);
+
+        // SystemUI (status bar) layout policy
+        int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
+
+        if (shortSizeDp < 600) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
             mNavigationBarCanMove = true;
-        } else if (mSystemUiLayout < 720) {
+        } else if (shortSizeDp < 720) {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
             mNavigationBarCanMove = false;
-        } else if (mSystemUiLayout == 1000) {
-            // 1000dp: "tablet" UI with a single combined status & navigation bar
-            mHasSystemNavBar = true;
-            mNavigationBarCanMove = false;
         }
-   
-        mHasNavigationBar = !mHasSystemNavBar;
-   
+
+        if (!mHasSystemNavBar) {
+            mHasNavigationBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (! "".equals(navBarOverride)) {
+                if      (navBarOverride.equals("1")) mHasNavigationBar = false;
+                else if (navBarOverride.equals("0")) mHasNavigationBar = true;
+            }
+        } else {
+            mHasNavigationBar = false;
+        }
+
         if (mHasSystemNavBar) {
-            mCanHideNavigationBar = true;
+            // The system bar is always at the bottom.  If you are watching
+            // a video in landscape, we don't need to hide it if we can still
+            // show a 16:9 aspect ratio with it.
+            int longSizeDp = longSize * DisplayMetrics.DENSITY_DEFAULT / density;
+            int barHeightDp = mNavigationBarHeightForRotation[mLandscapeRotation]
+                    * DisplayMetrics.DENSITY_DEFAULT / density;
+            int aspect = ((shortSizeDp-barHeightDp) * 16) / longSizeDp;
+            // We have computed the aspect ratio with the bar height taken
+            // out to be 16:aspect.  If this is less than 9, then hiding
+            // the navigation bar will provide more useful space for wide
+            // screen movies.
+            mCanHideNavigationBar = aspect < 9;
         } else if (mHasNavigationBar) {
             // The navigation bar is at the right in landscape; it seems always
             // useful to hide it for showing a video.
             mCanHideNavigationBar = true;
         } else {
             mCanHideNavigationBar = false;
-        }
-   
-        // In case that we removed nav bar, set all sizes to 0 again
-        if(!mHasNavigationBar){
-            if(!mHasSystemNavBar || Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1){
-                mNavigationBarWidthForRotation[mPortraitRotation]
-                           = mNavigationBarWidthForRotation[mUpsideDownRotation]
-                           = mNavigationBarWidthForRotation[mLandscapeRotation]
-                           = mNavigationBarWidthForRotation[mSeascapeRotation]
-                           = mNavigationBarHeightForRotation[mPortraitRotation]
-                           = mNavigationBarHeightForRotation[mUpsideDownRotation]
-                           = mNavigationBarHeightForRotation[mLandscapeRotation]
-                           = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
-            }
         }
     }
 
