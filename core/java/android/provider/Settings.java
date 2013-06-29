@@ -2624,6 +2624,13 @@ public final class Settings {
         public static final String QS_DYNAMIC_ALARM = "qs_dyanmic_alarm";
 
         /**
+         * Animate-flip Quick Settings Panel Tiles on click
+         *
+         * @hide
+         */
+        public static final String QUICK_SETTINGS_TILES_FLIP = "quick_settings_tiles_flip";
+
+        /**
          * Quick Settings Panel Dynamic Tiles
          *
          * @hide
