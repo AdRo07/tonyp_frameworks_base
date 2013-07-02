@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +229,9 @@ public final class BluetoothHeadset implements BluetoothProfile {
         mContext = context;
         mServiceListener = l;
         mAdapter = BluetoothAdapter.getDefaultAdapter();
-        Log.e(TAG, "Default Adapter name: " + mAdapter.getName());
+		Log.d(TAG, "BluetoothHeadset is created");
+		if(mServiceListener == null)
+			Log.e(TAG, "ERROR in headset");
         if (!context.bindService(new Intent(IBluetoothHeadset.class.getName()), mConnection, 0)) {
             Log.e(TAG, "Could not bind to Bluetooth Headset Service");
         }
@@ -241,11 +244,11 @@ public final class BluetoothHeadset implements BluetoothProfile {
      * are ok.
      */
     /*package*/ synchronized void close() {
-        if (DBG) log("close()");
-        if (mConnection != null) {
+        if (DBG) log("BluetoothHeadset close() which makes mServiceListner NULL");
+        if (mConnection != null && mService != null) {
             mContext.unbindService(mConnection);
-            mConnection = null;
         }
+        mConnection = null;
         mServiceListener = null;
     }
 
@@ -563,6 +566,25 @@ public final class BluetoothHeadset implements BluetoothProfile {
     }
 
     /**
+     * Indicates if current device supports voice dialing over bluetooth SCO.
+     *
+     * @return true if voice dialing over bluetooth is supported, false otherwise.
+     * @hide
+     */
+    public boolean isBluetoothVoiceDialingSupported(BluetoothDevice device) {
+        if (mService != null && isEnabled() &&
+            isValidDevice(device)) {
+            try {
+                return mService.isBluetoothVoiceDialingEnabled(device);
+            } catch (RemoteException e) {
+                Log.e(TAG,  Log.getStackTraceString(new Throwable()));
+            }
+        }
+        if (mService == null) Log.w(TAG, "Proxy not attached to service");
+        return false;
+    }
+
+    /**
      * Cancel the outgoing connection.
      * Note: This is an internal function and shouldn't be exposed
      *
@@ -713,6 +735,74 @@ public final class BluetoothHeadset implements BluetoothProfile {
     }
 
     /**
+     * Check if Bluetooth SCO audio is connected.
+     *
+     * <p>Requires {@link android.Manifest.permission#BLUETOOTH} permission.
+     *
+     * @return true if SCO is connected,
+     *         false otherwise or on error
+     * @hide
+     */
+    public boolean isAudioOn() {
+        if (mService != null && isEnabled()) {
+            try {
+              return mService.isAudioOn();
+            } catch (RemoteException e) {
+              Log.e(TAG,  Log.getStackTraceString(new Throwable()));
+            }
+        }
+        if (mService == null) Log.w(TAG, "Proxy not attached to service");
+        return false;
+
+    }
+
+    /**
+     * Initiates a connection of headset audio.
+     * It setup SCO channel with remote connected headset device.
+     *
+     * @return true if successful
+     *         false if there was some error such as
+     *               there is no connected headset
+     * @hide
+     */
+    public boolean connectAudio() {
+         if (mService != null && isEnabled()) {
+            try {
+                return mService.connectAudio();
+            } catch (RemoteException e) {
+                Log.e(TAG, e.toString());
+            }
+        } else {
+            Log.w(TAG, "Proxy not attached to service");
+            if (DBG) Log.d(TAG, Log.getStackTraceString(new Throwable()));
+        }
+        return false;
+    }
+
+    /**
+     * Initiates a disconnection of headset audio.
+     * It tears down the SCO channel from remote headset device.
+     *
+     * @return true if successful
+     *         false if there was some error such as
+     *               there is no connected SCO channel
+     * @hide
+     */
+    public boolean disconnectAudio() {
+        if (mService != null && isEnabled()) {
+            try {
+                return mService.disconnectAudio();
+            } catch (RemoteException e) {
+                Log.e(TAG, e.toString());
+            }
+        } else {
+            Log.w(TAG, "Proxy not attached to service");
+            if (DBG) Log.d(TAG, Log.getStackTraceString(new Throwable()));
+        }
+        return false;
+    }
+
+    /**
      * Initiates a SCO channel connection with the headset (if connected).
      * Also initiates a virtual voice call for Handsfree devices as many devices
      * do not accept SCO audio without a call.
@@ -761,19 +851,84 @@ public final class BluetoothHeadset implements BluetoothProfile {
         return false;
     }
 
+    /**
+     * Notify Headset of phone state change.
+     * This is a backdoor for phone app to call BluetoothHeadset since
+     * there is currently not a good way to get precise call state change outside
+     * of phone app.
+     *
+     * @hide
+     */
+    public void phoneStateChanged(int numActive, int numHeld, int callState, String number,
+                                  int type) {
+        if (mService != null && isEnabled()) {
+            try {
+				Log.w(TAG, "headset Proxy attached to service.Phonestatechanged");
+                mService.phoneStateChanged(numActive, numHeld, callState, number, type);
+            } catch (RemoteException e) {
+                Log.e(TAG, e.toString());
+            }
+        } else {
+            Log.w(TAG, "Proxy not attached to service");
+            if (DBG) Log.d(TAG, Log.getStackTraceString(new Throwable()));
+        }
+    }
+
+    /**
+     * Notify Headset of phone roam state change.
+     * This is a backdoor for phone app to call BluetoothHeadset since
+     * there is currently not a good way to get roaming state change outside
+     * of phone app.
+     *
+     * @hide
+     */
+    public void roamChanged(boolean roaming) {
+        if (mService != null && isEnabled()) {
+            try {
+                mService.roamChanged(roaming);
+            } catch (RemoteException e) {
+                Log.e(TAG, e.toString());
+            }
+        } else {
+            Log.w(TAG, "Proxy not attached to service");
+            if (DBG) Log.d(TAG, Log.getStackTraceString(new Throwable()));
+        }
+    }
+
+    /**
+     * Send Headset of CLCC response
+     *
+     * @hide
+     */
+    public void clccResponse(int index, int direction, int status, int mode, boolean mpty,
+                             String number, int type) {
+       if (mService != null && isEnabled()) {
+            try {
+                mService.clccResponse(index, direction, status, mode, mpty, number, type);
+            } catch (RemoteException e) {
+                Log.e(TAG, e.toString());
+            }
+        } else {
+            Log.w(TAG, "Proxy not attached to service");
+            if (DBG) Log.d(TAG, Log.getStackTraceString(new Throwable()));
+        }
+    }
+
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
-            if (DBG) Log.d(TAG, "Proxy object connected");
+            if (DBG) Log.d(TAG, "HeadsetService Proxy object connected");
             mService = IBluetoothHeadset.Stub.asInterface(service);
 
             if (mServiceListener != null) {
+				Log.d(TAG, "HeadsetService Calls the service listeners");
                 mServiceListener.onServiceConnected(BluetoothProfile.HEADSET, BluetoothHeadset.this);
             }
         }
         public void onServiceDisconnected(ComponentName className) {
-            if (DBG) Log.d(TAG, "Proxy object disconnected");
+            if (DBG) Log.d(TAG, "HeadsetService Proxy object disconnected");
             mService = null;
             if (mServiceListener != null) {
+				Log.d(TAG, "HeadsetService Calls the service listeners for dis");
                 mServiceListener.onServiceDisconnected(BluetoothProfile.HEADSET);
             }
         }
