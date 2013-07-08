@@ -41,9 +41,6 @@ import android.os.ServiceManager;
 import android.os.StrictMode;
 import android.os.SystemClock;
 import android.os.SystemProperties;
-import android.provider.Settings;
-import android.server.BluetoothA2dpService;
-import android.server.BluetoothService;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.server.search.SearchManagerService;
@@ -166,8 +163,7 @@ class ServerThread extends Thread {
         IPackageManager pm = null;
         Context context = null;
         WindowManagerService wm = null;
-        BluetoothService bluetooth = null;
-        BluetoothA2dpService bluetoothA2dp = null;
+        BluetoothManagerService bluetooth = null;
         DockObserver dock = null;
         RotationSwitchObserver rotateSwitch = null;
         UsbService usb = null;
@@ -365,23 +361,9 @@ class ServerThread extends Thread {
             } else if (factoryTest == SystemServer.FACTORY_TEST_LOW_LEVEL) {
                 Slog.i(TAG, "No Bluetooth Service (factory test)");
             } else {
-                Slog.i(TAG, "Bluetooth Service");
-                bluetooth = new BluetoothService(context);
-                ServiceManager.addService(BluetoothAdapter.BLUETOOTH_SERVICE, bluetooth);
-                bluetooth.initAfterRegistration();
-
-                if (!"0".equals(SystemProperties.get("system_init.startaudioservice"))) {
-                    bluetoothA2dp = new BluetoothA2dpService(context, bluetooth);
-                    ServiceManager.addService(BluetoothA2dpService.BLUETOOTH_A2DP_SERVICE,
-                                              bluetoothA2dp);
-                    bluetooth.initAfterA2dpRegistration();
-                }
-
-                int bluetoothOn = Settings.Global.getInt(mContentResolver,
-                    Settings.Global.BLUETOOTH_ON, 0);
-                if (bluetoothOn != 0) {
-                    bluetooth.enable();
-                }
+                Slog.i(TAG, "Bluetooth Manager Service");
+                bluetooth = new BluetoothManagerService(context);
+                ServiceManager.addService(BluetoothAdapter.BLUETOOTH_MANAGER_SERVICE, bluetooth);
             }
 
         } catch (RuntimeException e) {
