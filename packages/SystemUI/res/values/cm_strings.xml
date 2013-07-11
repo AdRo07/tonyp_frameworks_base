@@ -103,4 +103,9 @@
     <!-- **** TONYP STUFF **** -->
     <!-- Label in drop down to identify brightness slider -->
     <string name="brightness_label">Brightness</string>
+
+    <!-- Halo -->
+    <string name="halo_dismiss">Dismiss notification</string>
+    <string name="halo_hide">Hide HALO</string>
+
 </resources>
