@@ -53,6 +53,7 @@ public class BatteryController extends BroadcastReceiver {
     public static final int BATTERY_STYLE_CIRCLE         = 2;
     public static final int BATTERY_STYLE_CIRCLE_PERCENT = 3;
     public static final int BATTERY_STYLE_GONE           = 4;
+    public static final int BATTERY_STYLE_TEXT           = 5;
 
 
     private static final int BATTERY_TEXT_STYLE_NORMAL  = R.string.status_bar_settings_battery_meter_format;
@@ -234,18 +235,46 @@ public class BatteryController extends BroadcastReceiver {
                 mText = (View.VISIBLE);
                 mIconStyle = isBatteryStatusCharging() ?
                                 getIconStyleChargeMin() : getIconStyleNormalMin();
+            } else if (mBatteryStyle == BATTERY_STYLE_TEXT) {
+                mIcon = (View.GONE);
+                mText = (View.VISIBLE);
             }
         }
 
         int N = mIconViews.size();
         for (int i=0; i<N; i++) {
             ImageView v = mIconViews.get(i);
+            v.setImageLevel(getBatteryLevel());
+            v.setContentDescription(mContext.getString(R.string.accessibility_battery_level,
+                getBatteryLevel()));
             v.setVisibility(mIcon);
             v.setImageResource(mIconStyle);
         }
         N = mLabelViews.size();
         for (int i=0; i<N; i++) {
             TextView v = mLabelViews.get(i);
+            if (mBatteryStyle == BATTERY_STYLE_TEXT) {
+                if (mBatteryPlugged) {
+                    v.setTextColor(mContext.getResources().getColor(
+                            com.android.internal.R.color.holo_green_light));
+                } else if (getBatteryLevel() <= 4) {
+                    v.setTextColor(mContext.getResources().getColor(
+                            com.android.internal.R.color.holo_red_dark));
+                } else if (getBatteryLevel() <= 14) {
+                    v.setTextColor(mContext.getResources().getColor(
+                            com.android.internal.R.color.holo_orange_dark));
+                } else {
+                    v.setTextAppearance(mContext, 
+                        com.android.systemui.R.style.TextAppearance_StatusBar_Battery);
+                }
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_NORMAL,getBatteryLevel()));
+                v.setTextSize(14);
+            } else {
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,getBatteryLevel()));
+                v.setTextSize(12);
+                v.setTextAppearance(mContext, 
+                    com.android.systemui.R.style.TextAppearance_StatusBar_Battery);
+            }
             v.setVisibility(mText);
         }
     }
