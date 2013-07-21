@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -112,8 +113,8 @@ public class NotificationPanelView extends PanelView {
             boolean swipeFlipJustStarted = false;
             boolean noNotificationPulldown = Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.QS_NO_NOTIFICATION_PULLDOWN, 0) == 1;
-            int quickPulldownMode = Settings.System.getInt(getContext().getContentResolver(),
-                                    Settings.System.QS_QUICK_PULLDOWN, 0);
+            int quickPulldownMode = Settings.System.getIntForUser(getContext().getContentResolver(),
+                                    Settings.System.QS_QUICK_PULLDOWN, 0, UserHandle.USER_CURRENT);
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     mGestureStartX = event.getX(0);

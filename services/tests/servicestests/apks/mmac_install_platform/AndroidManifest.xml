@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2013 The CyanogenMod Project
+<!-- Copyright (C) 2011 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,9 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.frameworks.servicestests.mmac_install_platform">
 
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="twelve_hour_time_format">h:mm a</string>
-    <string name="twenty_four_hour_time_format">H:mm</string>
-    <string name="full_wday_month_day_no_year_split">EEEE\nd \'de\' MMMM</string>
-</resources>
+    <uses-permission android:name="android.permission.SET_ANIMATION_SCALE" />
+    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
+
+    <application android:hasCode="false">
+    </application>
+
+
+</manifest>

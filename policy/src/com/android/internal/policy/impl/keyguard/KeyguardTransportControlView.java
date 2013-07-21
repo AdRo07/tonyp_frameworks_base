@@ -20,6 +20,7 @@ import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.content.Context;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.IRemoteControlDisplay;
@@ -32,6 +33,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
@@ -75,6 +78,7 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
     private AudioManager mAudioManager;
     private IRemoteControlDisplayWeak mIRCD;
     private boolean mMusicClientPresent = true;
+    private boolean mShouldBeShown = true;
 
     /**
      * The metadata which should be populated into the view once we've been attached
@@ -125,6 +129,20 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
         }
     };
     private KeyguardHostView.TransportCallback mTransportCallback;
+
+    private ContentObserver mSettingsObserver = new ContentObserver(mHandler) {
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+        }
+    };
+
+    KeyguardUpdateMonitorCallback mUpdateCallback = new KeyguardUpdateMonitorCallback() {
+        @Override
+        public void onUserSwitched(int userId) {
+            updateSettings();
+        }
+    };
 
     /**
      * This class is required to have weak linkage to the current TransportControlView
@@ -198,20 +216,43 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
     protected void onListenerDetached() {
         mMusicClientPresent = false;
         if (DEBUG) Log.v(TAG, "onListenerDetached()");
-        if (mTransportCallback != null) {
-            mTransportCallback.onListenerDetached();
-        } else {
-            Log.w(TAG, "onListenerDetached: no callback");
-        }
+        callAppropriateCallback();
     }
 
     private void onListenerAttached() {
         mMusicClientPresent = true;
         if (DEBUG) Log.v(TAG, "onListenerAttached()");
-        if (mTransportCallback != null) {
+        callAppropriateCallback();
+    }
+
+    private void updateSettings() {
+        boolean oldShown = mShouldBeShown;
+        mShouldBeShown = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_MUSIC_CONTROLS, 1, UserHandle.USER_CURRENT) != 0;
+        if (DEBUG) Log.v(TAG, "updateSettings(): mShouldBeShown=" + mShouldBeShown);
+        if (oldShown != mShouldBeShown) {
+            callAppropriateCallback();
+            if (mShouldBeShown && mMusicClientPresent
+                    && mCurrentPlayState != RemoteControlClient.PLAYSTATE_NONE) {
+                // send out the play state change event that we suppressed earlier
+                mTransportCallback.onPlayStateChanged();
+            }
+        }
+    }
+
+    private void callAppropriateCallback() {
+        if (mTransportCallback == null) {
+            Log.w(TAG, "callAppropriateCallback: no callback");
+            return;
+        }
+
+        boolean shouldBeAttached = mMusicClientPresent && mShouldBeShown;
+        if (DEBUG) Log.v(TAG, "callAppropriateCallback(): shouldBeAttached=" + shouldBeAttached);
+
+        if (shouldBeAttached) {
             mTransportCallback.onListenerAttached();
         } else {
-            Log.w(TAG, "onListenerAttached(): no callback");
+            mTransportCallback.onListenerDetached();
         }
     }
 
@@ -245,6 +286,11 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
         if (!mAttached) {
             if (DEBUG) Log.v(TAG, "Registering TCV " + this);
             mAudioManager.registerRemoteControlDisplay(mIRCD);
+            KeyguardUpdateMonitor.getInstance(mContext).registerCallback(mUpdateCallback);
+            mContext.getContentResolver().registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.LOCKSCREEN_MUSIC_CONTROLS),
+                    false, mSettingsObserver);
+            updateSettings();
         }
         mAttached = true;
     }
@@ -256,6 +302,8 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
         if (mAttached) {
             if (DEBUG) Log.v(TAG, "Unregistering TCV " + this);
             mAudioManager.unregisterRemoteControlDisplay(mIRCD);
+            KeyguardUpdateMonitor.getInstance(mContext).removeCallback(mUpdateCallback);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
         mAttached = false;
     }
@@ -334,8 +382,11 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
     }
 
     public boolean isMusicPlaying() {
-       return mCurrentPlayState == RemoteControlClient.PLAYSTATE_PLAYING
-               || mCurrentPlayState == RemoteControlClient.PLAYSTATE_BUFFERING;
+        if (!mMusicClientPresent) {
+            return false;
+        }
+        return mCurrentPlayState == RemoteControlClient.PLAYSTATE_PLAYING
+                || mCurrentPlayState == RemoteControlClient.PLAYSTATE_BUFFERING;
     }
 
     private static void setVisibilityBasedOnFlag(View view, int flags, int flag) {
@@ -381,7 +432,9 @@ public class KeyguardTransportControlView extends FrameLayout implements OnClick
         mBtnPlay.setImageResource(imageResId);
         mBtnPlay.setContentDescription(getResources().getString(imageDescId));
         mCurrentPlayState = state;
-        mTransportCallback.onPlayStateChanged();
+        if (mShouldBeShown) {
+            mTransportCallback.onPlayStateChanged();
+        }
     }
 
     static class SavedState extends BaseSavedState {

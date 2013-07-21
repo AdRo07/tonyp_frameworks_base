@@ -863,6 +863,10 @@
   <java-symbol type="string" name="media_route_status_available" />
   <java-symbol type="string" name="media_route_status_not_available" />
   <java-symbol type="string" name="owner_name" />
+  <java-symbol type="string" name="policylab_enforceSelinux" />
+  <java-symbol type="string" name="policydesc_enforceSelinux" />
+  <java-symbol type="string" name="policylab_enforceMmac" />
+  <java-symbol type="string" name="policydesc_enforceMmac" />
 
   <java-symbol type="plurals" name="abbrev_in_num_days" />
   <java-symbol type="plurals" name="abbrev_in_num_hours" />
@@ -1860,6 +1864,7 @@
   <java-symbol type="bool" name="config_intrusiveBatteryLed" />
   <java-symbol type="bool" name="config_multiColorBatteryLed" />
   <java-symbol type="array" name="notification_light_package_mapping" />
+  <java-symbol type="array" name="config_notificationNoAlertsVibePattern" />
 
   <!-- Power menu -->
   <java-symbol type="string" name="global_action_screenshot" />
@@ -1882,6 +1887,8 @@
   <!-- Profiles -->
   <java-symbol type="xml" name="profile_default" />
   <java-symbol type="string" name="wildcardProfile" />
+  <java-symbol type="string" name="profile_picker_title" />
+  <java-symbol type="string" name="profile_none" />
 
   <!-- Power widget -->
   <java-symbol type="string" name="hour" />
@@ -2003,4 +2010,8 @@
   <java-symbol type="dimen" name="pie_trigger_thickness" />
   <java-symbol type="dimen" name="pie_trigger_distance" />
   <java-symbol type="dimen" name="pie_perpendicular_distance" />
+  <!-- Privacy Guard -->
+  <java-symbol type="string" name="privacy_guard_notification" />
+  <java-symbol type="string" name="privacy_guard_notification_detail" />
+  <java-symbol type="drawable" name="stat_notify_privacy_guard" />
 </resources>

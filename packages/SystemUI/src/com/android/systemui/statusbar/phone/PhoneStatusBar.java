@@ -95,9 +95,13 @@ import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.GestureRecorder;
 import com.android.systemui.statusbar.NotificationData;
 import com.android.systemui.statusbar.NotificationData.Entry;
+import com.android.systemui.statusbar.SignalClusterTextView;
 import com.android.systemui.statusbar.SignalClusterView;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.CircleBattery;
+import com.android.systemui.statusbar.policy.CircleDockBattery;
+import com.android.systemui.statusbar.policy.Clock;
 import com.android.systemui.statusbar.policy.DockBatteryController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.DateView;
@@ -136,8 +140,6 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     // will likely move to a resource or other tunable param at some point
     private static final int INTRUDER_ALERT_DECAY_MS = 0; // disabled, was 10000;
-
-    private static final boolean CLOSE_PANEL_WHEN_EMPTIED = true;
 
     private static final int NOTIFICATION_PRIORITY_MULTIPLIER = 10; // see NotificationManagerService
     private static final int HIDE_ICONS_BELOW_SCORE = Notification.PRIORITY_LOW * NOTIFICATION_PRIORITY_MULTIPLIER;
@@ -217,6 +219,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     QuickSettingsContainerView mSettingsContainer;
     int mSettingsPanelGravity;
     private TilesChangedObserver mTilesChangedObserver;
+    private SettingsObserver mSettingsObserver;
 
     // top bar
     View mNotificationPanelHeader;
@@ -230,6 +233,11 @@ public class PhoneStatusBar extends BaseStatusBar {
     private int mCarrierLabelHeight;
     private TextView mEmergencyCallLabel;
     private int mNotificationHeaderHeight;
+
+    private SignalClusterView mSignalView;
+    private SignalClusterTextView mSignalTextView;
+    private CircleBattery mCircleBattery;
+    private CircleDockBattery mCircleDockBattery;
 
     private boolean mShowCarrierInPanel = false;
 
@@ -290,7 +298,6 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     private Animator mLightsOutAnimation;
     private Animator mLightsOnAnimation;
-
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
@@ -364,11 +371,11 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
-            boolean autoBrightness = Settings.System.getIntForUser(
-                    resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0, mCurrentUserId) ==
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
-            mBrightnessControl = !autoBrightness && Settings.System.getInt(
-                    resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0) == 1;
+            int brightnessValue = Settings.System.getIntForUser(resolver,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE, 0, UserHandle.USER_CURRENT);
+            mBrightnessControl = brightnessValue != Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                    && Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL,
+                            0, UserHandle.USER_CURRENT) == 1;
         }
     }
 
@@ -419,8 +426,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         if (ENABLE_INTRUDERS) addIntruderView();
 
-        SettingsObserver observer = new SettingsObserver(mHandler);
-        observer.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
+        mSettingsObserver.observe();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
@@ -587,14 +594,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         // Load the Power widget views and set the listeners
         mPowerWidget = (PowerWidget)mStatusBarWindow.findViewById(R.id.exp_power_stat);
         mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if(Settings.System.getInt(mContext.getContentResolver(),
-                                Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
-                            animateCollapsePanels();
-                        }
-                    }
-                });
+            @Override
+            public void onClick(View v) {
+                if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_HIDE_ONCHANGE, 0, UserHandle.USER_CURRENT) == 1) {
+                    animateCollapsePanels();
+                }
+            }
+        });
         mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -618,6 +625,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         mBatteryController.addIconView((ImageView)mStatusBarView.findViewById(R.id.battery));
         mBatteryController.addLabelView((TextView)mStatusBarView.findViewById(R.id.battery_text));
 
+        mCircleBattery = (CircleBattery) mStatusBarView.findViewById(R.id.circle_battery);
+        mBatteryController.addStateChangedCallback(mCircleBattery);
+
         // Dock Battery support
         mHasDockBattery = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_hasDockBattery);
@@ -628,6 +638,12 @@ public class PhoneStatusBar extends BaseStatusBar {
                     (ImageView)mStatusBarView.findViewById(R.id.dock_battery));
             mDockBatteryController.addLabelView(
                     (TextView)mStatusBarView.findViewById(R.id.dock_battery_text));
+
+            mCircleDockBattery =
+                    (CircleDockBattery) mStatusBarView.findViewById(R.id.circle_dock_battery);
+            final DockBatteryController.DockBatteryStateChangeCallback callback =
+                    (DockBatteryController.DockBatteryStateChangeCallback) mCircleDockBattery;
+            mDockBatteryController.addStateChangedCallback(callback);
         } else {
             // Remove dock battery icons if device doesn't hava dock battery support
             View v = mStatusBarView.findViewById(R.id.dock_battery);
@@ -636,16 +652,17 @@ public class PhoneStatusBar extends BaseStatusBar {
             if (v != null) mStatusBarView.removeView(v);
             v = mStatusBarView.findViewById(R.id.circle_dock_battery);
             if (v != null) mStatusBarView.removeView(v);
+            mCircleDockBattery = null;
         }
 
         mNetworkController = new NetworkController(mContext);
         mBluetoothController = new BluetoothController(mContext);
-        final SignalClusterView signalCluster =
-                (SignalClusterView)mStatusBarView.findViewById(R.id.signal_cluster);
 
+        mSignalView = (SignalClusterView) mStatusBarView.findViewById(R.id.signal_cluster);
+        mSignalTextView = (SignalClusterTextView) mStatusBarView.findViewById(R.id.signal_cluster_text);
 
-        mNetworkController.addSignalCluster(signalCluster);
-        signalCluster.setNetworkController(mNetworkController);
+        mNetworkController.addSignalCluster(mSignalView);
+        mSignalView.setNetworkController(mNetworkController);
 
         mEmergencyCallLabel = (TextView)mStatusBarWindow.findViewById(R.id.emergency_calls_only);
         if (mEmergencyCallLabel != null) {
@@ -929,7 +946,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     private void prepareNavigationBarView() {
         mNavigationBarView.reorient();
-        mNavigationBarView.setListener(mRecentsClickListener,mRecentsPreloadOnTouchListener, mHomeSearchActionListener);
+        mNavigationBarView.setListeners(mRecentsClickListener,
+                mRecentsPreloadOnTouchListener, mHomeSearchActionListener);
         updateSearchPanel();
     }
 
@@ -1119,11 +1137,6 @@ public class PhoneStatusBar extends BaseStatusBar {
 
             if (ENABLE_INTRUDERS && old == mCurrentlyIntrudingNotification) {
                 mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
-            }
-
-            if (CLOSE_PANEL_WHEN_EMPTIED && mNotificationData.size() == 0 && !mAnimating
-                    && !isShowingSettings()) {
-                animateCollapsePanels();
             }
         }
 
@@ -2056,8 +2069,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                     ServiceManager.getService("power"));
             if (power != null) {
                 power.setTemporaryScreenBrightnessSettingOverride(newBrightness);
-                Settings.System.putInt(mContext.getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS, newBrightness);
+                Settings.System.putIntForUser(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, newBrightness, UserHandle.USER_CURRENT);
             }
         } catch (RemoteException e) {
             Slog.w(TAG, "Setting Brightness failed: " + e);
@@ -2748,6 +2761,31 @@ public class PhoneStatusBar extends BaseStatusBar {
         animateCollapsePanels();
         updateNotificationIcons();
         resetUserSetupObserver();
+        mSettingsObserver.onChange(true);
+        mPowerWidget.setupWidget();
+        mPowerWidget.updateVisibility();
+        if (mTilesChangedObserver != null) {
+            mTilesChangedObserver.onChange(true);
+        }
+        if (mSignalView != null) {
+            mSignalView.updateSettings();
+        }
+        if (mSignalTextView != null) {
+            mSignalTextView.updateSettings();
+        }
+        if (mBatteryController != null) {
+            mBatteryController.updateSettings();
+        }
+        if (mCircleBattery != null) {
+            mCircleBattery.updateSettings();
+        }
+        if (mCircleDockBattery != null) {
+            mCircleDockBattery.updateSettings();
+        }
+        if (mNavigationBarView != null) {
+            mNavigationBarView.updateSettings();
+        }
+        super.userSwitched(newUserId);
     }
 
     private void resetUserSetupObserver() {
@@ -2968,7 +3006,8 @@ public class PhoneStatusBar extends BaseStatusBar {
     @Override
     protected boolean shouldDisableNavbarGestures() {
         return !isDeviceProvisioned()
-                || mExpandedVisible || NavigationBarView.getEditMode()
+                || mExpandedVisible
+                || (mNavigationBarView != null && mNavigationBarView.isInEditMode())
                 || (mDisabled & StatusBarManager.DISABLE_SEARCH) != 0;
     }
 
@@ -3032,31 +3071,31 @@ public class PhoneStatusBar extends BaseStatusBar {
             final ContentResolver cr = mContext.getContentResolver();
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_ALARM),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_BUGREPORT),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_DOCK_BATTERY),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_IME),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_USBTETHER),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_WIFI),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
         }
     }
 

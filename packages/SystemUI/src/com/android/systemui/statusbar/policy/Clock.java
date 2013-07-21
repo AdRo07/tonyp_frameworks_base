@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.provider.AlarmClock;
 import android.provider.Settings;
 import android.text.Spannable;
@@ -248,11 +249,9 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
 
     }
 
-    private void updateSettings(){
-        ContentResolver resolver = mContext.getContentResolver();
-
-        int amPmStyle = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_AM_PM, 2));
+    public void updateSettings() {
+        int amPmStyle = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_AM_PM, 2, UserHandle.USER_CURRENT);
 
         if (mAmPmStyle != amPmStyle) {
             mAmPmStyle = amPmStyle;
