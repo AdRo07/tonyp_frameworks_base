@@ -3580,16 +3580,6 @@ public final class Settings {
         public static final String STATUSBAR_TOGGLES_BRIGHTNESS_LOC = "statusbar_toggles_brightness_loc";
 
         /**
-         * @hide
-         */
-        public static final String SYSTEM_POWER_ENABLE_CRT_OFF = "system_power_enable_crt_off";
-
-        /**
-         * @hide
-         */
-        public static final String SYSTEM_POWER_ENABLE_CRT_ON = "system_power_enable_crt_on";
-
-        /**
          * Battery warning preferences
          *
          * 0 = show dialog + play sound (default)
