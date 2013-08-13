@@ -62,6 +62,7 @@ import android.os.ServiceManager;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.ExtendedPropertiesUtils;
 import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
@@ -96,7 +97,7 @@ import android.widget.ScrollView;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar.NotificationClicker;
-import com.android.internal.statusbar.StatusBarNotification;
+import android.service.notification.StatusBarNotification;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.NotificationData;
@@ -398,11 +399,11 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
                 if (mNotificationData.size() > 1 && mLastNotificationEntry != null &&
                         mCurrentNotficationEntry != null &&
                         mLastNotificationEntry.notification == mCurrentNotficationEntry.notification) {
-                    boolean cancel = (mLastNotificationEntry.notification.notification.flags &
+                    boolean cancel = (mLastNotificationEntry.notification.getNotification().flags &
                             Notification.FLAG_AUTO_CANCEL) == Notification.FLAG_AUTO_CANCEL;
                     if (cancel) mLastNotificationEntry = mNotificationData.get(mNotificationData.size() - 2);
                 } else if (mNotificationData.size() == 1) {
-                    boolean cancel = (mLastNotificationEntry.notification.notification.flags &
+                    boolean cancel = (mLastNotificationEntry.notification.getNotification().flags &
                             Notification.FLAG_AUTO_CANCEL) == Notification.FLAG_AUTO_CANCEL;
                     if (cancel) {
                         // We have one notification left and it is dismissable, clear it...
@@ -413,9 +414,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
             }
 
             if (mLastNotificationEntry.notification != null
-                    && mLastNotificationEntry.notification.notification != null
-                    && mLastNotificationEntry.notification.notification.tickerText != null) {
-                mNotificationText = mLastNotificationEntry.notification.notification.tickerText.toString();
+                    && mLastNotificationEntry.notification.getNotification() != null
+                    && mLastNotificationEntry.notification.getNotification().tickerText != null) {
+                mNotificationText = mLastNotificationEntry.notification.getNotification().tickerText.toString();
             }
 
             tick(mLastNotificationEntry, "", 0, 0, false);
@@ -426,7 +427,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
 
     public void setStatusBar(BaseStatusBar bar) {
         mBar = bar;
-        if (mBar.getTicker() != null) mBar.getTicker().setUpdateEvent(this);
+        mBar.getTicker().setUpdateEvent(this);
         mNotificationData = mBar.getNotificationData();
         loadLastNotification(true);
     }
@@ -490,7 +491,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         final float originalAlpha = mContext.getResources().getFraction(R.dimen.status_bar_icon_drawing_alpha, 1, 1);
         for (int i = 0; i < mNotificationData.size(); i++) {
             NotificationData.Entry entry = mNotificationData.get(i);
-            if (entry.notification.pkg.equals("com.paranoid.halo")) {
+            if (entry.notification.getPackageName().equals("com.paranoid.halo")) {
                 entry.icon.setAlpha(0);
             } else {
                 entry.icon.setAlpha(originalAlpha);
@@ -502,7 +503,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         float originalAlpha = mContext.getResources().getFraction(R.dimen.status_bar_icon_drawing_alpha, 1, 1);
         for (int i = 0; i < mNotificationData.size(); i++) {
             NotificationData.Entry entry = mNotificationData.get(i);
-            if (entry.notification.pkg.equals("com.paranoid.halo")) continue;
+            if (entry.notification.getPackageName().equals("com.paranoid.halo")) continue;
             entry.icon.setAlpha(index == i ? 1f : originalAlpha);
         }
     }
@@ -630,7 +631,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
                                     && mCurrentNotficationEntry.notification == item.notification) {
                                 continue;
                             }
-                            boolean cancel = (item.notification.notification.flags &
+                            boolean cancel = (item.notification.getNotification().flags &
                                     Notification.FLAG_AUTO_CANCEL) == Notification.FLAG_AUTO_CANCEL;
                             if (cancel) {
                                 entry = item;
@@ -838,14 +839,14 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
 
                                 ApplicationInfo ai;
                                 try {
-                                    ai = mPm.getApplicationInfo( entry.notification.pkg, 0);
+                                    ai = mPm.getApplicationInfo( entry.notification.getPackageName(), 0);
                                 } catch (final NameNotFoundException e) {
                                     ai = null;
                                 }
                                 String text = (String) (ai != null ? mPm.getApplicationLabel(ai) : "...");
 
-                                if (entry.notification.notification.tickerText != null) {
-                                    text = entry.notification.notification.tickerText.toString();
+                                if (entry.notification.getNotification().tickerText != null) {
+                                    text = entry.notification.getNotification().tickerText.toString();
                                 }
                                 tick(entry, text, 0, 250, false);
                                 mTaskIntent = entry.getFloatingIntent();
@@ -1204,7 +1205,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         }
 
         StatusBarNotification notification = entry.notification;
-        Notification n = notification.notification;
+        Notification n = notification.getNotification();
 
         // Deal with the intent
         mContentIntent = entry.getFloatingIntent();
@@ -1223,12 +1224,16 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         mEffect.setHaloMessageNumber(n.number, alwaysFlip, delay);
     }
 
+    public void updateTicker(StatusBarNotification notification) {
+        loadLastNotification(true);
+    }
+
     // This is the android ticker callback
     public void updateTicker(StatusBarNotification notification, String text) {
 
         boolean allowed = false; // default off
         try {
-            allowed = mNotificationManager.isPackageAllowedForHalo(notification.pkg);
+            allowed = mNotificationManager.isPackageAllowedForHalo(notification.getPackageName());
         } catch (android.os.RemoteException ex) {
             // System is dead
         }
@@ -1239,7 +1244,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
             if (entry.notification == notification) {
 
                 // No intent, no tick ...
-                if (entry.notification.notification.contentIntent == null) return;
+                if (entry.notification.getNotification().contentIntent == null) return;
 
                 mIsNotificationNew = true;
                 if (mLastNotificationEntry != null && notification == mLastNotificationEntry.notification) {
