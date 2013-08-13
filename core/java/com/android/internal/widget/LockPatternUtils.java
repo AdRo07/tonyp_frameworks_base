@@ -140,7 +140,7 @@ public class LockPatternUtils {
      */
     public static final int ID_DEFAULT_STATUS_WIDGET = -2;
 
-     final static String LOCKOUT_PERMANENT_KEY = "lockscreen.lockedoutpermanently";
+    public final static String LOCKOUT_PERMANENT_KEY = "lockscreen.lockedoutpermanently";
     public final static String LOCKOUT_ATTEMPT_DEADLINE = "lockscreen.lockoutattemptdeadline";
     public final static String PATTERN_EVER_CHOSEN_KEY = "lockscreen.patterneverchosen";
     public final static String GESTURE_EVER_CHOSEN_KEY = "lockscreen.gestureeverchosen";
