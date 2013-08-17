@@ -1380,7 +1380,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mDoubleTapOnHomeBehavior = mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_doubleTapOnHomeBehavior);
         if (mDoubleTapOnHomeBehavior < KEY_ACTION_NOTHING ||
-                mDoubleTapOnHomeBehavior > KEY_ACTION_IN_APP_SEARCH) {
+                Integer.parseInt(mDoubleTapOnHomeBehavior) > KEY_ACTION_IN_APP_SEARCH) {
             mDoubleTapOnHomeBehavior = KEY_ACTION_NOTHING;
         }
     }
