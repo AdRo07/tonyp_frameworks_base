@@ -1979,10 +1979,10 @@ public final class Settings {
         public static final String PHONE_BLACKLIST_PRIVATE_NUMBER_MODE = "phone_blacklist_private_number_enabled";
 
         /**
-         * Whether the blacklisting feature for phone calls from private numbers is enabled
+         * Whether the blacklisting feature for phone calls from unknown numbers is enabled
          * @hide
          */
-        public static final String PHONE_BLACKLIST_UNKNOWN_NUMBER_MODE = "phone_blacklist_private_number_enabled";
+        public static final String PHONE_BLACKLIST_UNKNOWN_NUMBER_MODE = "phone_blacklist_unknown_number_enabled";
 
         /**
          * Constants to be used for {@link PHONE_BLACKLIST_PRIVATE_NUMBER_MODE} and
@@ -3169,6 +3169,13 @@ public final class Settings {
           * @hide
           */
          public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
+
+         /**
+          * Action to perform when the home key is double-tapped. (Default is 0)
+          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+          * @hide
+          */
+         public static final String KEY_HOME_DOUBLE_TAP_ACTION = "key_home_double_tap_action";
 
          /**
           * Action to perform when the menu key is pressed. (Default is 1)
