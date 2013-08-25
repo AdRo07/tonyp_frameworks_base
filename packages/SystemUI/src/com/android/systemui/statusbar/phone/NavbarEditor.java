@@ -68,7 +68,7 @@ public class NavbarEditor implements View.OnTouchListener {
     private final ArrayList<KeyButtonView> mButtonViews;
 
     private Context mContext;
-    private static Boolean mIsDevicePhone = null;
+    private static Boolean sIsDevicePhone = null;
     private boolean mInEditMode = false;
 
     // Holds reference to the parent/root of the inflated view
