@@ -268,10 +268,10 @@ public class BatteryController extends BroadcastReceiver {
                         com.android.systemui.R.style.TextAppearance_StatusBar_Battery);
                 }
                 v.setText(mContext.getString(BATTERY_TEXT_STYLE_NORMAL,getBatteryLevel()));
-                v.setTextSize(16);
+                //v.setTextSize(14);
             } else {
                 v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,getBatteryLevel()));
-                v.setTextSize(12);
+                //v.setTextSize(12);
                 v.setTextAppearance(mContext, 
                     com.android.systemui.R.style.TextAppearance_StatusBar_Battery);
             }
