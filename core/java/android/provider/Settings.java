@@ -3643,30 +3643,6 @@ public final class Settings {
          */
         public static final String POWER_UI_LOW_BATTERY_WARNING_POLICY = "power_ui_low_battery_warning_policy";
 
-        /**
-         * Sets transparency of statusbar
-         * @hide
-         */
-        public static final String STATUS_BAR_ALPHA = "status_bar_alpha";
-
-        /**
-         * Sets transparency mode of statusbar
-         * 0 = only home, 1 = keyguard and home (default), 2 = always
-         * @hide
-         */
-        public static final String STATUS_BAR_ALPHA_MODE = "status_bar_alpha_mode";
-
-        /**
-         * Sets color of statusbar
-         * @hide
-         */
-        public static final String STATUS_BAR_COLOR = "status_bar_color";
-
-        /**
-         * @hide
-         */
-        public static final String STATUSBAR_TOGGLES_BRIGHTNESS_LOC = "statusbar_toggles_brightness_loc";
-
     }
 
     /**
