@@ -41,6 +41,30 @@
         android:scaleType="center"
         android:visibility="gone"
         />
+    
+    <com.android.systemui.statusbar.policy.Clock
+        android:id="@+id/clock_center"
+        android:textAppearance="@style/TextAppearance.StatusBar.Clock"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:singleLine="true"
+        android:paddingStart="6dip"
+        android:gravity="center"
+        android:clickable="false"
+        android:visibility="gone"
+        />
+
+    <com.android.systemui.statusbar.policy.Clock
+        android:id="@+id/clock_left"
+        android:textAppearance="@style/TextAppearance.StatusBar.Clock"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:singleLine="true"
+        android:paddingStart="6dip"
+        android:gravity="center_vertical|left"
+        android:clickable="false"
+        android:visibility="gone"
+        />
 
     <LinearLayout android:id="@+id/status_bar_contents"
         android:layout_width="match_parent"

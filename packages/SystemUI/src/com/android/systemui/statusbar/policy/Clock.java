@@ -65,6 +65,10 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
     private static final int AM_PM_STYLE_SMALL   = 1;
     private static final int AM_PM_STYLE_GONE    = 2;
 
+    public static final int CLOCK_POSITION_LEFT    = 0;
+    public static final int CLOCK_POSITION_CENTER  = 1;
+    public static final int CLOCK_POSITION_RIGHT   = 2;
+
     private int mAmPmStyle = AM_PM_STYLE_GONE;
 
     Handler mHandler;

@@ -241,8 +241,13 @@ public class PhoneStatusBar extends BaseStatusBar {
     private CircleBattery mCircleBattery;
     private CircleDockBattery mCircleDockBattery;
     private Clock mClock;
+    private Clock mClockLeft;
+    private Clock mClockCenter;
 
     private boolean mShowCarrierInPanel = false;
+
+    //clock position
+    private int mClockPosition;    
 
     // drag bar
     CloseDragHandle mCloseView;
@@ -353,6 +358,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                     Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SCREEN_BRIGHTNESS_MODE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK_POSITION), false, this);
             update();
         }
 
@@ -368,6 +375,11 @@ public class PhoneStatusBar extends BaseStatusBar {
             mBrightnessControl = brightnessValue != Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
                     && Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL,
                             0, UserHandle.USER_CURRENT) == 1;
+            int clockPosition = Settings.System.getIntForUser(resolver, Settings.STATUS_BAR_CLOCK_POSITION,
+                            0, UserHandle.USER_CURRENT) == 1;
+
+            if(clockPosition != mClockPosition)
+                updateClock();
         }
     }
 
@@ -398,6 +410,34 @@ public class PhoneStatusBar extends BaseStatusBar {
             }
         }
     };
+    
+    public void updateClock() {
+        int newPosition = Settings.System.getIntForUser(resolver, Settings.STATUS_BAR_CLOCK_POSITION,
+                            0, UserHandle.USER_CURRENT) == 1;,
+
+        boolean left = false;
+        boolean center = false;
+        boolean right = false;
+
+        if(newPosition == Clock.CLOCK_POSITION_LEFT) {
+            left = true;
+        } else if(newPosition == Clock.CLOCK_POSITION_CENTER) {
+            center = true;
+        } else {
+            //default value or position right, but that is default
+            newPosition = Clock.CLOCK_POSITION_RIGHT;
+            right = true;
+        }
+        mClockPossition = newPosition;
+
+        mClock.setHidden(!right);
+        mClockLeft.setHidden(!left);
+        mClockCenter.setHidden(!center);
+
+        mClock.setVisibility(right ? View.VISIBLE : View.GONE);
+        mClockLeft.setVisibility(left ? View.VISIBLE : View.GONE);
+        mClockCenter.setVisibility(center? View.VISIBLE : View.GONE);
+    }
 
     @Override
     public void start() {
@@ -644,6 +684,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         mSignalView = (SignalClusterView) mStatusBarView.findViewById(R.id.signal_cluster);
         mSignalTextView = (SignalClusterTextView) mStatusBarView.findViewById(R.id.signal_cluster_text);
         mClock = (Clock) mStatusBarView.findViewById(R.id.clock);
+        mClockLeft = (Clock) mStatusBarView.findViewById(R.id.clock_left);
+        mClockCenter = (Clock) mStatusBarView.findViewById(R.id.clock_center);
 
         mNetworkController.addSignalCluster(mSignalView);
         mSignalView.setNetworkController(mNetworkController);

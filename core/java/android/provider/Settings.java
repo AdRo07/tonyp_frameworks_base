@@ -2844,6 +2844,16 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
+        
+        /**
+         * Whether to show the clock in status bar left, centered or right
+         * 0: left
+         * 1: center
+         * 2: right
+         * default: 2
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_POSITION = "status_bar_clock_position";
 
         /**
          * Whether to show the signal text or signal bars.
