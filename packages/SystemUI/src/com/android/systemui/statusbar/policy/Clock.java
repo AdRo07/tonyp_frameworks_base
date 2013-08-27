@@ -59,7 +59,7 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
     private SimpleDateFormat mClockFormat;
     private Locale mLocale;
     private SettingsObserver mObserver;
-    private boolean mHidden;
+    private boolean mHidden, mForceHidden;
 
     private static final int AM_PM_STYLE_NORMAL  = 0;
     private static final int AM_PM_STYLE_SMALL   = 1;
@@ -117,6 +117,11 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
 
     public void setHidden(boolean hidden) {
         mHidden = hidden;
+        updateVisibility();
+    }
+
+    public void setForceHidden(boolean hidden) {
+        mForceHidden = hidden;
         updateVisibility();
     }
 
@@ -275,7 +280,7 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
     private void updateVisibility() {
         boolean showClock = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CLOCK, 1, UserHandle.USER_CURRENT) == 1;
-        setVisibility(showClock && !mHidden ? View.VISIBLE : View.GONE);
+        setVisibility(showClock && !mHidden && !mForceHidden ? View.VISIBLE : View.GONE);
     }
 
     private void collapseStartActivity(Intent what) {

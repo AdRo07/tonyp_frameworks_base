@@ -378,11 +378,11 @@ public class PhoneStatusBar extends BaseStatusBar {
                     && Settings.System.getIntForUser(resolver,
                             Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL,
                             0, UserHandle.USER_CURRENT) == 1;
-            int clockPosition = Settings.System.getIntForUser(resolver, Settings.STATUS_BAR_CLOCK_POSITION,
-                            0, UserHandle.USER_CURRENT) == 1;
+            int clockPosition = Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_CLOCK_POSITION,
+                            0, UserHandle.USER_CURRENT);
 
             if(clockPosition != mClockPosition)
-                updateClock();
+                updateClock(clockPosition);
         }
     }
 
@@ -414,9 +414,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
     };
     
-    public void updateClock() {
-        int newPosition = Settings.System.getIntForUser(resolver, Settings.STATUS_BAR_CLOCK_POSITION,
-                            0, UserHandle.USER_CURRENT) == 1;,
+    public void updateClock(int newPosition) {
 
         boolean left = false;
         boolean center = false;
@@ -431,15 +429,11 @@ public class PhoneStatusBar extends BaseStatusBar {
             newPosition = Clock.CLOCK_POSITION_RIGHT;
             right = true;
         }
-        mClockPossition = newPosition;
+        mClockPosition = newPosition;
 
-        mClock.setHidden(!right);
-        mClockLeft.setHidden(!left);
-        mClockCenter.setHidden(!center);
-
-        mClock.setVisibility(right ? View.VISIBLE : View.GONE);
-        mClockLeft.setVisibility(left ? View.VISIBLE : View.GONE);
-        mClockCenter.setVisibility(center? View.VISIBLE : View.GONE);
+        mClock.setForceHidden(!right);
+        mClockLeft.setForceHidden(!left);
+        mClockCenter.setForceHidden(!center);
     }
 
     @Override
