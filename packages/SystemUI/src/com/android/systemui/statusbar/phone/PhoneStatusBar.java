@@ -248,6 +248,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private Clock mClock;
     private Clock mClockLeft;
     private Clock mClockCenter;
+    private Clock mClockRight;
 
     private boolean mShowCarrierInPanel = false;
 
@@ -422,18 +423,21 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         if(newPosition == Clock.CLOCK_POSITION_LEFT) {
             left = true;
+            mClock = mClockLeft; 
         } else if(newPosition == Clock.CLOCK_POSITION_CENTER) {
             center = true;
+            mClock = mClockCenter;
         } else {
             //default value or position right, but that is default
             newPosition = Clock.CLOCK_POSITION_RIGHT;
             right = true;
+            mClock = mClockRight;
         }
         mClockPosition = newPosition;
 
-        mClock.setForceHidden(!right);
         mClockLeft.setForceHidden(!left);
         mClockCenter.setForceHidden(!center);
+        mClockRight.setForceHidden(!right);
     }
 
     @Override
@@ -457,6 +461,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         mSettingsObserver = new SettingsObserver(mHandler);
         mSettingsObserver.observe();
+        
+        mSettingsObserver.update();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
@@ -689,9 +695,13 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         mSignalView = (SignalClusterView) mStatusBarView.findViewById(R.id.signal_cluster);
         mSignalTextView = (SignalClusterTextView) mStatusBarView.findViewById(R.id.signal_cluster_text);
-        mClock = (Clock) mStatusBarView.findViewById(R.id.clock);
+        mClockRight = (Clock) mStatusBarView.findViewById(R.id.clock);
         mClockLeft = (Clock) mStatusBarView.findViewById(R.id.clock_left);
         mClockCenter = (Clock) mStatusBarView.findViewById(R.id.clock_center);
+
+        mClockLeft.setForceHidden(true);
+        mClockCenter.setForceHidden(true);
+        mClockRight.setForceHidden(true);
 
         mNetworkController.addSignalCluster(mSignalView);
         mSignalView.setNetworkController(mNetworkController);
@@ -708,7 +718,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                         @Override
                         public void onLayoutChange(View v, int left, int top, int right, int bottom,
                             int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                        updateCarrierLabelVisibility(false);
+                                updateCarrierLabelVisibility(false);
                         }});
             }
         }
@@ -2279,7 +2289,12 @@ public class PhoneStatusBar extends BaseStatusBar {
             final View dockBattery = mStatusBarView.findViewById(R.id.dock_battery);
             final View dockBattery2 = mStatusBarView.findViewById(R.id.dock_battery_text);
             final View dockBattery3 = mStatusBarView.findViewById(R.id.circle_dock_battery);
-            final View clock = mStatusBarView.findViewById(R.id.clock);
+            int id = -1;
+            if(mClockPosition == Clock.CLOCK_POSITION_LEFT) id = R.id.clock_left;
+            else if(mClockPosition == Clock.CLOCK_POSITION_CENTER) id = R.id.clock_center;
+            else if(mClockPosition == Clock.CLOCK_POSITION_RIGHT) id = R.id.clock;
+
+            final View clock = mStatusBarView.findViewById(id);
 
             List<ObjectAnimator> lightsOutObjs = new ArrayList<ObjectAnimator>();
             lightsOutObjs.add(ObjectAnimator.ofFloat(notifications, View.ALPHA, 0));
