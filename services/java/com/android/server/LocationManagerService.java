@@ -1724,13 +1724,10 @@ public class LocationManagerService extends ILocationManager.Stub {
     public void reportLocation(Location location, boolean passive) {
         checkCallerIsProvider();
 
-        /*
         if (!location.isComplete()) {
             Log.w(TAG, "Dropping incomplete location: " + location);
             return;
         }
-        */
-        location.makeComplete();
 
         mLocationHandler.removeMessages(MSG_LOCATION_CHANGED, location);
         Message m = Message.obtain(mLocationHandler, MSG_LOCATION_CHANGED, location);
