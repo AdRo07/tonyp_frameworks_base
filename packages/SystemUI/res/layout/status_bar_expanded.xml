@@ -58,6 +58,14 @@
             android:layout_height="@dimen/notification_panel_header_height"
             />
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/notification_min_height"
+            android:id="@+id/brightness_slider_container_above"
+            android:orientation="vertical">
+
+        </FrameLayout>
+
         <ViewStub android:id="@+id/ribbon_settings_stub"
             android:layout="@layout/ribbon_settings"
             android:layout_width="match_parent"
@@ -67,7 +75,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/notification_min_height"
-            android:id="@+id/brightness_slider_container"
+            android:id="@+id/brightness_slider_container_below"
             android:orientation="vertical">
 
         </FrameLayout>

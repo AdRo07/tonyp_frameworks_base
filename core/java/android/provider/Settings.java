@@ -2835,7 +2835,10 @@ public final class Settings {
         
         /**
          * Whether to show the BrightnessSlider in Notifications 
-         * default: 1
+         * default: 0
+         * 0: don't show
+         * 1: above Ribbons
+         * 2: below Ribbons
          * @hide
          */
         public static final String SHOW_BRIGHTNESS_SLIDER = "show_brightness_slider";

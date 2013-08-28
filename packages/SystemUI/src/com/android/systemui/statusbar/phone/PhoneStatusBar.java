@@ -231,7 +231,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private QuickSettingsController mRibbonQS;
     
     //Brightness Slider 
-    private boolean mHasBrightnessSlider;
+    private int mBrightnessSliderMode;
     private BrightnessSlider mSlider;
     private FrameLayout mSliderContainer;
     //Made it in the same way as the Ribbons are made
@@ -520,9 +520,14 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     private void showBrightnessSlider(){
+        if(mBrightnessSliderMode > 2 || mBrightnessSliderMode < 0)
+            mBrightnessSliderMode = 0; //default
         if(mSlider == null) {
             mSlider = new BrightnessSlider(mContext); 
-            mSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container);
+            mSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(
+                                    (mBrightnessSliderMode == 1)  ? 
+                                        R.id.brightness_slider_container_above : 
+                                        R.id.brightness_slider_container_below);
             mSliderContainer.removeAllViews();
             mSliderContainer.addView(mSlider.getView());
         }
@@ -832,12 +837,12 @@ public class PhoneStatusBar extends BaseStatusBar {
                     Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
             mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
                     Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
-            mHasBrightnessSlider = Settings.System.getIntForUser(resolver,
-                    Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT) == 1;
+            mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
+                    Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
             if (mHasQuickAccessSettings) {
                 inflateRibbon();
             }
-            if(mHasBrightnessSlider) {
+            if(mBrightnessSliderMode != 0) {
                 showBrightnessSlider();
             }
         }
@@ -1787,7 +1792,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                                     .setDuration(FLIP_DURATION_IN)
                                     )));
         }
-        if (mSlider != null && mHasBrightnessSlider) {
+        if (mSlider != null && mBrightnessSliderMode != 0) {
             mSliderContainer.setVisibility(View.VISIBLE);
             mSlider.getView().setVisibility(View.VISIBLE);
             mBrightnessSliderViewAnim = start(
@@ -1908,7 +1913,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 mRibbonView.setVisibility(View.VISIBLE);
                 mRibbonView.setScaleX(-progress);
             }
-            if(mSlider != null && mHasBrightnessSlider) {
+            if(mSlider != null && mBrightnessSliderMode != 0) {
                 View v = mSliderContainer;
                 v.setVisibility(View.VISIBLE);
                 mSlider.getView().setVisibility(View.VISIBLE);
@@ -2062,7 +2067,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 mRibbonView.setScaleX(1f);
                 mRibbonView.setVisibility(View.VISIBLE);
             }
-            if (mSlider != null && mHasBrightnessSlider) {
+            if (mSlider != null && mBrightnessSliderMode != 0) {
                 mSliderContainer.setScaleX(1f);
                 mSliderContainer.setVisibility(View.VISIBLE);
                 mSlider.getView().setVisibility(View.VISIBLE);
@@ -3186,9 +3191,9 @@ public class PhoneStatusBar extends BaseStatusBar {
             if (uri != null && uri.equals(Settings.System.getUriFor(
                     Settings.System.SHOW_BRIGHTNESS_SLIDER))) {
                 final ContentResolver resolver = mContext.getContentResolver();
-                mHasBrightnessSlider = Settings.System.getIntForUser(resolver,
-                        Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT) == 1;
-                if (mHasBrightnessSlider) {
+                mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
+                if (mBrightnessSliderMode != 0) {
                     showBrightnessSlider();
                 } else {
                     cleanupBrightnessSlider();
