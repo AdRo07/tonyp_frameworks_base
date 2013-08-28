@@ -64,6 +64,14 @@
             android:layout_height="@dimen/notification_min_height"
             />
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/notification_min_height"
+            android:id="@+id/brightness_slider_container"
+            android:orientation="vertical">
+
+        </FrameLayout>
+
         <TextView
             android:id="@+id/emergency_calls_only"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Network.EmergencyOnly"

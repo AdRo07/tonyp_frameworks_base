@@ -2834,6 +2834,13 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
         
         /**
+         * Whether to show the BrightnessSlider in Notifications 
+         * default: 1
+         * @hide
+         */
+        public static final String SHOW_BRIGHTNESS_SLIDER = "show_brightness_slider";
+        
+        /**
          * Whether to show the clock in status bar left, centered or right
          * 0: left
          * 1: center

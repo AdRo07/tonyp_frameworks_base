@@ -39,6 +39,7 @@ import com.android.systemui.ExpandHelper;
 import com.android.systemui.R;
 import com.android.systemui.SwipeHelper;
 import com.android.systemui.statusbar.NotificationData;
+import com.android.systemui.statusbar.powerwidget.BrightnessSlider;
 
 import java.util.HashMap;
 
@@ -70,6 +71,7 @@ public class NotificationRowLayout
     boolean mRemoveViews = true;
 
     private LayoutTransition mRealLayoutTransition;
+    private BrightnessSlider mSlider;
 
     public NotificationRowLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -102,6 +104,21 @@ public class NotificationRowLayout
         float densityScale = getResources().getDisplayMetrics().density;
         float pagingTouchSlop = ViewConfiguration.get(mContext).getScaledPagingTouchSlop();
         mSwipeHelper = new SwipeHelper(SwipeHelper.X, this, densityScale, pagingTouchSlop);
+
+        showBrightnessSlider(true);
+    }
+
+    public void showBrightnessSlider(boolean slider) {
+        
+        if(!slider && mSlider != null) {
+            mSlider.getView().setVisibility(View.GONE);       
+            return;
+        }         
+
+        if(mSlider == null)
+            mSlider = new BrightnessSlider(getContext());
+        View v = mSlider.getView();
+        addView(v, 0);
     }
 
     public void setLongPressListener(View.OnLongClickListener listener) {
