@@ -392,7 +392,7 @@ public class WifiStateMachine extends StateMachine {
     private static final int SUSPEND_DUE_TO_SCREEN     = 1<<2;
 
     /* Tracks if user has enabled suspend optimizations through settings */
-    private AtomicBoolean mUserWantsSuspendOpt = new AtomicBoolean(true);
+    private AtomicBoolean mUserWantsSuspendOpt = new AtomicBoolean(false);
 
     /**
      * Default framework scan interval in milliseconds. This is used in the scenario in which
@@ -597,7 +597,7 @@ public class WifiStateMachine extends StateMachine {
                 R.string.config_wifi_p2p_device_type);
 
         mUserWantsSuspendOpt.set(Settings.Global.getInt(mContext.getContentResolver(),
-                    Settings.Global.WIFI_SUSPEND_OPTIMIZATIONS_ENABLED, 1) == 1);
+                    Settings.Global.WIFI_SUSPEND_OPTIMIZATIONS_ENABLED, 0) == 1);
 
         mContext.registerReceiver(
             new BroadcastReceiver() {
