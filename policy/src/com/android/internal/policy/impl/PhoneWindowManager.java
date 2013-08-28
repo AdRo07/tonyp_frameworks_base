@@ -179,6 +179,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_SEARCH = 3;
     private static final int KEY_ACTION_VOICE_SEARCH = 4;
     private static final int KEY_ACTION_IN_APP_SEARCH = 5;
+    private static final int KEY_ACTION_SCREEN_OFF = 6;
+    private static final int KEY_ACTION_POWER_MENU = 7;
+    private static final int KEY_ACTION_LAST_APP = 8;
+    private static final int KEY_ACTION_TORCH = 9;
+    private static final int KEY_ACTION_SCREENSHOT = 10;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -983,8 +988,60 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KEY_ACTION_IN_APP_SEARCH:
                 triggerVirtualKeypress(KeyEvent.KEYCODE_SEARCH);
                 break;
+            case KEY_ACTION_SCREEN_OFF:
+                PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+                pm.goToSleep(SystemClock.uptimeMillis());
+                break;
+            case KEY_ACTION_POWER_MENU:
+                Runnable pmenu = new Runnable() {
+                    public void run() {
+                            sendCloseSystemWindows(SYSTEM_DIALOG_REASON_GLOBAL_ACTIONS);
+                            showGlobalActionsDialog();
+                    }
+                };
+                mHandler.post(pmenu);
+                break;
+            case KEY_ACTION_LAST_APP:
+                toggleLastApp();
+                break;
+            case KEY_ACTION_TORCH:
+                Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
+                i.putExtra("bright", false);
+                mContext.sendBroadcast(i);
+                break;
+            case KEY_ACTION_SCREENSHOT:
+                takeScreenshot();
+                break;
             default:
                 break;
+        }
+    }
+
+    private void toggleLastApp() {
+        int lastAppId = 0;
+        int looper = 1;
+        String packageName;
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        final ActivityManager am = (ActivityManager) mContext
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        String defaultHomePackage = "com.android.launcher";
+        intent.addCategory(Intent.CATEGORY_HOME);
+        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
+        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
+            defaultHomePackage = res.activityInfo.packageName;
+        }
+        List <ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(5);
+        // lets get enough tasks to find something to switch to
+        // Note, we'll only get as many as the system currently has - up to 5
+        while ((lastAppId == 0) && (looper < tasks.size())) {
+            packageName = tasks.get(looper).topActivity.getPackageName();
+            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
+                lastAppId = tasks.get(looper).id;
+            }
+            looper++;
+        }
+        if (lastAppId != 0) {
+            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
         }
     }
 
