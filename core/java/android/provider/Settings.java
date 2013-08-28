@@ -2875,6 +2875,16 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
+        
+        /**
+         * Whether to show the BrightnessSlider in Notifications 
+         * default: 0
+         * 0: don't show
+         * 1: above Ribbons
+         * 2: below Ribbons
+         * @hide
+         */
+        public static final String SHOW_BRIGHTNESS_SLIDER = "show_brightness_slider";
 
         /**
          * Whether to show the signal text or signal bars.

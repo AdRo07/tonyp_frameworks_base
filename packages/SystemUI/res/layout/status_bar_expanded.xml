@@ -58,11 +58,29 @@
             android:layout_height="@dimen/notification_panel_header_height"
             />
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/notification_min_height"
+            android:id="@+id/brightness_slider_container_above"
+            android:visibility="gone"
+            >
+
+        </FrameLayout>
+
         <ViewStub android:id="@+id/ribbon_settings_stub"
             android:layout="@layout/ribbon_settings"
             android:layout_width="match_parent"
             android:layout_height="@dimen/notification_min_height"
             />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/notification_min_height"
+            android:id="@+id/brightness_slider_container_below"
+            android:visibility="gone"
+            >
+
+        </FrameLayout>
 
         <TextView
             android:id="@+id/emergency_calls_only"
