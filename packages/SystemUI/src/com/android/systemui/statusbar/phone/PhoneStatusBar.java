@@ -3191,8 +3191,11 @@ public class PhoneStatusBar extends BaseStatusBar {
             if (uri != null && uri.equals(Settings.System.getUriFor(
                     Settings.System.SHOW_BRIGHTNESS_SLIDER))) {
                 final ContentResolver resolver = mContext.getContentResolver();
-                mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
+                int mode = Settings.System.getIntForUser(resolver,
                         Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
+                if(mode != mBrightnessSliderMode)
+                    cleanupBrightnessSlider();
+                mBrightnessSliderMode = mode;
                 if (mBrightnessSliderMode != 0) {
                     showBrightnessSlider();
                 } else {

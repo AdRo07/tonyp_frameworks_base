@@ -62,7 +62,8 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/notification_min_height"
             android:id="@+id/brightness_slider_container_above"
-            android:orientation="vertical">
+            android:visibility="gone"
+            >
 
         </FrameLayout>
 
@@ -76,7 +77,8 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/notification_min_height"
             android:id="@+id/brightness_slider_container_below"
-            android:orientation="vertical">
+            android:visibility="gone"
+            >
 
         </FrameLayout>
 
