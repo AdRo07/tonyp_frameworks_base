@@ -3254,7 +3254,6 @@ public final class Settings {
           *  8 - Toggle last app
           *  9 - Toggle torch
           * 10 - Take screenshot
-          * 11 - Quickmemo (if installed)
           * @hide
           */
          public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
