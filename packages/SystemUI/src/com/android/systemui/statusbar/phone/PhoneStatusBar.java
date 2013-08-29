@@ -513,6 +513,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mSlider == null) {
             return;
         }
+        ((FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container_above)).removeAllViews();
+        ((FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container_below)).removeAllViews();
         mSliderContainer.setVisibility(View.GONE);
         mSliderContainer.removeAllViews();
         mSlider = null;
@@ -831,20 +833,21 @@ public class PhoneStatusBar extends BaseStatusBar {
                     mTilesChangedObserver.startObserving();
                 }
             }
+        }
 
-            final ContentResolver resolver = mContext.getContentResolver();
-            mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
-                    Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
-            mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
-                    Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
-            mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
-                    Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
-            if (mHasQuickAccessSettings) {
-                inflateRibbon();
-            }
-            if(mBrightnessSliderMode != 0) {
-                showBrightnessSlider();
-            }
+        final ContentResolver resolver = mContext.getContentResolver();
+        mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
+                Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
+        mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
+                Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
+        mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
+                Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
+        if (mHasQuickAccessSettings) {
+            inflateRibbon();
+        }
+        if(mBrightnessSliderMode != 0) {
+            cleanupBrightnessSlider();
+            showBrightnessSlider();
         }
 
         mClingShown = ! (DEBUG_CLINGS
