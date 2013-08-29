@@ -600,23 +600,15 @@ public abstract class BaseStatusBar extends SystemUI implements
         return new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                NotificationData.Entry  entry = (NotificationData.Entry) v.getTag();
-                StatusBarNotification sbn = entry.notification;
+                NotificationData.Entry entry = (NotificationData.Entry) v.getTag();
+                if (entry.notification == null) return false;
 
+                StatusBarNotification sbn = entry.notification;
                 final String packageNameF = sbn.getPackageName();
                 final PendingIntent contentIntent = sbn.getNotification().contentIntent;
-                boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
 
                 if (packageNameF == null) return false;
                 if (v.getWindowToken() == null) return false;
-
-                //Long click menu broken on PIE mode...pop up menu is useless (auto-launch on long click)
-                if (expanded) {
-                    launchFloating(contentIntent);
-                    animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
-                    return true;
-                }
 
                 mNotificationBlamePopup = new PopupMenu(mContext, v);
                 mNotificationBlamePopup.getMenuInflater().inflate(
