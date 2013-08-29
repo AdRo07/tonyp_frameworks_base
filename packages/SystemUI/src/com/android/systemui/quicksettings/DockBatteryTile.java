@@ -23,7 +23,7 @@ public class DockBatteryTile extends QuickSettingsTile implements DockBatterySta
     private Drawable mDockBatteryIcon;
 
     public DockBatteryTile(Context context, QuickSettingsController qsc, DockBatteryController controller) {
-        super(context, qsc, R.layout.quick_settings_tile_dock_battery);
+        super(context, qsc);
 
         mController = controller;
 
@@ -82,9 +82,10 @@ public class DockBatteryTile extends QuickSettingsTile implements DockBatterySta
 
     @Override
     void updateQuickSettings() {
-        TextView tv = (TextView) mTile.findViewById(R.id.dock_battery_textview);
+        TextView tv = (TextView) mTile.findViewById(R.id.text);
+        ImageView iv = (ImageView) mTile.findViewById(R.id.image);
+
         tv.setText(mLabel);
-        ImageView iv = (ImageView) mTile.findViewById(R.id.dock_battery_image);
         iv.setImageDrawable(mDockBatteryIcon);
         iv.setImageLevel(mDockBatteryLevel);
     }
