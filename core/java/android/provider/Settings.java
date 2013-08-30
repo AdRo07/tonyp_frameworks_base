@@ -2908,6 +2908,15 @@ public final class Settings {
         public static final String SHOW_BRIGHTNESS_SLIDER = "show_brightness_slider";
 
         /**
+         * Whether to show the BrightnessSlider in Notifications as Transparent or not
+         * default: 0
+         * 0: transparent
+         * 1: not transparent -> qs_tile_background
+         * @hide
+         */
+        public static final String SHOW_BRIGHTNESS_SLIDER_TRANSPARENT = "show_brightness_slider_transparent";
+
+        /**
          * Whether to show the signal text or signal bars.
          * default: 0
          * 0: show signal bars
