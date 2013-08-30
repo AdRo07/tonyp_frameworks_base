@@ -45,7 +45,6 @@ public class BrightnessSlider implements ToggleSlider.Listener {
     private View mView;
 
     boolean mSystemChange;
-
     boolean mAutomatic = false;
 
     private final CurrentUserTracker mUserTracker;
@@ -185,5 +184,10 @@ public class BrightnessSlider implements ToggleSlider.Listener {
         public void onChange(boolean selfChange) {
             updateValues();
         }
+    }
+
+    public void setTransparent(boolean b) {
+        if(b)mView.setBackgroundColor(0x00000000);
+        else mView.setBackgroundResource(R.drawable.qs_tile_background);
     }
 }

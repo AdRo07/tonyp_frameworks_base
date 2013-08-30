@@ -782,6 +782,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             });
         }
 
+        final ContentResolver resolver = mContext.getContentResolver();
         // Quick Settings (where available, some restrictions apply)
         if (mHasSettingsPanel) {
             // first, figure out where quick settings should be inflated
@@ -833,21 +834,24 @@ public class PhoneStatusBar extends BaseStatusBar {
                     mTilesChangedObserver.startObserving();
                 }
             }
+            mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
+                Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
+            mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
+                Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
+            if (mHasQuickAccessSettings) {
+                inflateRibbon();
+            }
         }
 
-        final ContentResolver resolver = mContext.getContentResolver();
-        mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
-                Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
-        mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
-                Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
         mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
                 Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
-        if (mHasQuickAccessSettings) {
-            inflateRibbon();
-        }
+        boolean transparent = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
+
         if(mBrightnessSliderMode != 0) {
             cleanupBrightnessSlider();
             showBrightnessSlider();
+            mSlider.setTransparent(transparent);
         }
 
         mClingShown = ! (DEBUG_CLINGS
@@ -3193,16 +3197,23 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            if (uri != null && uri.equals(Settings.System.getUriFor(
-                    Settings.System.SHOW_BRIGHTNESS_SLIDER))) {
+            if (uri != null && (uri.equals(Settings.System.getUriFor(
+                    Settings.System.SHOW_BRIGHTNESS_SLIDER)) || uri.equals(Settings.System.getUriFor(
+                    Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT)) )) {
+
                 final ContentResolver resolver = mContext.getContentResolver();
                 int mode = Settings.System.getIntForUser(resolver,
                         Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
+                boolean transparent = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
+
                 if(mode != mBrightnessSliderMode)
                     cleanupBrightnessSlider();
                 mBrightnessSliderMode = mode;
+
                 if (mBrightnessSliderMode != 0) {
                     showBrightnessSlider();
+                    mSlider.setTransparent(transparent);
                 } else {
                     cleanupBrightnessSlider();
                 }
@@ -3283,8 +3294,13 @@ public class PhoneStatusBar extends BaseStatusBar {
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_RIBBON_TILES),
                     false, this, UserHandle.USER_ALL);
+
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SHOW_BRIGHTNESS_SLIDER),
+                    false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT),
                     false, this, UserHandle.USER_ALL);
         }
     }

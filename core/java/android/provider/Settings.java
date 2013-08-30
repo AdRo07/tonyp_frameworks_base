@@ -2842,6 +2842,15 @@ public final class Settings {
          * @hide
          */
         public static final String SHOW_BRIGHTNESS_SLIDER = "show_brightness_slider";
+
+        /**
+         * Whether to show the BrightnessSlider in Notifications as Transparent or not
+         * default: 0
+         * 0: transparent
+         * 1: not transparent -> qs_tile_background
+         * @hide
+         */
+        public static final String SHOW_BRIGHTNESS_SLIDER_TRANSPARENT = "show_brightness_slider_transparent";
         
         /**
          * Whether to show the clock in status bar left, centered or right
