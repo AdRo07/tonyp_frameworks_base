@@ -825,6 +825,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
                 Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
         if (mHasQuickAccessSettings) {
+            cleanupRibbon();
+            mRibbonView = null;
             inflateRibbon();
         }
         if(mBrightnessSliderMode != 0) {
