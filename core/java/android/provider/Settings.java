@@ -3296,7 +3296,7 @@ public final class Settings {
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
-         public static final String KEY_BACK_LONG_PRESS_ACTION = "key_menu_long_press_action";
+         public static final String KEY_BACK_LONG_PRESS_ACTION = "key_back_long_press_action";
 
          /**
           * Action to perform when the assistant (search) key is pressed. (Default is 3)
