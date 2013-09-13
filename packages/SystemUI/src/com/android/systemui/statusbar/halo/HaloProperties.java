@@ -509,8 +509,8 @@ public class HaloProperties extends FrameLayout implements BatteryStateChangeCal
         return mBatteryLevel;
     }
 
-    public int getBatteryStatus() {
-        return mBatteryStatus;
+    public boolean getBatteryStatus() {
+        return mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING;
     }
 
     @Override
