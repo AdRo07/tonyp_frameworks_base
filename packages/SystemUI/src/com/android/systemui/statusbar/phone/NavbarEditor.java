@@ -125,7 +125,7 @@ public class NavbarEditor implements View.OnTouchListener {
     }
 
     public static boolean isDevicePhone(Context context) {
-        if (sIsDevicePhone == null) {
+        if (mIsDevicePhone == null) {
             WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             DisplayInfo outDisplayInfo = new DisplayInfo();
 
@@ -135,10 +135,10 @@ public class NavbarEditor implements View.OnTouchListener {
             int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / outDisplayInfo.logicalDensityDpi;
 
             // 0-599dp: "phone" UI with a separate status & navigation bar
-            sIsDevicePhone = shortSizeDp < 600;
+            mIsDevicePhone = shortSizeDp < 600;
         }
 
-        return sIsDevicePhone;
+        return mIsDevicePhone;
     }
 
     /**

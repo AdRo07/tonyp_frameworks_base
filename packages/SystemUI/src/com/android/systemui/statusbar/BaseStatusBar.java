@@ -73,7 +73,6 @@ import android.provider.Settings;
 import android.service.pie.PieManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.ExtendedPropertiesUtils;
 import android.util.Log;
 import android.util.Slog;
 import android.view.Display;

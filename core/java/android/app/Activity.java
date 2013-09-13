@@ -720,6 +720,8 @@ public class Activity extends ContextThemeWrapper
     private CharSequence mTitle;
     private int mTitleColor = 0;
 
+    private int currentW, currentH, currentX, currentY;
+
     final FragmentManagerImpl mFragments = new FragmentManagerImpl();
     final FragmentContainer mContainer = new FragmentContainer() {
         @Override
@@ -5101,6 +5103,7 @@ public class Activity extends ContextThemeWrapper
 
         mFragments.attachActivity(this, mContainer, null);
 
+        boolean changeable = (intent.getFlags()&Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE;
         boolean floating = (intent.getFlags()&Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
         boolean history = (intent.getFlags()&Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
         if (intent != null && floating && !history) {
@@ -5118,19 +5121,24 @@ public class Activity extends ContextThemeWrapper
             }
 
             parent = null;
+            currentX = 20;
+            currentY = 20;
+            currentW = 200;
+            currentH = 200;
 
             // Create our new window
             mWindow = PolicyManager.makeNewWindow(this);
             mWindow.mIsFloatingWindow = true;
-            mWindow.setCloseOnTouchOutsideIfNotSet(true);
-            mWindow.setGravity(Gravity.CENTER);
+            mWindow.mIsFloatingChangeable = changeable;
+            mWindow.setCloseOnTouchOutsideIfNotSet(!changeable);
+            mWindow.setGravity(changeable ? Gravity.LEFT : Gravity.CENTER);
 
             if (this instanceof LayerActivity || android.os.Process.myUid() == android.os.Process.SYSTEM_UID) {
                 mWindow.setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                         WindowManager.LayoutParams.FLAG_DIM_BEHIND);
                 WindowManager.LayoutParams params = mWindow.getAttributes();
                 params.alpha = 1f;
-                params.dimAmount = 0.25f;
+                params.dimAmount = changeable ? 0.0f : 0.25f;
                 mWindow.setAttributes((android.view.WindowManager.LayoutParams) params);
             }
 
@@ -5187,10 +5195,18 @@ public class Activity extends ContextThemeWrapper
         Display display = wm.getDefaultDisplay();
         DisplayMetrics metrics = new DisplayMetrics();
         display.getMetrics(metrics);
-        if (metrics.heightPixels > metrics.widthPixels) {
-            mWindow.setLayout((int)(metrics.widthPixels * 0.9f), (int)(metrics.heightPixels * 0.7f));
+        if(!mWindow.mIsFloatingChangeable) {
+            if (metrics.heightPixels > metrics.widthPixels) {
+                mWindow.setLayout((int)(metrics.widthPixels * 0.9f), (int)(metrics.heightPixels * 0.7f));
+            } else {
+                mWindow.setLayout((int)(metrics.widthPixels * 0.7f), (int)(metrics.heightPixels * 0.8f));
+            }
         } else {
-            mWindow.setLayout((int)(metrics.widthPixels * 0.7f), (int)(metrics.heightPixels * 0.8f));
+            mWindow.setLayout(currentW, currentH);
+            WindowManager.LayoutParams params = mWindow.getAttributes();
+            params.x = currentX;
+            params.y = currentY;
+            mWindow.setAttributes((android.view.WindowManager.LayoutParams) params);
         }
     }
 

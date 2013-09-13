@@ -3537,6 +3537,11 @@ public class Intent implements Parcelable, Cloneable {
      */
     public static final int FLAG_FLOATING_WINDOW = 0x00002000;
     /**
+     * If set, this intent will always match start up as a floating window
+     * in mutil window scenarios that is changeable (needs {@link #FLAG_FLOATING_WINDOW})
+     */
+    public static final int FLAG_FLOATING_CHANGEABLE = 0x00001000;
+    /**
      * If set, when sending a broadcast only registered receivers will be
      * called -- no BroadcastReceiver components will be launched.
      */

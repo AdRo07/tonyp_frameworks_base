@@ -67,7 +67,6 @@ import android.provider.Settings;
 import android.service.notification.INotificationListener;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.ExtendedPropertiesUtils;
 import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
