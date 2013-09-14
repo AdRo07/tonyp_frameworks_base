@@ -132,6 +132,7 @@ final class ActivityRecord {
     boolean topIntent;
     boolean newTask;
     boolean floatingWindow;
+    boolean floatingChangeable;
 
     String stringName;      // for caching of toString().
     
@@ -419,6 +420,8 @@ final class ActivityRecord {
 
                 final boolean floats = (baseRecord.intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW
                         && (baseRecord.intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
+                final boolean changeable = (baseRecord.intent.getFlags() & Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE
+                        && (baseRecord.intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
                 final boolean taskAffinity = aInfo.applicationInfo.packageName.equals(baseRecord.packageName);
                 newTask = (intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) == Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -426,6 +429,10 @@ final class ActivityRecord {
                 // Perhaps it started out as a multiwindow in which case we pass the flag on
                 if (floats && (!newTask || taskAffinity)) {
                     intent.addFlags(Intent.FLAG_FLOATING_WINDOW);
+                    if(changeable) {
+                        intent.addFlags(Intent.FLAG_FLOATING_CHANGEABLE);
+                        floatingChangeable = true;
+                    }
                     // Flag the activity as sub-task
                     topIntent = false;
                     floatingWindow = true;

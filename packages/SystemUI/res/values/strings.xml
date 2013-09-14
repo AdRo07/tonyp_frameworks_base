@@ -445,6 +445,9 @@
     <!-- Title shown in notification popup for launching notification in floating mode -->
     <string name="status_bar_notification_floating_item_title">Floating mode</string>
 
+    <!-- Title shown in notification popup for launching notification in Q-floating mode -->
+    <string name="status_bar_notification_q_floating_item_title">Q-Floating mode</string>
+
     <!-- [CHAR LIMIT=NONE] -->
     <string name="close_universe">Close</string>
 

@@ -364,7 +364,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
 
         mHaloActive = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.HALO_ACTIVE, 0) == 1;
+                Settings.System.HALO_ACTIVE, 1) == 1;
 
         createAndAddWindows();
 
@@ -478,7 +478,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected void updateHalo() {
         mHaloActive = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.HALO_ACTIVE, 0) == 1;
+                Settings.System.HALO_ACTIVE, 1) == 1;
 
         updateHaloButton();
 
@@ -580,9 +580,14 @@ public abstract class BaseStatusBar extends SystemUI implements
                 null, UserHandle.CURRENT);
     }
 
-    private void launchFloating(PendingIntent pIntent) {
+    private void launchFloating(PendingIntent i) {
+        launchFloating(i, false);
+    }
+
+    private void launchFloating(PendingIntent pIntent, boolean qmode) {
         Intent overlay = new Intent();
         overlay.addFlags(Intent.FLAG_FLOATING_WINDOW | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        if(qmode)overlay.addFlags(Intent.FLAG_FLOATING_CHANGEABLE);
         try {
             ActivityManagerNative.getDefault().resumeAppSwitches();
             ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
@@ -625,6 +630,9 @@ public abstract class BaseStatusBar extends SystemUI implements
                             animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
                         } else if (item.getItemId() == R.id.notification_floating_item) {
                             launchFloating(contentIntent);
+                            animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
+                        } else if (item.getItemId() == R.id.notification_q_floating_item) {
+                            launchFloating(contentIntent, true);
                             animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
                         } else {
                             return false;

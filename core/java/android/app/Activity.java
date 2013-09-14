@@ -5121,24 +5121,24 @@ public class Activity extends ContextThemeWrapper
             }
 
             parent = null;
-            currentX = 20;
-            currentY = 20;
+            currentX = 200;
+            currentY = 200;
             currentW = 200;
-            currentH = 200;
+            currentH = 300;
 
             // Create our new window
             mWindow = PolicyManager.makeNewWindow(this);
             mWindow.mIsFloatingWindow = true;
             mWindow.mIsFloatingChangeable = changeable;
             mWindow.setCloseOnTouchOutsideIfNotSet(!changeable);
-            mWindow.setGravity(changeable ? Gravity.LEFT : Gravity.CENTER);
+            mWindow.setGravity(changeable ? (Gravity.LEFT | Gravity.TOP) : Gravity.CENTER);
 
             if (this instanceof LayerActivity || android.os.Process.myUid() == android.os.Process.SYSTEM_UID) {
                 mWindow.setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                         WindowManager.LayoutParams.FLAG_DIM_BEHIND);
                 WindowManager.LayoutParams params = mWindow.getAttributes();
-                params.alpha = 1f;
-                params.dimAmount = changeable ? 0.0f : 0.25f;
+                params.alpha = 1.0f;
+                params.dimAmount = changeable ? 1.0f : 0.25f;
                 mWindow.setAttributes((android.view.WindowManager.LayoutParams) params);
             }
 
