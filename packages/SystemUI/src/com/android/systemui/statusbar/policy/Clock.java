@@ -24,6 +24,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.os.Handler;
 import android.os.UserHandle;
@@ -299,9 +300,16 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
 
     @Override
     public void onClick(View v) {
-        // start com.android.deskclock/.DeskClock
-        ComponentName clock = new ComponentName("com.android.deskclock",
-                "com.android.deskclock.DeskClock");
+        // start Timely if it is installed
+        // else start com.android.deskclock/.DeskClock
+        ComponentName clock = null;
+        if (isAppInstalled("ch.bitspin.timely")) {
+            clock = new ComponentName("ch.bitspin.timely",
+                    "ch.bitspin.timely.activity.MainActivity_");
+        } else {
+            clock = new ComponentName("com.android.deskclock",
+                    "com.android.deskclock.DeskClock");
+        }
         Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
                 .setComponent(clock);
         collapseStartActivity(intent);
@@ -313,6 +321,16 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
         collapseStartActivity(intent);
 
         // consume event
+        return true;
+    }
+
+    private boolean isAppInstalled(String uri) {
+        PackageManager pm = mContext.getPackageManager();
+        try {
+            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
         return true;
     }
 }
