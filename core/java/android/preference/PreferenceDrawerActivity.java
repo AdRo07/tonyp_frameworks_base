@@ -686,8 +686,13 @@ public abstract class PreferenceDrawerActivity extends ListActivity implements
     public void onBackPressed() {
         if (mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mDrawer))
             mDrawerLayout.closeDrawer(mDrawer);
-        else
-            super.onBackPressed();
+        else {
+            try {
+                super.onBackPressed();
+            } catch (NullPointerException e) {
+                // do nothing
+            }
+        }
     }
 
     private void loadDrawerDrawables() {
