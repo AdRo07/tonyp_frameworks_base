@@ -90,11 +90,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.TabHost;
-import android.widget.TabHost.TabSpec;
-import android.widget.TabHost.TabContentFactory;
-import android.widget.TabHost;
-import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 
 import android.service.notification.StatusBarNotification;
@@ -606,10 +601,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         } catch (RemoteException ex) {
             // no window manager? good luck with that
         }
-
-
-        if (!mRecreating)
-            addActiveDisplayView();
 
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.OPAQUE;
@@ -2487,7 +2478,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         setAreThereNotifications();
     }
 
-    public boolean areLightsOn() {
+    private boolean areLightsOn() {
         return 0 == (mSystemUiVisibility & View.SYSTEM_UI_FLAG_LOW_PROFILE);
     }
 
@@ -2505,10 +2496,6 @@ public class PhoneStatusBar extends BaseStatusBar {
             mWindowManagerService.statusBarVisibilityChanged(mSystemUiVisibility);
         } catch (RemoteException ex) {
         }
-    }
-
-    public void setNavigationBarLightsOn(boolean on, boolean force) {
-        mNavigationBarView.setLowProfile(!on, true, force);
     }
 
     @Override
