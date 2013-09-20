@@ -2047,4 +2047,7 @@
   <!-- Irda Service -->
   <java-symbol type="bool" name="config_enableIrdaManagerService" />
 
+  <!-- Q-Floating -->
+  <java-symbol type="id" name="q_floating_menu_stub" />
+
 </resources>

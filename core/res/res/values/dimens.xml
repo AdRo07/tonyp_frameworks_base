@@ -362,4 +362,7 @@
 
     <!-- Pie service: Thickness of the active trigger fields around the screen border -->
     <dimen name="pie_trigger_thickness">12dp</dimen>
+
+    <!-- Q Floating menu height -->
+    <dimen name="q_floating_menu_height">30dp</dimen>
 </resources>

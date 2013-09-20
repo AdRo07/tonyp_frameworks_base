@@ -20,36 +20,26 @@ import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.getMode;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static android.view.WindowManager.LayoutParams.*;
+import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+import static android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER;
+import static android.view.WindowManager.LayoutParams.FLAG_SPLIT_TOUCH;
 
-import com.android.internal.view.RootViewSurfaceTaker;
-import com.android.internal.view.StandaloneActionMode;
-import com.android.internal.view.menu.ContextMenuBuilder;
-import com.android.internal.view.menu.IconMenuPresenter;
-import com.android.internal.view.menu.ListMenuPresenter;
-import com.android.internal.view.menu.MenuBuilder;
-import com.android.internal.view.menu.MenuDialogHelper;
-import com.android.internal.view.menu.MenuPresenter;
-import com.android.internal.view.menu.MenuView;
-import com.android.internal.widget.ActionBarContainer;
-import com.android.internal.widget.ActionBarContextView;
-import com.android.internal.widget.ActionBarOverlayLayout;
-import com.android.internal.widget.ActionBarView;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 
 import android.app.KeyguardManager;
-import android.content.ComponentName;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.content.ActivityNotFoundException;
 import android.database.ContentObserver;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
@@ -59,9 +49,6 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -101,16 +88,26 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-
-import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.R;
+import com.android.internal.statusbar.IStatusBarService;
+import com.android.internal.view.RootViewSurfaceTaker;
+import com.android.internal.view.StandaloneActionMode;
+import com.android.internal.view.menu.ContextMenuBuilder;
+import com.android.internal.view.menu.IconMenuPresenter;
+import com.android.internal.view.menu.ListMenuPresenter;
+import com.android.internal.view.menu.MenuBuilder;
+import com.android.internal.view.menu.MenuDialogHelper;
+import com.android.internal.view.menu.MenuPresenter;
+import com.android.internal.view.menu.MenuView;
+import com.android.internal.widget.ActionBarContainer;
+import com.android.internal.widget.ActionBarContextView;
+import com.android.internal.widget.ActionBarView;
 
 /**
  * Android-specific Window.
@@ -149,6 +146,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     InputQueue.Callback mTakeInputQueueCallback;
     
     private boolean mIsFloating;
+    private boolean mIsFloatingChangeable;
 
     private LayoutInflater mLayoutInflater;
 
@@ -208,6 +206,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     private AudioManager mAudioManager;
     private KeyguardManager mKeyguardManager;
+
+    private LinearLayout qMenu;
 
     private final class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
@@ -3163,6 +3163,10 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             // Set up decor part of UI to ignore fitsSystemWindows if appropriate.
             mDecor.makeOptionalFitsSystemWindows();
 
+            if(mIsFloatingChangeable) {
+	            ViewStub vs = (ViewStub)findViewById(com.android.internal.R.id.q_floating_menu_stub);
+	            qMenu = (LinearLayout)vs.inflate();
+            }
             mTitleView = (TextView)findViewById(com.android.internal.R.id.title);
             if (mTitleView != null) {
                 mTitleView.setLayoutDirection(mDecor.getLayoutDirection());

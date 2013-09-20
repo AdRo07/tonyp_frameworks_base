@@ -847,7 +847,8 @@ public abstract class Window {
         return false;
     }
     
-    private boolean isOutOfBounds(Context context, MotionEvent event) {
+    /** @hide */
+    public boolean isOutOfBounds(Context context, MotionEvent event) {
         final int x = (int) event.getX();
         final int y = (int) event.getY();
         final int slop = ViewConfiguration.get(context).getScaledWindowTouchSlop();

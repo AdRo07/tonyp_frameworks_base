@@ -764,6 +764,8 @@ public class Activity extends ContextThemeWrapper
     private Thread mUiThread;
     final Handler mHandler = new Handler();
 
+    private FloatingEventHelper fHelper;
+
     /** Return the intent that started this activity. */
     public Intent getIntent() {
         return mIntent;
@@ -902,6 +904,8 @@ public class Activity extends ContextThemeWrapper
         mFragments.dispatchCreate();
         getApplication().dispatchActivityCreated(this, savedInstanceState);
         mCalled = true;
+
+        fHelper = FloatingEventHelper.getHelperInstance();
     }
 
     /**
@@ -2388,6 +2392,10 @@ public class Activity extends ContextThemeWrapper
      * @return boolean Return true if this event was consumed.
      */
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if(!fHelper.hasFocus(this)) {
+            if(fHelper.sendToFocus(event, FloatingEventHelper.KEY, this))
+                return true;
+        }
         onUserInteraction();
         Window win = getWindow();
         if (win.superDispatchKeyEvent(event)) {
@@ -2427,6 +2435,17 @@ public class Activity extends ContextThemeWrapper
      * @return boolean Return true if this event was consumed.
      */
     public boolean dispatchTouchEvent(MotionEvent ev) {
+
+        //This gets tricky: When we touch outside the view and it is Floating it looses its focus
+        if(mWindow.mIsFloatingChangeable && mWindow.isOutOfBounds(this, ev)) {
+            fHelper.changeFocus(this, false);
+        } else if (mWindow.mIsFloatingChangeable) { //<!-- When this is true we have to move focus:
+            fHelper.changeFocus(this, true);        //     The event was in the views bounds
+        } else if(!fHelper.hasFocus(this)) {
+            if(fHelper.sendToFocus(ev, FloatingEventHelper.TOUCH, this))
+                return true;
+        }
+
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             onUserInteraction();
         }
@@ -2447,6 +2466,10 @@ public class Activity extends ContextThemeWrapper
      * @return boolean Return true if this event was consumed.
      */
     public boolean dispatchTrackballEvent(MotionEvent ev) {
+        if(!fHelper.hasFocus(this)) {
+            if(fHelper.sendToFocus(ev, FloatingEventHelper.TRACKBALL, this))
+                return true;
+        }
         onUserInteraction();
         if (getWindow().superDispatchTrackballEvent(ev)) {
             return true;
@@ -2465,6 +2488,10 @@ public class Activity extends ContextThemeWrapper
      * @return boolean Return true if this event was consumed.
      */
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
+        if(!fHelper.hasFocus(this)) {
+             if(fHelper.sendToFocus(ev, FloatingEventHelper.GENERIC_MOTION, this))
+                  return true;
+        }
         onUserInteraction();
         if (getWindow().superDispatchGenericMotionEvent(ev)) {
             return true;
@@ -5285,7 +5312,7 @@ public class Activity extends ContextThemeWrapper
         }
     }
     
-    final void performResume() {
+    public final void performResume() {
         performRestart();
         
         mFragments.execPendingActions();
@@ -5419,6 +5446,85 @@ public class Activity extends ContextThemeWrapper
             if (frag != null) {
                 frag.onActivityResult(requestCode, resultCode, data);
             }
+        }
+    }
+
+/* ---------------- Only needed for Q-Floating - JUST A TEST! -------------- */
+
+/** @hide **/
+public static class FloatingEventHelper {
+
+    private static FloatingEventHelper mHelper;
+    private static Activity mBackgroundActivity, mFloatingActivity, mForegroundActivity;
+
+    public static final byte GENERIC_MOTION = 0;
+    public static final byte KEY = 1;
+    public static final byte TOUCH = 2;
+    public static final byte TRACKBALL= 3;
+
+    /** @ hide **/
+    public static FloatingEventHelper getHelperInstance() {
+        if(mHelper == null)mHelper = new FloatingEventHelper();
+            return mHelper;
+    }
+
+    public boolean sendToFocus(Object obj, byte to, Activity a) {
+        if(mForegroundActivity == null || mForegroundActivity == a )
+            return false;
+
+        if(!mBackgroundActivity.isResumed())
+            mBackgroundActivity.performResume();
+
+        if(obj instanceof android.view.KeyEvent && to == KEY)
+            return mForegroundActivity.dispatchKeyEvent((android.view.KeyEvent)obj);
+
+        if(obj instanceof android.view.MotionEvent) {
+            android.view.MotionEvent ev = (android.view.MotionEvent)obj;
+            switch(to) {
+                case GENERIC_MOTION:
+                    return mForegroundActivity.dispatchGenericMotionEvent(ev);
+                case TOUCH:
+                    return mForegroundActivity.dispatchTouchEvent(ev);
+                case TRACKBALL:
+                    return mForegroundActivity.dispatchTrackballEvent(ev);
+            }
+        }
+
+        return false;
+    }
+
+    public Activity getBackground() {
+        return mBackgroundActivity;
+    }
+
+    public Activity getForeground() {
+        return mForegroundActivity;
+    }
+
+    public void changeFocus(Activity a, boolean focus) {
+        if(a != mFloatingActivity || a != mBackgroundActivity || a != mFloatingActivity)
+            resumedActivity(a);
+
+        if(focus)
+            mForegroundActivity = a;
+        else {
+            mForegroundActivity = (mForegroundActivity == mFloatingActivity)
+                    ? mBackgroundActivity : mFloatingActivity;
+        }
+    }
+
+    public boolean hasFocus(Activity a) {
+        return a == mForegroundActivity;
+    }
+
+    public void resumedActivity(Activity activity) {
+        if(activity == null)return;
+
+        if((activity.getIntent().getFlags() & Intent.FLAG_FLOATING_WINDOW)
+              == Intent.FLAG_FLOATING_WINDOW)
+                mFloatingActivity = activity;
+            else
+                mBackgroundActivity = activity;
         }
     }
 }

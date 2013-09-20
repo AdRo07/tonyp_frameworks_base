@@ -413,6 +413,7 @@ final class ActivityRecord {
 
             floatingWindow = (intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW
                     && (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
+            floatingChangeable = (intent.getFlags() & Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE && floatingWindow;
 
             ActivityRecord baseRecord = stack.mHistory.size() > 0 ? stack.mHistory.get(stack.mHistory.size() -1) : null;
 
@@ -420,8 +421,7 @@ final class ActivityRecord {
 
                 final boolean floats = (baseRecord.intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW
                         && (baseRecord.intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
-                final boolean changeable = (baseRecord.intent.getFlags() & Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE
-                        && (baseRecord.intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
+                final boolean changeable = (baseRecord.intent.getFlags() & Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE;
                 final boolean taskAffinity = aInfo.applicationInfo.packageName.equals(baseRecord.packageName);
                 newTask = (intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) == Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -457,6 +457,7 @@ final class ActivityRecord {
                 realTheme = com.android.internal.R.style.Theme_DeviceDefault_FloatingWindow;
             } else {
                 intent.setFlags(intent.getFlags() & ~Intent.FLAG_FLOATING_WINDOW);
+                intent.setFlags(intent.getFlags() & ~Intent.FLAG_FLOATING_CHANGEABLE);
             }
 
             if ((aInfo.flags&ActivityInfo.FLAG_HARDWARE_ACCELERATED) != 0) {

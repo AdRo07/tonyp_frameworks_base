@@ -1564,7 +1564,6 @@ final class ActivityStack {
                 mLastStartedActivity = next;
             }
         }
-        
         // We need to start pausing the current activity so the top one
         // can be resumed...
         if (mResumedActivity != null && (pauseActiveAppWhenUsingHalo(next.floatingChangeable) || !next.floatingWindow)) {
@@ -3356,8 +3355,10 @@ final class ActivityStack {
 
                 // we must resolve if the last intent in the stack is floating to give the flag to the previous
                 boolean floating = false;
+                boolean changeable = false;
                 if (intents.length > 0) {
                     floating = (intents[intents.length - 1].getFlags()&Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
+                    changeable = (intents[intents.length - 1].getFlags()&Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE;
                 }
                 for (int i=0; i<intents.length; i++) {
                     Intent intent = intents[i];
@@ -3389,6 +3390,7 @@ final class ActivityStack {
 
                     if (floating) {
                         intent.addFlags(Intent.FLAG_FLOATING_WINDOW);
+                        if(changeable) intent.addFlags(Intent.FLAG_FLOATING_CHANGEABLE);
                     }
 
                     Bundle theseOptions;
@@ -4863,7 +4865,7 @@ final class ActivityStack {
     private boolean pauseActiveAppWhenUsingHalo(boolean changeable) {
         int isLowRAM = (ActivityManager.isLargeRAM()) ? 0 : 1;
         return (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.HALO_PAUSE, isLowRAM) == 1 && !changeable);
+                Settings.System.HALO_PAUSE, isLowRAM) == 1) && !changeable;
     }
 
     public void dismissKeyguardOnNextActivityLocked() {

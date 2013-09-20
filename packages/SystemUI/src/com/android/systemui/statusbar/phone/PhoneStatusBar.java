@@ -116,6 +116,7 @@ import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import com.android.systemui.statusbar.policy.OnSizeChangedListener;
 import com.android.systemui.statusbar.policy.Prefs;
 import com.android.systemui.statusbar.powerwidget.BrightnessSlider;
+import com.android.systemui.statusbar.powerwidget.QFloatingSlider;
 
 public class PhoneStatusBar extends BaseStatusBar {
     static final String TAG = "PhoneStatusBar";
@@ -235,7 +236,9 @@ public class PhoneStatusBar extends BaseStatusBar {
     private BrightnessSlider mSlider;
     private FrameLayout mSliderContainer;
     //Made it in the same way as the Ribbons are made
-
+    
+    private QFloatingSlider mQFloating;
+    private FrameLayout mQFloatingContainer;
 
     // top bar
     View mNotificationPanelHeader;
