@@ -13226,6 +13226,16 @@ public final class ActivityManagerService  extends ActivityManagerNative
             interesting = true;
         }
 
+        // let's give the launcher a bit more weight /t
+        if (adj > 3 && app == mHomeProcess) {
+            // This process is hosting what we currently consider to be the
+            // home app, so we don't want to let it go into the background.
+            adj = 3;
+            schedGroup = Process.THREAD_GROUP_BG_NONINTERACTIVE;
+            app.hidden = false;
+            app.adjType = "heavy";
+        }
+
         if (adj > ProcessList.HEAVY_WEIGHT_APP_ADJ && app == mHeavyWeightProcess) {
             // We don't want to kill the current heavy-weight process.
             adj = ProcessList.HEAVY_WEIGHT_APP_ADJ;
