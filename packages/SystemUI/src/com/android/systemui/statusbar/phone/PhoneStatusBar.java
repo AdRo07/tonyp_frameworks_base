@@ -602,10 +602,6 @@ public class PhoneStatusBar extends BaseStatusBar {
             // no window manager? good luck with that
         }
 
-        if (mRecreating) {
-            addActiveDisplayView();
-        }
-
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.OPAQUE;
 
@@ -2482,7 +2478,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         setAreThereNotifications();
     }
 
-    public boolean areLightsOn() {
+    private boolean areLightsOn() {
         return 0 == (mSystemUiVisibility & View.SYSTEM_UI_FLAG_LOW_PROFILE);
     }
 
@@ -2500,10 +2496,6 @@ public class PhoneStatusBar extends BaseStatusBar {
             mWindowManagerService.statusBarVisibilityChanged(mSystemUiVisibility);
         } catch (RemoteException ex) {
         }
-    }
-
-    public void setNavigationBarLightsOn(boolean on, boolean force) {
-        mNavigationBarView.setLowProfile(!on, true, force);
     }
 
     @Override
