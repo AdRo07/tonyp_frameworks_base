@@ -602,7 +602,9 @@ public class PhoneStatusBar extends BaseStatusBar {
             // no window manager? good luck with that
         }
 
-        addActiveDisplayView();
+        if (mRecreating) {
+            addActiveDisplayView();
+        }
 
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.OPAQUE;
