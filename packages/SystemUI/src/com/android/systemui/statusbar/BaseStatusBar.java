@@ -460,7 +460,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         updateHalo();
         mFloatingHelper = FloatingEventHelper.getHelperInstance();
-        mFloatingHelper.assignSystemContext(mContext);
+        //mFloatingHelper.assignSystemContext(mContext);
     }
 
     public void setHaloTaskerActive(boolean haloTaskerActive, boolean updateNotificationIcons) {

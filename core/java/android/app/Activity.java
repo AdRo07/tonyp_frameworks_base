@@ -5553,8 +5553,8 @@ public class Activity extends ContextThemeWrapper
         }
 
         public void assignSystemContext(Context c) {
-            if(c == null && !mContext.getPackageName().equals("com.android.systemui"))return;
-            aManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
+            //if(c == null || !mContext.getPackageName().equals("com.android.systemui"))return;
+            //aManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
         }
 
         private List<ActivityManager.RunningTaskInfo> getTasks() {
