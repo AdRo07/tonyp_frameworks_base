@@ -16,6 +16,7 @@
 
 package com.android.internal.policy;
 
+import android.app.Activity.FloatingEventHelper;
 import android.content.Context;
 import android.view.FallbackEventHandler;
 import android.view.LayoutInflater;
@@ -32,8 +33,17 @@ public final class PolicyManager {
         "com.android.internal.policy.impl.Policy";
 
     private static final IPolicy sPolicy;
+    private static final FloatingEventHelper mHelper;
+    public static Boolean fHelperInit = null;
 
     static {
+        try {
+            mHelper  = new FloatingEventHelper();
+        } catch (IllegalAccessException ex) {
+            // shouldn't happen, but in case:
+            throw new RuntimeException(ex.getMessage());
+        }
+        fHelperInit = true;
         // Pull in the actual implementation of the policy at run-time
         try {
             Class policyClass = Class.forName(POLICY_IMPL_CLASS_NAME);
@@ -68,5 +78,9 @@ public final class PolicyManager {
 
     public static FallbackEventHandler makeNewFallbackEventHandler(Context context) {
         return sPolicy.makeNewFallbackEventHandler(context);
+    }
+
+    public static FloatingEventHelper getFHelper() {
+        return mHelper;
     }
 }

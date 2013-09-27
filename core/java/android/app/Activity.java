@@ -87,6 +87,7 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * An activity is a single, focused thing that the user can do.  Almost all
@@ -1290,6 +1291,7 @@ public class Activity extends ContextThemeWrapper
         if (DEBUG_LIFECYCLE) Slog.v(TAG, "onPause " + this);
         getApplication().dispatchActivityPaused(this);
         mCalled = true;
+        fHelper.pausedActivity(this);
     }
 
     /**
@@ -1392,6 +1394,7 @@ public class Activity extends ContextThemeWrapper
         if (mActionBar != null) mActionBar.setShowHideAnimationEnabled(false);
         getApplication().dispatchActivityStopped(this);
         mCalled = true;
+        fHelper.stoppedActivity(this);
     }
 
     /**
@@ -5201,7 +5204,7 @@ public class Activity extends ContextThemeWrapper
         mCurrentConfig = config;
     }
 
-    private void scaleFloatingWindow(Context context) {
+    public void scaleFloatingWindow(Context context) {
         if (!mWindow.mIsFloatingWindow) {
             return;
         }
@@ -5230,6 +5233,19 @@ public class Activity extends ContextThemeWrapper
     }
     
     /** @hide **/
+    public void setDimensForWindow(int w, int h, int x, int y) {
+        if(x < 0 || y < 0 || w < 0 || h < 0)return;
+    }
+    /** @hide **/
+    public int getHeight() {return currentH;}
+    /** @hide **/
+    public int getWidth() { return currentW;}
+    /** @hide **/
+    public int getX() {return currentX;}
+    /** @hide **/
+    public int getY() { return currentY;}
+
+    /** @hide **/
     final void changeFocusTo(boolean focus) {
         if(!focus)mWindow.setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND);
@@ -5237,6 +5253,8 @@ public class Activity extends ContextThemeWrapper
         params.alpha = focus ? 1.0f : 0.5f;
         params.dimAmount = focus ? 0.5f : 0.0f;
         mWindow.setAttributes((android.view.WindowManager.LayoutParams) params);
+        if(getParent() != null)
+            getParent().changeFocusTo(focus);
     }
 
     /** @hide */
@@ -5336,14 +5354,13 @@ public class Activity extends ContextThemeWrapper
         mFragments.dispatchResume();
         mFragments.execPendingActions();
         
-        fHelper.resumedActivity(this); //DERP: Forgot that -.-
-        
         onPostResume();
         if (!mCalled) {
             throw new SuperNotCalledException(
                 "Activity " + mComponent.toShortString() +
                 " did not call through to super.onPostResume()");
         }
+        fHelper.resumedActivity(Activity.this); //DERP: Forgot that -.-
     }
 
     final void performPause() {
@@ -5452,30 +5469,53 @@ public class Activity extends ContextThemeWrapper
             }
         }
     }
-
-    /* ---------------- Only needed for Q-Floating - JUST A TEST! -------------- */
     
     /** @hide **/
     public static class FloatingEventHelper {
-    
-        private static FloatingEventHelper mHelper;
-        private static Activity mBaseActivity, mFloatingActivity, mForegroundActivity;
-    
+
+        private Activity mBaseActivity, mFloatingActivity;
+        private ArrayList<Activity>mList;
+        private ActivityManager aManager;
+        private boolean mFocusOnBase;
+        private Context mContext;
+
         public static final byte GENERIC_MOTION = 0;
         public static final byte KEY = 1;
         public static final byte TOUCH = 2;
         public static final byte TRACKBALL= 3;
-    
+        public static final byte BASE_ACTIVITY = 4;
+        public static final byte FLOATING_ACTIVITY = 5;
+
+        public FloatingEventHelper() throws IllegalAccessException {
+            if(PolicyManager.fHelperInit != null) {
+                throw new IllegalAccessException(getClass().getName() + " can only be constructed once!");
+            }
+            mFocusOnBase = true;
+            mList = new ArrayList<Activity>();
+        }
+
         /** @ hide **/
         public static FloatingEventHelper getHelperInstance() {
-            if(mHelper == null) {
-                mHelper = new FloatingEventHelper();
-                Log.d("WTF", "New FloatingEventHelper created!");
-            }
-                return mHelper;
+            return PolicyManager.getFHelper();
         }
-        
-        public boolean dispatchTouchEventTo(final Activity a, final MotionEvent ev) {
+
+        public static boolean isAFloatingOne(Activity a) {
+            return (a.mWindow.mIsFloatingChangeable && a.mWindow.mIsFloatingWindow) ||
+                        ((a.getIntent().getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW &&
+                        (a.getIntent().getFlags() & Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE);
+        }
+
+        public static boolean equalAct(Activity a, Activity b) {
+            if(a != b)
+                return false;
+            if(a == null || b == null)return false;
+            boolean sameT = a.getTaskId() == b.getTaskId();
+            boolean sameB = a.getPackageName().equals(b.getPackageName());
+            boolean sameC = a.getLocalClassName().equals(b.getLocalClassName());
+            return (sameB && sameC && sameT);
+        }
+
+        public static boolean dispatchTouchEventTo(final Activity a, final MotionEvent ev) {
             if(!a.mCalled)a.performResume();
             
             a.runOnUiThread(new Runnable(){
@@ -5486,110 +5526,228 @@ public class Activity extends ContextThemeWrapper
             });
             return true;
         }
-    
-        public boolean handleTouch(Activity activity, MotionEvent ev) {
-            if(activity == null)return false;
-            
-            boolean outside = activity.mWindow.isOutOfBounds(activity, ev);
-            boolean fore = (mForegroundActivity == activity);
-            
-            Log.d("WTF", "Got Touch Event from: " + activity.getPackageName() + " that is outside? " + outside + " is foreground: "+ fore);
-            
-            if(fore && !outside)return false;
-            
-            if(!fore && !outside) {
-                mForegroundActivity = null;
-                mForegroundActivity = activity;
-                changeFocus();
+
+        public static boolean dispatchEventTo(final Activity a, final Object ev, final int type) {
+            if(!a.mCalled)a.performResume();
+
+            a.runOnUiThread(new Runnable(){
+               @Override
+               public void run() {
+                   if(ev instanceof android.view.KeyEvent && type == KEY)
+                       a.mWindow.getDecorView().dispatchKeyEvent((android.view.KeyEvent)ev);
+
+                   if(ev instanceof android.view.MotionEvent) {
+                       android.view.MotionEvent event = (android.view.MotionEvent)ev;
+                       switch(type) {
+                           case GENERIC_MOTION:
+                               a.mWindow.getDecorView().dispatchGenericMotionEvent(event);
+                               break;
+                           case TRACKBALL:
+                               a.mWindow.getDecorView().dispatchTrackballEvent(event);
+                               break;
+                       }
+                   }
+               }
+            });
+            return true;
+        }
+
+        public void assignSystemContext(Context c) {
+            if(c == null && !mContext.getPackageName().equals("com.android.systemui"))return;
+            aManager = (ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        }
+
+        private List<ActivityManager.RunningTaskInfo> getTasks() {
+            if(aManager == null)return null;
+            return aManager.getRunningTasks(20);
+        }
+
+        public boolean handleTouch(Activity a, MotionEvent ev) {
+            if(a == null)return false;
+
+            boolean focus = hasFocus(a);
+            boolean floating = isAFloatingOne(a);
+            boolean outside = a.mWindow.isOutOfBounds(a, ev);
+
+            if(focus && !outside)return false;
+            else if(!outside) {
+                newForeground(a);
                 return false;
             }
-            
-            if(activity == mFloatingActivity) {
-                if(outside) {
-                    if(mForegroundActivity == mFloatingActivity) {
-                        Log.d("WTF", "Change foreground to background: from " + mForegroundActivity.getPackageName() + " to " + mBaseActivity.getPackageName());
-                        mForegroundActivity = null;
-                        mForegroundActivity = mBaseActivity;
-                    }
-                    if(mForegroundActivity != null) {
-                        dispatchTouchEventTo(mForegroundActivity, ev);
-                        Log.d("WTF", "Dispatched event to " + mForegroundActivity.getBasePackageName());
-                    } else {
-                        Log.d("WTF", "Foreground equal null?");
-                    }
-                    changeFocus();
+
+            if(!equalAct(a, mBaseActivity) && !equalAct(a, mFloatingActivity)) resumedActivity(a);
+
+            if(equalAct(a, mFloatingActivity) && floating) {
+                if(outside && mBaseActivity != null && !isAFloatingOne(mBaseActivity)) {
+                    mFocusOnBase = true;
+                    Log.d("WTF", "Changed focus to background: " + mBaseActivity.getPackageName() + ":" +mBaseActivity.getTaskId()+ " that is floating: "+ isAFloatingOne(mBaseActivity));
+                    dispatchTouchEventTo(mBaseActivity, ev);
+                    log();
                     return true;
                 }
-                
             }
+
             return false;
         }
 
         public boolean sendToFocus(Object obj, byte to, Activity a) {
-            if(mForegroundActivity == null) {
+            Activity act = mFocusOnBase ? mBaseActivity : mFloatingActivity;
+            if(act == null) {
                 return false;
-            } else if (mForegroundActivity == a) {
+            } else if (hasFocus(a)) {
                 Log.d("WTF", "Foreground was the same as the sender: "+ a.getPackageName());
                 return false;
             }
-    
-            Log.d("WTF", "Send event to focus: from-" + a.getPackageName() + ":" + a.getTaskId() + " to " + mForegroundActivity.getPackageName() + ":" + mForegroundActivity.getTaskId());
-            
-            if(!mForegroundActivity.mCalled)
-                mForegroundActivity.performResume();
-    
-            if(obj instanceof android.view.KeyEvent && to == KEY)
-                return mForegroundActivity.dispatchKeyEvent((android.view.KeyEvent)obj);
-    
-            if(obj instanceof android.view.MotionEvent) {
-                android.view.MotionEvent ev = (android.view.MotionEvent)obj;
-                switch(to) {
-                    case GENERIC_MOTION:
-                        return mForegroundActivity.dispatchGenericMotionEvent(ev);
-                    /*case TOUCH:
-                        return mForegroundActivity.dispatchTouchEvent(ev);*/
-                    case TRACKBALL:
-                        return mForegroundActivity.dispatchTrackballEvent(ev);
+
+            Log.d("WTF", "Send event to focus: from: " + a.getPackageName()+ ":" +a.getTaskId() + " to "  + act.getPackageName() + ":" +act.getTaskId());
+
+            return dispatchEventTo(act, obj, to);
+        }
+
+        public boolean hasFocus(Activity a) {
+            return equalAct(a, mBaseActivity) == mFocusOnBase;
+        }
+
+        public void checkActivities() {
+
+            if(!isAFloatingOne(mFloatingActivity) && isAFloatingOne(mBaseActivity)) {
+                Log.d("WTF", "Swaped Activities, were not correct!");
+                Activity a = mFloatingActivity;
+                newFloating(mBaseActivity);
+                newBase(a);
+                return;
+            }
+            if(!isAFloatingOne(mFloatingActivity)) {
+                mFloatingActivity = null;
+            }
+
+            if(equalAct(mFloatingActivity, mBaseActivity))mFloatingActivity = null;
+        }
+
+        public synchronized void resumedActivity(Activity a) {
+            String txt = "RA: ";
+            if(a == null || a.getPackageName().equals("com.android.systemui"))return;
+            Log.d("WTF", "Resumed on: " + a.getPackageName() + ":" +a.getTaskId() + " is floating: " + isAFloatingOne(a) + ";" + a.getLocalClassName());
+
+            /*if((mBaseActivity != null && equalAct(a, mBaseActivity))
+                    || (mFloatingActivity != null && equalAct(a, mFloatingActivity))) {
+                txt += "was same as saved -> ";
+                Log.d("WTF", txt);
+                return;
+            }*/
+
+            mList.add(a);
+            if(equalAct(a.getParent(), mBaseActivity)) {
+                txt += "was equal to base.parent, so replaced it -> ";
+                newBase(a);
+            } else if (equalAct(a.getParent(), mFloatingActivity)) {
+                txt += "was equal to floating.parent, so replaced it -> ";
+                newFloating(a);
+            } else if(isAFloatingOne(a)) {
+                txt += "was a floating one so saved to floating -> ";
+                newFloating(a);
+            } else {
+                txt += "was a base (nothing found) so saved to base -> ";
+                newBase(a);
+            }
+
+            log();
+            txt += "new foreground! -> " + a.getPackageName();
+            newForeground(a);
+            Log.d("WTF", txt);
+        }
+
+        public synchronized void changedActivity(Activity a) {
+            if(a == null || a.getPackageName().equals("com.android.systemui"))return;
+
+            List<ActivityManager.RunningTaskInfo>list = getTasks();
+            int pos = -1;
+            while(pos < list.size()) {
+                boolean same = list.get(pos).topActivity.getPackageName().equals(a.getPackageName());
+                if(!same) {
+                    pos++;
+                } else {
+                    boolean hasRunning = list.get(pos).numRunning > 0;
                 }
             }
-    
-            return false;
+
+            log();
         }
-    
-        public boolean hasFocus(Activity a) {
-            return a == mForegroundActivity;
-        }
-    
-        public void resumedActivity(Activity activity) {
-            if(activity == null || activity.getPackageName().equals("com.android.systemui"))return;
-    
-            Log.d("WTF", "Activity resumed: " + activity.getPackageName()+ ":" + activity.getTaskId() + " that is floating: " + activity.mWindow.mIsFloatingChangeable);
-            if(activity.mWindow.mIsFloatingChangeable || 
-                    (activity.getIntent().getFlags() & Intent.FLAG_FLOATING_CHANGEABLE) == Intent.FLAG_FLOATING_CHANGEABLE) {
-                mFloatingActivity = null;
-                mFloatingActivity = activity;
-                Log.d("WTF", "New floating: " + mFloatingActivity.getPackageName()+ ":" + mFloatingActivity.getTaskId());
-            } else if (activity != mFloatingActivity){
-                mBaseActivity = null;
-                mBaseActivity = activity;   
-                Log.d("WTF", "New background: " + mBaseActivity.getPackageName() + ":" + mBaseActivity.getTaskId());
-            }
-            if(mForegroundActivity == null) {
-                mForegroundActivity = null;
-                mForegroundActivity = activity;
-            }
+
+        public synchronized void pausedActivity(Activity a) {
+            if(a == null || a.getPackageName().equals("com.android.systemui"))return;
             
-            changeFocus();
+            Log.d("WTF", "Paused Activity: " + a.getPackageName() + ":" + a.getLocalClassName() + " with: " + a.getTaskId()
+                    + " with= " + a.mCalled + ";");
+            if(equalAct(a, mFloatingActivity)) {
+                Log.d("WTF", "Removed Floating!");
+                newFloating(null);
+                mFocusOnBase = true;
+                mList.remove(a);
+            }
+            log();
+            updateFocus();
         }
-        
-        public void changeFocus() {
-            boolean f = (mForegroundActivity == mFloatingActivity);
+
+        public synchronized void stoppedActivity(Activity a) {
+            if(equalAct(a, mBaseActivity) && (a.mDestroyed || a.mFinished || a.mStopped) && a.getTaskId() == -1) {
+                newBase(null);
+                Log.d("WTF", "Removed base! with:#stop:" + a.mStopped + "#finished="+a.mFinished + "#destroyed="+a.mDestroyed);
+                log();
+            }
+        }
+
+        public void updateFocus() {
             if(mFloatingActivity != null) {
-                mFloatingActivity.changeFocusTo(f);
+                mFloatingActivity.changeFocusTo(!mFocusOnBase);
             }
             if(mBaseActivity != null) {
-                mBaseActivity.changeFocusTo(!f);
+                mBaseActivity.changeFocusTo(mFocusOnBase);
             }
+        }
+
+        private synchronized void newForeground(Activity a) {
+            if(a == (mFocusOnBase ? mBaseActivity : mFloatingActivity))return;
+            mFocusOnBase = (equalAct(a, mBaseActivity));
+            updateFocus();
+            if(a != null)
+                Log.d("WTF", "New foreground: " + a.getPackageName() + ":" + a.getTaskId());
+            else
+                log();
+        }
+
+        private synchronized void newBase(Activity a) {
+            mBaseActivity = a;
+            updateFocus();
+            if(a!= null)
+                Log.d("WTF", "New base: " + a.getPackageName() + ":" +a.getTaskId());
+            else
+                log();
+        }
+
+        private synchronized void newFloating(Activity a) {
+            mFloatingActivity = a;
+            updateFocus();
+            if(a != null)
+                Log.d("WTF", "New floating: " + mFloatingActivity.getPackageName()+ ":" + mFloatingActivity.getTaskId() + " - " + mFocusOnBase);
+            else
+                log();
+        }
+
+        public Activity getFloating() {
+            if(mFloatingActivity != null) {
+                Log.d("QF", "Returned activity: " + mFloatingActivity.getPackageName() + "-" + mFloatingActivity.getLocalClassName() + " -> " + this.toString());
+            } else {
+                Log.d("QF", "Floating one was null? " + " -> " + this.toString());
+                log();
+            }
+            return mFloatingActivity;
+        }
+
+        public void log() {
+            String b = (mBaseActivity == null) ? "empty" : mBaseActivity.getPackageName() + "." + mBaseActivity.getLocalClassName();
+            String f = (mFloatingActivity == null) ? "empty" : mFloatingActivity.getPackageName() + "." + mFloatingActivity.getLocalClassName();
+            Log.d("WTF", "Status: base=" + b + "#floating="+f+"#focus-base="+mFocusOnBase);
         }
     }
 }

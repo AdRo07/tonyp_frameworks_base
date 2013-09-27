@@ -33,6 +33,8 @@ import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import com.android.systemui.statusbar.policy.PieController;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
 
+import android.app.Activity;
+import android.app.Activity.FloatingEventHelper;
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.ActivityOptions;
@@ -104,6 +106,7 @@ import com.android.systemui.SystemUI;
 import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.recent.TaskDescription;
+import com.android.systemui.statusbar.halo.FloatingScaleView;
 import com.android.systemui.statusbar.halo.Halo;
 import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 import com.android.systemui.statusbar.phone.Ticker;
@@ -212,6 +215,11 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected boolean mHaloTaskerActive = false;
     protected ImageView mHaloButton;
     protected boolean mHaloButtonVisible = true;
+
+    //Q-Floating
+    protected FloatingEventHelper mFloatingHelper;
+    protected FloatingScaleView mFloatingScaleView;
+    protected boolean mHasQuickFloatingMenu;
 
     // UI-specific methods
 
@@ -451,6 +459,8 @@ public abstract class BaseStatusBar extends SystemUI implements
             }});
 
         updateHalo();
+        mFloatingHelper = FloatingEventHelper.getHelperInstance();
+        mFloatingHelper.assignSystemContext(mContext);
     }
 
     public void setHaloTaskerActive(boolean haloTaskerActive, boolean updateNotificationIcons) {
@@ -492,6 +502,11 @@ public abstract class BaseStatusBar extends SystemUI implements
                 mWindowManager.addView(mHalo,params);
                 mHalo.setStatusBar(this);
             }
+            if(mFloatingScaleView == null) {
+                mFloatingScaleView = new FloatingScaleView(mContext);
+                mFloatingScaleView.setLayerType (View.LAYER_TYPE_HARDWARE, null);
+                mFloatingScaleView.setStatusBar(this);
+            }
         } else {
             if (mHalo != null) {
                 mHalo.cleanUp();
@@ -499,6 +514,16 @@ public abstract class BaseStatusBar extends SystemUI implements
                 mHalo = null;
             }
         }
+    }
+
+    public void scaleForeground() {
+        if(mFloatingHelper==null)mFloatingHelper = FloatingEventHelper.getHelperInstance();
+        Activity a = mFloatingHelper.getFloating();
+        if(a == null) {
+            Log.d("QF", "Activity was null" + " -> " + mFloatingHelper.toString());
+            return;
+        }
+        mFloatingScaleView.startResizing(a);
     }
 
     public void userSwitched(int newUserId) {

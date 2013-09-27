@@ -256,4 +256,7 @@
     <dimen name="halo_speech_vpadding_bottom">3dp</dimen>
     <dimen name="halo_content_max_width">250dp</dimen>
 
+    <!-- Height for the powerwidgets! -->
+    <dimen name="powerwidget_min_height">56dp</dimen>
+
 </resources>
