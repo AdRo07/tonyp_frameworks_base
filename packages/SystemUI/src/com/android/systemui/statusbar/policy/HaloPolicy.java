@@ -36,7 +36,7 @@ public class HaloPolicy implements BatteryStateChangeCallback, NetworkSignalChan
 
     private OnClockChangedListener mClockChangedListener;
 
-    private boolean mCharging = false;
+    private int mBatteryStatus = 0;
     private boolean airPlaneMode;
     private boolean mConnected = true;
     private boolean mWifiConnected;
@@ -92,16 +92,16 @@ public class HaloPolicy implements BatteryStateChangeCallback, NetworkSignalChan
     }
 
     @Override
-    public void onBatteryLevelChanged(int level, boolean pluggedIn) {
+    public void onBatteryLevelChanged(int level, int status) {
         mBatteryLevel = level;
-        mCharging = pluggedIn;
+        mBatteryStatus  = status;
     }
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver(){
         @Override
         public void onReceive(Context arg0, Intent intent) {
             mBatteryLevel = intent.getIntExtra("level", 0);
-            mCharging = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0;
+            mBatteryStatus = BatteryManager.BATTERY_STATUS_CHARGING;
         }
     };
 
@@ -110,7 +110,7 @@ public class HaloPolicy implements BatteryStateChangeCallback, NetworkSignalChan
     }
 
     public boolean getBatteryStatus() {
-        return mCharging;
+        return mBatteryStatus == BatteryManager.BATTERY_STATUS_CHARGING;
     }
 
     @Override
