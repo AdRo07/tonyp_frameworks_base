@@ -18,7 +18,6 @@ package android.provider;
 
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
-import android.app.ActivityManagerNative;
 import android.app.SearchManager;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
@@ -38,7 +37,6 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.DropBoxManager;
 import android.os.IBinder;
@@ -58,6 +56,7 @@ import com.android.internal.widget.ILockSettings;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 
 /**
  * The Settings provider contains global system-level device preferences.
@@ -2768,7 +2767,7 @@ public final class Settings {
          *
          * @hide
          */
-        public static final String QUICK_SETTINGS_RIBBON_TILES = "quick_settings__ribbon_tiles";
+        public static final String QUICK_SETTINGS_RIBBON_TILES = "quick_settings_ribbon_tiles";
 
         /**
          * Navigation controls to Use
@@ -5212,7 +5211,7 @@ public final class Settings {
          * Whether newly installed apps should run with privacy guard by default
          * @hide
          */
-        public static final String PRIVACY_GUARD_DEFAULT = "privacy_guard_default";
+         public static final String PRIVACY_GUARD_DEFAULT = "privacy_guard_default";
 
         /**
          * This are the settings to be backed up.
@@ -5284,13 +5283,6 @@ public final class Settings {
          * @hide
          */
         public static final boolean isLocationProviderEnabledForUser(ContentResolver cr, String provider, int userId) {
-            try {
-                if (ActivityManagerNative.getDefault().isPrivacyGuardEnabledForProcess(Binder.getCallingPid())) {
-                    return false;
-                }
-            } catch (RemoteException e) {
-                // ignore
-            }
             String allowedProviders = Settings.Secure.getStringForUser(cr,
                     LOCATION_PROVIDERS_ALLOWED, userId);
             return TextUtils.delimitedStringContains(allowedProviders, ',', provider);
@@ -6420,7 +6412,7 @@ public final class Settings {
          * @hide
          */
         public static final String getBluetoothHeadsetPriorityKey(String address) {
-            return BLUETOOTH_HEADSET_PRIORITY_PREFIX + address.toUpperCase();
+            return BLUETOOTH_HEADSET_PRIORITY_PREFIX + address.toUpperCase(Locale.ROOT);
         }
 
         /**
@@ -6428,7 +6420,7 @@ public final class Settings {
          * @hide
          */
         public static final String getBluetoothA2dpSinkPriorityKey(String address) {
-            return BLUETOOTH_A2DP_SINK_PRIORITY_PREFIX + address.toUpperCase();
+            return BLUETOOTH_A2DP_SINK_PRIORITY_PREFIX + address.toUpperCase(Locale.ROOT);
         }
 
         /**
@@ -6436,7 +6428,7 @@ public final class Settings {
          * @hide
          */
         public static final String getBluetoothInputDevicePriorityKey(String address) {
-            return BLUETOOTH_INPUT_DEVICE_PRIORITY_PREFIX + address.toUpperCase();
+            return BLUETOOTH_INPUT_DEVICE_PRIORITY_PREFIX + address.toUpperCase(Locale.ROOT);
         }
 
         /**
