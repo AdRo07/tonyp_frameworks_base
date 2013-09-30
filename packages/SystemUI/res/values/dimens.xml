@@ -257,6 +257,6 @@
     <dimen name="halo_content_max_width">250dp</dimen>
 
     <!-- Height for the powerwidgets! -->
-    <dimen name="powerwidget_min_height">56dp</dimen>
+    <dimen name="powerwidget_min_height">42dp</dimen>
 
 </resources>

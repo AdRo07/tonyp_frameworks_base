@@ -117,6 +117,7 @@ import com.android.systemui.statusbar.policy.OnSizeChangedListener;
 import com.android.systemui.statusbar.policy.Prefs;
 import com.android.systemui.statusbar.powerwidget.BrightnessSlider;
 import com.android.systemui.statusbar.powerwidget.QFloatingSlider;
+import com.android.systemui.statusbar.powerwidget.VolumeSlider;
 
 public class PhoneStatusBar extends BaseStatusBar {
     static final String TAG = "PhoneStatusBar";
@@ -226,19 +227,23 @@ public class PhoneStatusBar extends BaseStatusBar {
     private SettingsObserver mSettingsObserver;
 
     // Ribbon settings
+    private int mRibbonPosition;
     private boolean mHasQuickAccessSettings;
     private boolean mQuickAccessLayoutLinked = true;
     private QuickSettingsHorizontalScrollView mRibbonView;
     private QuickSettingsController mRibbonQS;
-    
+    private QuickSettingsHorizontalScrollView mRibbonScrollView;
+    private LinearLayout mQAContainer;
     //Brightness Slider 
-    private int mBrightnessSliderMode;
-    private BrightnessSlider mSlider;
-    private FrameLayout mSliderContainer;
+    private int mBSliderMode;
+    private BrightnessSlider mBSlider;
+    private FrameLayout mBSliderContainer;
     //Made it in the same way as the Ribbons are made
-    
     private QFloatingSlider mQFloating;
     private FrameLayout mQFloatingContainer;
+    private int mVSliderMode;
+    private VolumeSlider mVSlider;
+    private FrameLayout mVSliderContainer;
 
     // top bar
     View mNotificationPanelHeader;
@@ -494,6 +499,8 @@ public class PhoneStatusBar extends BaseStatusBar {
             if (ribbon_stub != null) {
                 mRibbonView = (QuickSettingsHorizontalScrollView) ((ViewStub)ribbon_stub).inflate();
                 mRibbonView.setVisibility(View.VISIBLE);
+                mRibbonScrollView = (QuickSettingsHorizontalScrollView)
+                        mStatusBarWindow.findViewById(R.id.quick_settings_ribbon_scroll_container);
             }
         }
         if (mRibbonQS == null) {
@@ -513,31 +520,63 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
     
     private void cleanupBrightnessSlider() {
-        if (mSlider == null) {
+        if (mBSlider == null) {
             return;
         }
-        ((FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container_above)).removeAllViews();
-        ((FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container_below)).removeAllViews();
-        mSliderContainer.setVisibility(View.GONE);
-        mSliderContainer.removeAllViews();
-        mSlider = null;
-        mSliderContainer = null;
+        mBSliderContainer.setVisibility(View.GONE);
+        mBSliderContainer.removeAllViews();
+        mBSlider = null;
+        mBSliderContainer = null;
     }
 
     private void showBrightnessSlider(){
-        if(mBrightnessSliderMode > 2 || mBrightnessSliderMode < 0)
-            mBrightnessSliderMode = 0; //default
-        if(mSlider == null) {
-            mSlider = new BrightnessSlider(mContext); 
-            mSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(
-                                    (mBrightnessSliderMode == 1)  ? 
-                                        R.id.brightness_slider_container_above : 
-                                        R.id.brightness_slider_container_below);
-            mSliderContainer.removeAllViews();
-            mSliderContainer.addView(mSlider.getView());
+        if(mBSliderMode < 0)
+            return;
+        if(mBSlider == null) {
+            mBSlider = new BrightnessSlider(mContext);
+            mBSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container);
+            mBSliderContainer.removeAllViews();
+            mBSliderContainer.addView(mBSlider.getView());
         }
-        mSlider.getView().setVisibility(View.VISIBLE);
-        mSliderContainer.setVisibility(View.VISIBLE);
+        mBSliderContainer.setVisibility(View.VISIBLE);
+        changeQAPosition(mBSliderContainer, mBSliderMode);
+    }
+
+    private void cleanupVolumeSlider() {
+        if (mVSlider == null) {
+            return;
+        }
+        mVSliderContainer.setVisibility(View.GONE);
+        mVSliderContainer.removeAllViews();
+        mVSlider = null;
+        mVSliderContainer = null;
+    }
+
+    private void showVolumeSlider() {
+        if(mVSliderMode < 0)
+            return;
+        if(mVSlider == null) {
+            mVSlider = new VolumeSlider(mContext);
+            mVSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(R.id.volume_slider_container);
+            mVSliderContainer.removeAllViews();
+            mVSliderContainer.addView(mVSlider.getView());
+        }
+        mVSliderContainer.setVisibility(View.VISIBLE);
+        changeQAPosition(mVSliderContainer, mVSliderMode);
+    }
+
+    private void changeQAPosition(View v, int pos) {
+        if(mQAContainer == null)return;
+        boolean inside = false;
+        for (int i=0;!inside && i<mQAContainer.getChildCount();i++) {
+            if(mQAContainer.getChildAt(i).getId() == v.getId()) {
+                inside = true;
+            }
+        }
+        if(inside) {
+            mQAContainer.removeView(v);
+        }
+        mQAContainer.addView(v, pos);
     }
 
     // ================================================================================
@@ -841,20 +880,76 @@ public class PhoneStatusBar extends BaseStatusBar {
                 Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
             mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
                 Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
-            if (mHasQuickAccessSettings) {
-                inflateRibbon();
+        }
+
+        mRibbonPosition = Settings.System.getIntForUser(resolver,
+                Settings.System.RIBBONS_POSITION, 0, UserHandle.USER_CURRENT);
+        mBSliderMode = Settings.System.getIntForUser(resolver,
+                Settings.System.SHOW_BRIGHTNESS_SLIDER, 1, UserHandle.USER_CURRENT);
+        boolean transparentB = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
+
+        mVSliderMode = Settings.System.getIntForUser(resolver,
+                Settings.System.SHOW_VOLUME_SLIDER, 2, UserHandle.USER_CURRENT);
+        boolean transparentV = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
+
+        if(mBSliderMode >= 0 || mHasQuickAccessSettings || mVSliderMode >= 0)
+            mQAContainer = (LinearLayout)mStatusBarWindow.findViewById(R.id.quick_access_container);
+
+        View[] v = new View[3];
+
+        if (mHasSettingsPanel && mHasQuickAccessSettings) {
+            inflateRibbon();
+            int pos = mRibbonPosition;
+            if(pos > v.length)pos = v.length -1;
+            if(pos < 0)pos = 0;
+            v[pos] = mRibbonScrollView;
+        }
+
+        if(mBSliderMode >= 0) {
+            cleanupBrightnessSlider();
+            showBrightnessSlider();
+            mBSlider.setTransparent(transparentB);
+            int pos = mBSliderMode;
+            if(pos > v.length)pos = v.length -1;
+            if(pos < 0)pos = 0;
+            boolean ready = false;
+            while(!ready) {
+                if(pos > v.length)pos = 0; //Roll back to 0
+                if(v[pos]!=null) {
+                    pos++;
+                } else {
+                    v[pos] = mBSliderContainer;
+                    ready = true;
+                }
             }
         }
 
-        mBrightnessSliderMode = Settings.System.getIntForUser(resolver,
-                Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
-        boolean transparent = Settings.System.getIntForUser(resolver,
-                        Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
-
-        if(mBrightnessSliderMode != 0) {
-            cleanupBrightnessSlider();
-            showBrightnessSlider();
-            mSlider.setTransparent(transparent);
+        if(mVSliderMode >= 0) {
+            cleanupVolumeSlider();
+            showVolumeSlider();
+            mVSlider.setTransparent(transparentV);
+            int pos = mVSliderMode;
+            if(pos > v.length)pos = v.length -1;
+            if(pos < 0)pos = 0;
+            boolean ready = false;
+            while(!ready) {
+                if(pos >= v.length)pos = 0; //Roll back to 0
+                if(v[pos]!=null) {
+                    pos++;
+                } else {
+                    v[pos] = mVSliderContainer;
+                    ready = true;
+                }
+            }
+        }
+        int index = 0;
+        for(int i=0;i<v.length;i++) {
+            if(v[i] != null) {
+                changeQAPosition(v[i], index);
+                index++;
+            }
         }
 
         mClingShown = ! (DEBUG_CLINGS
@@ -1747,7 +1842,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
 
     Animator mScrollViewAnim, mFlipSettingsViewAnim, mNotificationButtonAnim,
-        mSettingsButtonAnim, mClearButtonAnim, mRibbonViewAnim, mBrightnessSliderViewAnim;
+        mSettingsButtonAnim, mClearButtonAnim, mQAContainerViewAnim;
 
     @Override
     public void animateExpandNotificationsPanel() {
@@ -1772,8 +1867,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     public void flipToNotifications() {
         if (mFlipSettingsViewAnim != null) mFlipSettingsViewAnim.cancel();
         if (mScrollViewAnim != null) mScrollViewAnim.cancel();
-        if (mRibbonViewAnim != null) mRibbonViewAnim.cancel();
-        if (mBrightnessSliderViewAnim != null) mBrightnessSliderViewAnim.cancel();
+        if (mQAContainerViewAnim != null) mQAContainerViewAnim.cancel();
         if (mSettingsButtonAnim != null) mSettingsButtonAnim.cancel();
         if (mNotificationButtonAnim != null) mNotificationButtonAnim.cancel();
         if (mClearButtonAnim != null) mClearButtonAnim.cancel();
@@ -1793,22 +1887,12 @@ public class PhoneStatusBar extends BaseStatusBar {
                     ObjectAnimator.ofFloat(mScrollView, View.SCALE_X, 1f)
                         .setDuration(FLIP_DURATION_IN)
                     )));
-        if (mRibbonView != null && mHasQuickAccessSettings) {
-            mRibbonView.setVisibility(View.VISIBLE);
-            mRibbonViewAnim = start(
+        if (mQAContainer != null) {
+            mQAContainer.setVisibility(View.VISIBLE);
+            mQAContainerViewAnim = start(
                     startDelay(FLIP_DURATION_OUT * zeroOutDelays,
                             interpolator(mDecelerateInterpolator,
-                                    ObjectAnimator.ofFloat(mRibbonView, View.SCALE_X, 1f)
-                                    .setDuration(FLIP_DURATION_IN)
-                                    )));
-        }
-        if (mSlider != null && mBrightnessSliderMode != 0) {
-            mSliderContainer.setVisibility(View.VISIBLE);
-            mSlider.getView().setVisibility(View.VISIBLE);
-            mBrightnessSliderViewAnim = start(
-                    startDelay(FLIP_DURATION_OUT * zeroOutDelays,
-                            interpolator(mDecelerateInterpolator,
-                                    ObjectAnimator.ofFloat(mSliderContainer, View.SCALE_X, 1f)
+                                    ObjectAnimator.ofFloat(mQAContainer, View.SCALE_X, 1f)
                                     .setDuration(FLIP_DURATION_IN)
                                     )));
         }
@@ -1875,15 +1959,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         mSettingsButton.setVisibility(View.GONE);
         mScrollView.setVisibility(View.GONE);
         mScrollView.setScaleX(0f);
-        if (mRibbonView != null) {
-            mRibbonView.setVisibility(View.GONE);
-            mRibbonView.setScaleX(0f);
-        }
-        if(mSlider != null) {
-            View v = mSliderContainer;
-            v.setVisibility(View.GONE);
-            v.setScaleX(0f);
-            mSlider.getView().setVisibility(View.GONE);
+        if(mQAContainer != null) {
+            mQAContainer.setVisibility(View.GONE);
+            mQAContainer.setScaleX(0f);
         }
         mNotificationButton.setVisibility(View.VISIBLE);
         mNotificationButton.setAlpha(1f);
@@ -1919,15 +1997,9 @@ public class PhoneStatusBar extends BaseStatusBar {
             mSettingsButton.setAlpha(-progress);
             mScrollView.setVisibility(View.VISIBLE);
             mScrollView.setScaleX(-progress);
-            if (mRibbonView != null && mHasQuickAccessSettings) {
-                mRibbonView.setVisibility(View.VISIBLE);
-                mRibbonView.setScaleX(-progress);
-            }
-            if(mSlider != null && mBrightnessSliderMode != 0) {
-                View v = mSliderContainer;
-                v.setVisibility(View.VISIBLE);
-                mSlider.getView().setVisibility(View.VISIBLE);
-                v.setScaleX(-progress);
+            if(mQAContainer != null) {
+                mQAContainer.setVisibility(View.VISIBLE);
+                mQAContainer.setScaleX(-progress);
             }
             mNotificationButton.setVisibility(View.GONE);
         } else { // settings side
@@ -1936,15 +2008,9 @@ public class PhoneStatusBar extends BaseStatusBar {
             mSettingsButton.setVisibility(View.GONE);
             mScrollView.setVisibility(View.GONE);
             mScrollView.setScaleX(0f);
-            if (mRibbonView != null) {
-                mRibbonView.setVisibility(View.GONE);
-                mRibbonView.setScaleX(0f);
-            }
-            if(mSlider != null) {
-                View v = mSliderContainer;
-                v.setVisibility(View.GONE);
-                mSlider.getView().setVisibility(View.GONE);
-                v.setScaleX(0f);
+            if(mQAContainer != null) {
+                mQAContainer.setVisibility(View.GONE);
+                mQAContainer.setScaleX(0f);
             }
             mNotificationButton.setVisibility(View.VISIBLE);
             mNotificationButton.setAlpha(progress);
@@ -1958,8 +2024,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         if (mFlipSettingsViewAnim != null) mFlipSettingsViewAnim.cancel();
         if (mScrollViewAnim != null) mScrollViewAnim.cancel();
-        if (mRibbonViewAnim != null) mRibbonViewAnim.cancel();
-        if (mBrightnessSliderViewAnim != null) mBrightnessSliderViewAnim.cancel();
+        if (mQAContainerViewAnim != null) mQAContainerViewAnim.cancel();
         if (mSettingsButtonAnim != null) mSettingsButtonAnim.cancel();
         if (mNotificationButtonAnim != null) mNotificationButtonAnim.cancel();
         if (mClearButtonAnim != null) mClearButtonAnim.cancel();
@@ -1970,11 +2035,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (!halfWayDone) {
             mFlipSettingsView.setScaleX(0f);
             mScrollView.setScaleX(1f);
-            if (mRibbonView != null) {
-                mRibbonView.setScaleX(1f);
-            }
-            if(mSlider != null) {
-                mSliderContainer.setScaleX(1f);
+            if(mQAContainer != null) {
+                mQAContainer.setScaleX(1f);
             }
         }
 
@@ -1992,23 +2054,14 @@ public class PhoneStatusBar extends BaseStatusBar {
                         )
                     .setDuration(FLIP_DURATION_OUT),
                 mScrollView, View.INVISIBLE));
-        if (mRibbonView != null) {
-            mRibbonViewAnim = start(
+        if (mQAContainer != null) {
+            mQAContainerViewAnim = start(
                     setVisibilityWhenDone(
                             interpolator(mAccelerateInterpolator,
-                                    ObjectAnimator.ofFloat(mRibbonView, View.SCALE_X, 0f)
+                                    ObjectAnimator.ofFloat(mQAContainer, View.SCALE_X, 0f)
                                     )
                                     .setDuration(FLIP_DURATION_OUT),
-                                    mRibbonView, View.GONE));
-        }
-        if (mSlider != null) {
-            mBrightnessSliderViewAnim = start(
-                    setVisibilityWhenDone(
-                            interpolator(mAccelerateInterpolator,
-                                    ObjectAnimator.ofFloat(mSliderContainer, View.SCALE_X, 0f)
-                                    )
-                                    .setDuration(FLIP_DURATION_OUT),
-                                    mSliderContainer, View.GONE));
+                                    mQAContainer, View.GONE));
         }
         mSettingsButtonAnim = start(
             setVisibilityWhenDone(
@@ -2066,21 +2119,16 @@ public class PhoneStatusBar extends BaseStatusBar {
             // reset things to their proper state
             if (mFlipSettingsViewAnim != null) mFlipSettingsViewAnim.cancel();
             if (mScrollViewAnim != null) mScrollViewAnim.cancel();
-            if (mRibbonViewAnim != null) mRibbonViewAnim.cancel();
+            if (mQAContainerViewAnim != null) mQAContainerViewAnim.cancel();
             if (mSettingsButtonAnim != null) mSettingsButtonAnim.cancel();
             if (mNotificationButtonAnim != null) mNotificationButtonAnim.cancel();
             if (mClearButtonAnim != null) mClearButtonAnim.cancel();
 
             mScrollView.setScaleX(1f);
             mScrollView.setVisibility(View.VISIBLE);
-            if (mRibbonView != null && mHasQuickAccessSettings) {
-                mRibbonView.setScaleX(1f);
-                mRibbonView.setVisibility(View.VISIBLE);
-            }
-            if (mSlider != null && mBrightnessSliderMode != 0) {
-                mSliderContainer.setScaleX(1f);
-                mSliderContainer.setVisibility(View.VISIBLE);
-                mSlider.getView().setVisibility(View.VISIBLE);
+            if (mQAContainer != null) {
+                mQAContainer.setScaleX(1f);
+                mQAContainer.setVisibility(View.VISIBLE);
             }
             mSettingsButton.setAlpha(1f);
             mSettingsButton.setVisibility(View.VISIBLE);
@@ -3204,19 +3252,39 @@ public class PhoneStatusBar extends BaseStatusBar {
 
                 final ContentResolver resolver = mContext.getContentResolver();
                 int mode = Settings.System.getIntForUser(resolver,
-                        Settings.System.SHOW_BRIGHTNESS_SLIDER, 0, UserHandle.USER_CURRENT);
+                        Settings.System.SHOW_BRIGHTNESS_SLIDER, -1, UserHandle.USER_CURRENT);
                 boolean transparent = Settings.System.getIntForUser(resolver,
                         Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
 
-                if(mode != mBrightnessSliderMode)
+                if(mode != mBSliderMode)
                     cleanupBrightnessSlider();
-                mBrightnessSliderMode = mode;
+                mBSliderMode = mode;
 
-                if (mBrightnessSliderMode != 0) {
+                if (mBSliderMode >= 0) {
                     showBrightnessSlider();
-                    mSlider.setTransparent(transparent);
+                    mBSlider.setTransparent(transparent);
                 } else {
                     cleanupBrightnessSlider();
+                }
+            } else if (uri != null && (uri.equals(Settings.System.getUriFor(
+                    Settings.System.SHOW_VOLUME_SLIDER)) || uri.equals(Settings.System.getUriFor(
+                    Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT)) )) {
+
+                final ContentResolver resolver = mContext.getContentResolver();
+                int mode = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_VOLUME_SLIDER, -1, UserHandle.USER_CURRENT);
+                boolean transparent = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
+
+                if(mode != mVSliderMode)
+                    cleanupVolumeSlider();
+                mVSliderMode = mode;
+
+                if (mVSliderMode >= 0) {
+                    showVolumeSlider();
+                    mVSlider.setTransparent(transparent);
+                } else {
+                    cleanupVolumeSlider();
                 }
             } else if (uri != null && uri.equals(Settings.System.getUriFor(
                     Settings.System.QS_QUICK_ACCESS))) {
@@ -3302,6 +3370,13 @@ public class PhoneStatusBar extends BaseStatusBar {
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SHOW_BRIGHTNESS_SLIDER_TRANSPARENT),
+                    false, this, UserHandle.USER_ALL);
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.SHOW_VOLUME_SLIDER),
+                    false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT),
                     false, this, UserHandle.USER_ALL);
         }
     }
