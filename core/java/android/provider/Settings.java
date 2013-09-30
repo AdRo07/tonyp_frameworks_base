@@ -2899,10 +2899,8 @@ public final class Settings {
         
         /**
          * Whether to show the BrightnessSlider in Notifications 
-         * default: 0
-         * 0: don't show
-         * 1: above Ribbons
-         * 2: below Ribbons
+         * default: -1
+         * other = Position in NotificationBar
          * @hide
          */
         public static final String SHOW_BRIGHTNESS_SLIDER = "show_brightness_slider";
@@ -2915,6 +2913,43 @@ public final class Settings {
          * @hide
          */
         public static final String SHOW_BRIGHTNESS_SLIDER_TRANSPARENT = "show_brightness_slider_transparent";
+        
+        /**
+         * Position to show the Ribbons in Notifications
+         * default: -1
+         * other = Position in NotificationBar
+         * @hide
+         */
+        public static final String RIBBONS_POSITION = "ribbons_position";
+
+        /**
+         * Whether to show the VolumeSlider in Notifications
+         * default: -1
+         * other = Position in NotificationBar
+         * @hide
+         */
+        public static final String SHOW_VOLUME_SLIDER = "show_volume_slider";
+
+
+        /**
+         * Whether to show the VolumeSlider in Notifications as Transparent or not
+         * default: 0
+         * 0: transparent
+         * 1: not transparent -> qs_tile_background
+         * @hide
+         */
+        public static final String SHOW_VOLUME_SLIDER_TRANSPARENT = "show_volume_slider_transparent";
+
+        /**
+         * Whether to change the music, notification sound or the call/phone volume
+         * default: o
+         * 0: phone
+         * 1: music
+         * 2: alarm
+         */
+        public static final String VOLUME_SLIDER_INPUT_MODE = "volume_slider_input_mode";
+
+        /**
 
         /**
          * Whether to show the signal text or signal bars.

@@ -17,6 +17,7 @@
 <com.android.systemui.statusbar.phone.QuickSettingsHorizontalScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
+    android:id="@+id/quick_settings_ribbon_scroll_container"
     android:layout_width="match_parent"
     android:fadingEdgeLength="30dp"
     android:requiresFadingEdge="horizontal"
