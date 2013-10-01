@@ -30,6 +30,7 @@ import static com.android.internal.util.cm.QSConstants.TILE_LOCKSCREEN;
 import static com.android.internal.util.cm.QSConstants.TILE_LTE;
 import static com.android.internal.util.cm.QSConstants.TILE_MOBILEDATA;
 import static com.android.internal.util.cm.QSConstants.TILE_NETWORKADB;
+import static com.android.internal.util.cm.QSConstants.TILE_NETWORKLOCATION;
 import static com.android.internal.util.cm.QSConstants.TILE_NETWORKMODE;
 import static com.android.internal.util.cm.QSConstants.TILE_NFC;
 import static com.android.internal.util.cm.QSConstants.TILE_PROFILE;
@@ -78,6 +79,7 @@ import com.android.systemui.quicksettings.LteTile;
 import com.android.systemui.quicksettings.MobileNetworkTile;
 import com.android.systemui.quicksettings.MobileNetworkTypeTile;
 import com.android.systemui.quicksettings.NetworkAdbTile;
+import com.android.systemui.quicksettings.NetworkLocationTile;
 import com.android.systemui.quicksettings.NfcTile;
 import com.android.systemui.quicksettings.PreferencesTile;
 import com.android.systemui.quicksettings.ProfileTile;
@@ -167,6 +169,7 @@ public class QuickSettingsController {
             TILES_DEFAULT.remove(TILE_WIFIAP);
             TILES_DEFAULT.remove(TILE_MOBILEDATA);
             TILES_DEFAULT.remove(TILE_NETWORKMODE);
+            TILES_DEFAULT.remove(TILE_NETWORKLOCATION);
         }
 
         if (!lteSupported) {
@@ -199,6 +202,8 @@ public class QuickSettingsController {
                 qs = new WiFiTile(mContext, this, mStatusBarService.mNetworkController);
             } else if (tile.equals(TILE_GPS)) {
                 qs = new GPSTile(mContext, this);
+            } else if (tile.equals(TILE_NETWORKLOCATION)) {
+                qs = new NetworkLocationTile(mContext, this);
             } else if (tile.equals(TILE_BLUETOOTH) && bluetoothSupported) {
                 qs = new BluetoothTile(mContext, this, mStatusBarService.mBluetoothController);
             } else if (tile.equals(TILE_BRIGHTNESS)) {
