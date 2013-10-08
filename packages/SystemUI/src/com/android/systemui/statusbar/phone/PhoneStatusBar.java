@@ -31,7 +31,6 @@ import android.app.ActivityManagerNative;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.StatusBarManager;
-import android.service.notification.StatusBarNotification;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -61,6 +60,7 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.service.dreams.DreamService;
 import android.service.dreams.IDreamManager;
+import android.service.notification.StatusBarNotification;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.Log;
@@ -88,8 +88,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import android.service.notification.StatusBarNotification;
-
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.internal.util.pie.PiePosition;
 import com.android.systemui.EventLogTags;
@@ -103,12 +101,11 @@ import com.android.systemui.statusbar.SignalClusterTextView;
 import com.android.systemui.statusbar.SignalClusterView;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.CircleBattery;
 import com.android.systemui.statusbar.policy.CircleDockBattery;
 import com.android.systemui.statusbar.policy.Clock;
 import com.android.systemui.statusbar.policy.DockBatteryController;
-import com.android.systemui.statusbar.policy.BluetoothController;
-import com.android.systemui.statusbar.policy.DateView;
 import com.android.systemui.statusbar.policy.IntruderAlertView;
 import com.android.systemui.statusbar.policy.LocationController;
 import com.android.systemui.statusbar.policy.NetworkController;
@@ -244,6 +241,9 @@ public class PhoneStatusBar extends BaseStatusBar {
     private int mVSliderMode;
     private VolumeSlider mVSlider;
     private FrameLayout mVSliderContainer;
+    private int mQSliderMode;
+    private QFloatingSlider mQSlider;
+    private FrameLayout mQSliderContainer;
 
     // top bar
     View mNotificationPanelHeader;
@@ -564,6 +564,30 @@ public class PhoneStatusBar extends BaseStatusBar {
         mVSliderContainer.setVisibility(View.VISIBLE);
         changeQAPosition(mVSliderContainer, mVSliderMode);
     }
+    
+    private void cleanupQFloatingSlider() {
+        if (mQSlider == null) {
+            return;
+        }
+        mQSliderContainer.setVisibility(View.GONE);
+        mQSliderContainer.removeAllViews();
+        mQSlider = null;
+        mQSliderContainer = null;
+    }
+
+    private void showQFloatingSlider() {
+        if(mQSliderMode < 0)
+            return;
+        if(mQSlider == null) {
+            mQSlider = new QFloatingSlider(mContext);
+            mQSlider.setBar(this);
+            mQSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(R.id.q_floating_slider_container);
+            mQSliderContainer.removeAllViews();
+            mQSliderContainer.addView(mQSlider);
+        }
+        mQSliderContainer.setVisibility(View.VISIBLE);
+        changeQAPosition(mQSliderContainer, mQSliderMode);
+    }
 
     private void changeQAPosition(View v, int pos) {
         if(mQAContainer == null)return;
@@ -876,14 +900,13 @@ public class PhoneStatusBar extends BaseStatusBar {
                     mTilesChangedObserver.startObserving();
                 }
             }
-            mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
-                Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
+            mRibbonPosition = Settings.System.getIntForUser(resolver,
+                    Settings.System.SHOW_RIBBONS, -1, UserHandle.USER_CURRENT);
+
+            mHasQuickAccessSettings = mRibbonPosition >= 0;
             mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
                 Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
         }
-
-        mRibbonPosition = Settings.System.getIntForUser(resolver,
-                Settings.System.RIBBONS_POSITION, 0, UserHandle.USER_CURRENT);
         mBSliderMode = Settings.System.getIntForUser(resolver,
                 Settings.System.SHOW_BRIGHTNESS_SLIDER, 1, UserHandle.USER_CURRENT);
         boolean transparentB = Settings.System.getIntForUser(resolver,
@@ -894,63 +917,26 @@ public class PhoneStatusBar extends BaseStatusBar {
         boolean transparentV = Settings.System.getIntForUser(resolver,
                         Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
 
-        if(mBSliderMode >= 0 || mHasQuickAccessSettings || mVSliderMode >= 0)
-            mQAContainer = (LinearLayout)mStatusBarWindow.findViewById(R.id.quick_access_container);
+        mQSliderMode = -1;
+        boolean transparentQ = false;
 
-        View[] v = new View[3];
+        checkQAContainer();
 
-        if (mHasSettingsPanel && mHasQuickAccessSettings) {
-            inflateRibbon();
-            int pos = mRibbonPosition;
-            if(pos > v.length)pos = v.length -1;
-            if(pos < 0)pos = 0;
-            v[pos] = mRibbonScrollView;
-        }
-
-        if(mBSliderMode >= 0) {
-            cleanupBrightnessSlider();
+        if(mBSliderMode>=0) {
             showBrightnessSlider();
             mBSlider.setTransparent(transparentB);
-            int pos = mBSliderMode;
-            if(pos > v.length)pos = v.length -1;
-            if(pos < 0)pos = 0;
-            boolean ready = false;
-            while(!ready) {
-                if(pos > v.length)pos = 0; //Roll back to 0
-                if(v[pos]!=null) {
-                    pos++;
-                } else {
-                    v[pos] = mBSliderContainer;
-                    ready = true;
-                }
-            }
         }
-
-        if(mVSliderMode >= 0) {
-            cleanupVolumeSlider();
+        if(mQSliderMode>=0){
+            showQFloatingSlider();
+            mQSlider.setTransparent(transparentQ);
+        }
+        if(mVSliderMode>=0){
             showVolumeSlider();
             mVSlider.setTransparent(transparentV);
-            int pos = mVSliderMode;
-            if(pos > v.length)pos = v.length -1;
-            if(pos < 0)pos = 0;
-            boolean ready = false;
-            while(!ready) {
-                if(pos >= v.length)pos = 0; //Roll back to 0
-                if(v[pos]!=null) {
-                    pos++;
-                } else {
-                    v[pos] = mVSliderContainer;
-                    ready = true;
-                }
-            }
         }
-        int index = 0;
-        for(int i=0;i<v.length;i++) {
-            if(v[i] != null) {
-                changeQAPosition(v[i], index);
-                index++;
-            }
-        }
+        if(mRibbonPosition>=0)inflateRibbon();
+
+        sortToggles();
 
         mClingShown = ! (DEBUG_CLINGS
             || !Prefs.read(mContext).getBoolean(Prefs.SHOWN_QUICK_SETTINGS_HELP, false));
@@ -979,6 +965,34 @@ public class PhoneStatusBar extends BaseStatusBar {
         mVelocityTracker = VelocityTracker.obtain();
 
         return mStatusBarView;
+    }
+
+    public void sortToggles () {
+        TogglesList list = new TogglesList();
+        list.addItemWithoutReorder(mBSliderContainer, mBSliderMode);
+        list.addItemWithoutReorder(mVSliderContainer, mVSliderMode);
+        list.addItemWithoutReorder(mRibbonScrollView, mRibbonPosition);
+        list.addItemWithoutReorder(mQFloatingContainer, mQSliderMode);
+        list.reorder();
+        int index = 0;
+        for(int i = 0;i<list.length;i++) {
+            View v = list.get(i);
+            if(v != null) {
+                changeQAPosition(v, index);
+                index++;
+            }
+        }
+        if(mBSliderMode == -1 && mVSliderMode == -1 && mRibbonPosition == -1 && mQSliderMode == -1) {
+            mQAContainer.setVisibility(View.GONE);
+            mQAContainer = null;
+        }
+    }
+
+    public void checkQAContainer() {
+        if(mQAContainer == null && (mBSliderMode >= 0 || mVSliderMode >= 0 || mRibbonPosition >= 0 || mQSliderMode >= 0)) {
+            mQAContainer = (LinearLayout)mStatusBarWindow.findViewById(R.id.quick_access_container);
+            mQAContainer.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -1819,6 +1833,17 @@ public class PhoneStatusBar extends BaseStatusBar {
         return a;
     }
 
+    public Animator setVisibilityOnStart(
+            final Animator a, final View v, final int vis) {
+        a.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                v.setVisibility(vis);
+            }
+        });
+        return a;
+    }
+
     public Animator interpolator(TimeInterpolator ti, Animator a) {
         a.setInterpolator(ti);
         return a;
@@ -1888,13 +1913,12 @@ public class PhoneStatusBar extends BaseStatusBar {
                         .setDuration(FLIP_DURATION_IN)
                     )));
         if (mQAContainer != null) {
-            mQAContainer.setVisibility(View.VISIBLE);
             mQAContainerViewAnim = start(
                     startDelay(FLIP_DURATION_OUT * zeroOutDelays,
+                        setVisibilityOnStart(
                             interpolator(mDecelerateInterpolator,
-                                    ObjectAnimator.ofFloat(mQAContainer, View.SCALE_X, 1f)
-                                    .setDuration(FLIP_DURATION_IN)
-                                    )));
+                                ObjectAnimator.ofFloat(mQAContainer, View.SCALE_X, 1f)
+                                    .setDuration(FLIP_DURATION_IN)), mQAContainer, View.VISIBLE)));
         }
         mFlipSettingsViewAnim = start(
             setVisibilityWhenDone(
@@ -2057,11 +2081,11 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mQAContainer != null) {
             mQAContainerViewAnim = start(
                     setVisibilityWhenDone(
-                            interpolator(mAccelerateInterpolator,
-                                    ObjectAnimator.ofFloat(mQAContainer, View.SCALE_X, 0f)
-                                    )
-                                    .setDuration(FLIP_DURATION_OUT),
-                                    mQAContainer, View.GONE));
+                        interpolator(mAccelerateInterpolator,
+                                ObjectAnimator.ofFloat(mQAContainer, View.SCALE_X, 0f)
+                                )
+                            .setDuration(FLIP_DURATION_OUT),
+                        mQAContainer, View.GONE));
         }
         mSettingsButtonAnim = start(
             setVisibilityWhenDone(
@@ -3259,13 +3283,14 @@ public class PhoneStatusBar extends BaseStatusBar {
                 if(mode != mBSliderMode)
                     cleanupBrightnessSlider();
                 mBSliderMode = mode;
-
+                checkQAContainer();
                 if (mBSliderMode >= 0) {
                     showBrightnessSlider();
                     mBSlider.setTransparent(transparent);
                 } else {
                     cleanupBrightnessSlider();
                 }
+                sortToggles();
             } else if (uri != null && (uri.equals(Settings.System.getUriFor(
                     Settings.System.SHOW_VOLUME_SLIDER)) || uri.equals(Settings.System.getUriFor(
                     Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT)) )) {
@@ -3279,24 +3304,29 @@ public class PhoneStatusBar extends BaseStatusBar {
                 if(mode != mVSliderMode)
                     cleanupVolumeSlider();
                 mVSliderMode = mode;
-
+                checkQAContainer();
                 if (mVSliderMode >= 0) {
                     showVolumeSlider();
                     mVSlider.setTransparent(transparent);
                 } else {
                     cleanupVolumeSlider();
                 }
+                sortToggles();
             } else if (uri != null && uri.equals(Settings.System.getUriFor(
-                    Settings.System.QS_QUICK_ACCESS))) {
+                    Settings.System.SHOW_RIBBONS))) {
                 final ContentResolver resolver = mContext.getContentResolver();
-                mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
-                        Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
+                mRibbonPosition = Settings.System.getIntForUser(resolver,
+                        Settings.System.SHOW_RIBBONS, -1, UserHandle.USER_CURRENT);
+                mHasQuickAccessSettings = mRibbonPosition >= 0;
+                checkQAContainer();
                 if (mHasQuickAccessSettings) {
                     inflateRibbon();
                     mRibbonView.setVisibility(View.VISIBLE);
+                    changeQAPosition(mRibbonScrollView, mRibbonPosition);
                 } else {
                     cleanupRibbon();
                 }
+                sortToggles();
             } else if (uri != null && uri.equals(Settings.System.getUriFor(
                     Settings.System.QS_QUICK_ACCESS_LINKED))) {
                 final ContentResolver resolver = mContext.getContentResolver();
@@ -3309,11 +3339,13 @@ public class PhoneStatusBar extends BaseStatusBar {
                     inflateRibbon();
                     mRibbonView.setVisibility(View.VISIBLE);
                 }
+                sortToggles();
             }  else if (uri != null && uri.equals(Settings.System.getUriFor(
                     Settings.System.QUICK_SETTINGS_RIBBON_TILES))) {
-                    cleanupRibbon();
-                    inflateRibbon();
-                    mRibbonView.setVisibility(View.VISIBLE);
+                cleanupRibbon();
+                inflateRibbon();
+                mRibbonView.setVisibility(View.VISIBLE);
+                sortToggles();
             } else if (mSettingsContainer != null) {
                 mQS.setupQuickSettings();
                 if (mQuickAccessLayoutLinked && mRibbonQS != null) {
@@ -3353,7 +3385,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.QS_QUICK_ACCESS),
+                    Settings.System.getUriFor(Settings.System.SHOW_RIBBONS),
                     false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
@@ -3378,6 +3410,95 @@ public class PhoneStatusBar extends BaseStatusBar {
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT),
                     false, this, UserHandle.USER_ALL);
+        }
+    }
+
+    /**
+     * Helper Class for Toggles implementation
+     * @author Firtecy
+     */
+    public class TogglesList {
+        private static final int MAX_TOGGLES = 4;
+        private View[] items;
+        public final int length;
+
+        public TogglesList() {
+            length = MAX_TOGGLES;
+            items = new View[length];
+        }
+
+        public View get(int pos) {
+            if(pos < 0 || pos >= items.length)return null;
+            return items[pos];
+        }
+
+        public boolean hasItem(View item) {
+            for(int i =0;i<length;i++) {
+                if(items[i] != null &&items[i] == item)
+                    return true;
+            }
+            return false;
+        }
+
+        public void addItem(View item, int pos) {
+            if(item == null || hasItem(item))return;
+            if(pos < 0 || pos >= length)return;
+            reorder();
+            if(pos == length - 1) {
+                items[pos] = item;
+                return;
+            }
+            if(items[pos] != null)moveOneBack(pos);
+            items[pos] = item;
+        }
+
+        public void addItemWithoutReorder(View item, int pos) {
+            if(item == null || hasItem(item))return;
+            if(pos < 0 || pos >= length)return;
+            if(pos == length - 1) {
+                items[pos] = item;
+                return;
+            }
+            if(items[pos] != null)moveOneBack(pos);
+            items[pos] = item;
+        }
+
+        private void moveOneBack(int pos) {
+            int i = pos + 1;
+            if(i < length) {
+                if(items[i] != null)moveOneBack(i);
+                items[i] = items[pos];
+                items[pos] = null;
+            }
+        }
+
+        public void addItem(View item) {
+            if(hasItem(item))return;
+            reorder();
+            for(int i =0;i<length;i++) {
+                if(items[i]==null){
+                    items[i] = item;
+                    return;
+                }
+            }
+        }
+
+        private void swap(int i, int j) {
+            View it = items[i];
+            items[i] = items[j];
+            items[j] = it;
+        }
+
+        public void reorder() {
+            for(int i = 0;i<length;i++) {
+                if(items[i]!= null) {
+                    int j = i - 1;
+                    if(j >= 0 && items[j] == null) {
+                        swap(i, j);
+                        i--;//Check again
+                    }
+                }
+            }
         }
     }
 }

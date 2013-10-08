@@ -41,22 +41,26 @@ import android.view.View;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.policy.CurrentUserTracker;
-import com.android.systemui.statusbar.policy.ImageToggleSlider;
+import com.android.systemui.statusbar.policy.StateToggleSlider;
+import com.android.systemui.statusbar.policy.StateToggleSlider.StateToggleSliderItem;
 import com.android.systemui.statusbar.powerwidget.BrightnessSlider.SettingsObserver;
 
-public class VolumeSlider implements ImageToggleSlider.Listener {
+public class VolumeSlider implements StateToggleSlider.Listener {
     private static final String TAG = "StatusBar.VolumeController";
 
     private static final int VIBRATE_DURATION = 300;
     private AudioManager mAudioManager;
     private Context mContext;
-    private ImageToggleSlider mControl;
+    private StateToggleSlider mControl;
     private View mView;
 
     private Vibrator mVibrator;
-    private int mStreamMode;
+    private int mStreamMode, mLastValue, mLastState;
+    private boolean mIgnoreNext;
     
     private Handler mHandler;
+
+    private StateToggleSliderItem[] mStates;
 
     private final CurrentUserTracker mUserTracker;
 
@@ -118,8 +122,7 @@ public class VolumeSlider implements ImageToggleSlider.Listener {
                     }
                     mVolume = volume;
                 }
-            } catch (InterruptedException e) {
-            }
+            } catch (InterruptedException e) {}
         }
     };
 
@@ -138,90 +141,123 @@ public class VolumeSlider implements ImageToggleSlider.Listener {
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         mVibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
         
-        mControl = (ImageToggleSlider) mView.findViewById(R.id.volume);
+        mControl = (StateToggleSlider) mView.findViewById(R.id.volume);
 
+        mIgnoreNext = false;
         mHandler = new Handler();
         mUserTracker = new CurrentUserTracker(mContext);
 
-        try {
-            mStreamMode = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.VOLUME_SLIDER_INPUT_MODE,
-                mUserTracker.getCurrentUserId());
-        } catch (SettingNotFoundException ex) {}
-
-        init();
+        mStreamMode = Settings.System.getIntForUser(mContext.getContentResolver(),
+            Settings.System.VOLUME_SLIDER_INPUT_MODE, 0, mUserTracker.getCurrentUserId());
+        
         mControl.setOnChangedListener(this);
+        init();
         mVolumeThread.start();
     }
     
     private void init() {
+        int state;
         if(mStreamMode == 0) {
             mStreamMode = AudioManager.STREAM_RING;
+            mStates = new StateToggleSliderItem[] {
+                    new StateToggleSliderItem(R.drawable.ic_audio_ring_notif_vibrate, "", true),
+                    new StateToggleSliderItem(R.drawable.ic_audio_phone, "MUTE", true),
+                    new StateToggleSliderItem(R.drawable.ic_audio_ring_notif, "SOUND", false),
+            };
         } else if(mStreamMode == 1) {
             mStreamMode = AudioManager.STREAM_MUSIC;
-        } else {
+            mStates = new StateToggleSliderItem[] {
+                    new StateToggleSliderItem(R.drawable.ic_audio_vol, "UNMUTE", false),
+                    new StateToggleSliderItem(R.drawable.ic_audio_vol_mute, "MUTE", true),
+            };
+        } else if(mStreamMode == 2){
             mStreamMode = AudioManager.STREAM_ALARM;
+            mStates = new StateToggleSliderItem[] {
+                    new StateToggleSliderItem(R.drawable.ic_audio_alarm, "UNMUTE", false),
+                    new StateToggleSliderItem(R.drawable.ic_audio_alarm_mute, "MUTE", true),
+            };
         }
-        
+        mControl.setItems(mStates);
+        mIgnoreNext = true;
         int value = mAudioManager.getStreamVolume(mStreamMode);
         if(mStreamMode == AudioManager.STREAM_RING) {
-            mControl.setChecked(mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT);
+            if(mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)
+                state = 0;
+            else if(mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT)
+                state = 1;
+            else
+                state = 2;
             listenToRingerMode();
         } else {
-            updateIcons(value);
+            state = (value == 0) ? 1 : 0;
         }
-        mControl.setMax(mAudioManager.getStreamMaxVolume(mStreamMode));
+        mControl.setMax(value);
+        mIgnoreNext = true;
         mControl.setValue(value);
+        mIgnoreNext = true;
+        mControl.changeToState(state);
     }
     
     private void onVolumeChanged(int volume) {
         mControl.setValue(volume);
-        onChanged(null, false, false, volume);
     }
 
     public View getView() {
         return mView;
     }
 
-    public void onInit(ImageToggleSlider v) {
+    public void onInit(StateToggleSlider v) {
         SettingsObserver so = new SettingsObserver(new Handler());
         so.observe();
     }
 
-    public void onChanged(ImageToggleSlider view, boolean tracking, boolean silent, int value) {
+    @Override
+    public void onChanged(StateToggleSlider v, boolean tracking, final int state, int value) {
+        if(mIgnoreNext) {
+            mIgnoreNext = false;
+            mLastValue = value; //Ignore next is only set by this method,
+            mLastState = state; //so we save the last values too.
+            return;
+        }
         if(mStreamMode == AudioManager.STREAM_RING) {
-            mAudioManager.setRingerMode(silent ? AudioManager.RINGER_MODE_SILENT 
-                    : AudioManager.RINGER_MODE_NORMAL);
-            if(!silent) {
-                if(value == 0) {
-                    mAudioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-                    mControl.setImage(R.drawable.ic_audio_ring_notif_vibrate);
-                    onVibrate();
-                } else {
-                    mVolumeThread.skipNext();
+            mVolumeThread.skipNext();
+            if(state == 2) {
+                if(mLastState == state)
                     mAudioManager.setStreamVolume(mStreamMode, value, AudioManager.FLAG_PLAY_SOUND);
-                    mControl.setImage(R.drawable.ic_audio_ring_notif);
+                if(value == 0) {
+                    mControl.changeToState(0);
+                } else {
+                    mAudioManager.setStreamVolume(mStreamMode, value, AudioManager.FLAG_PLAY_SOUND);
                 }
-            } else {
-                mVolumeThread.skipNext();
-                mControl.setImage(R.drawable.ic_audio_phone);
+            }
+            if(state != 2){
+                boolean vibrate = state == 0;
+                if(state != mLastState) {
+                    mAudioManager.setRingerMode(vibrate ? AudioManager.RINGER_MODE_VIBRATE
+                            : AudioManager.RINGER_MODE_SILENT);
+                    if(vibrate)vibrate();
+                    mAudioManager.setStreamVolume(mStreamMode, value, 0);
+                } else  if(value > 0) {
+                    mIgnoreNext = true;
+                    mControl.changeToState(2);
+                    mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                    mAudioManager.setStreamVolume(mStreamMode, value, AudioManager.FLAG_PLAY_SOUND);
+                }
             }
         } else {
             mVolumeThread.skipNext();
-            mAudioManager.setStreamMute(mStreamMode, silent);
-            if(!silent)
+            if(value > 0 && state == 1) {
+                mControl.changeToState(0);
                 mAudioManager.setStreamVolume(mStreamMode, value, AudioManager.FLAG_PLAY_SOUND);
-            else mAudioManager.setStreamVolume(mStreamMode, value, 0);
-            updateIcons(value);
+            } else if (value == 0 && state == 0) {
+                mControl.changeToState(1);
+                mAudioManager.setStreamVolume(mStreamMode, value, 0);
+            } else {
+                mAudioManager.setStreamVolume(mStreamMode, value, AudioManager.FLAG_PLAY_SOUND);
+            }
         }
-    }
-
-    private void updateIcons(int value) {
-        int u = (mStreamMode == AudioManager.STREAM_MUSIC) ? R.drawable.ic_audio_vol :
-            R.drawable.ic_audio_alarm;
-        int m = (mStreamMode == AudioManager.STREAM_MUSIC) ? R.drawable.ic_audio_vol_mute :
-            R.drawable.ic_audio_alarm_mute;
-        mControl.setImage((value == 0) ? m : u); 
+        mLastValue = value;
+        mLastState = state;
     }
     
     private void listenToRingerMode() {
@@ -237,16 +273,16 @@ public class VolumeSlider implements ImageToggleSlider.Listener {
                     final int audio = mAudioManager.getRingerMode();
                     switch(audio) {
                         case AudioManager.RINGER_MODE_NORMAL:
-                            mControl.setChecked(false);
-                            mControl.setImage(R.drawable.ic_audio_ring_notif);
+                            if(mLastState != 2) //Don't update if it is the same!
+                                mControl.changeToState(2);
                             break;
                         case AudioManager.RINGER_MODE_SILENT:
-                            mControl.setChecked(true);
-                            mControl.setImage(R.drawable.ic_audio_phone);
+                            if(mLastState != 1) //See above
+                                mControl.changeToState(1);
                             break;
                         case AudioManager.RINGER_MODE_VIBRATE:
-                            mControl.setChecked(false);
-                            mControl.setImage(R.drawable.ic_audio_ring_notif_vibrate);
+                            if(mLastState != 0) //See two above
+                                mControl.changeToState(0);
                             break;
                     }
                 }
@@ -254,7 +290,7 @@ public class VolumeSlider implements ImageToggleSlider.Listener {
         }, filter);
     }
     
-    protected void onVibrate() {
+    protected void vibrate() {
         // Make sure we ended up in vibrate ringer mode
         if (mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_VIBRATE) {
             return;

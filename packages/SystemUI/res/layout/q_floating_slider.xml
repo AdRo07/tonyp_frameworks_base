@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2013 Firtecy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * limitations under the License.
 -->
 
-<!--    android:background="@drawable/status_bar_closed_default_background" -->
 <merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
@@ -26,41 +25,45 @@
         android:layout_height="0dp"
         android:layout_gravity="center_horizontal|top"
         android:scaleType="center"
-        android:paddingTop="35dp"
-        android:paddingStart="30dp"
-        android:paddingEnd="30dp"
+        android:paddingTop="5dp"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_alignParentBottom="true"
         />
 
-    <CheckBox
-        android:id="@+id/toggle"
-        android:layout_width="48dp"
-        android:layout_height="0dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentBottom="true"
-        android:button="@null"
-        />
-
-    <SeekBar
-        android:id="@+id/slider"
+    <com.android.systemui.statusbar.phone.QuickSettingsHorizontalScrollView
+        android:id="@+id/q_access_container"
+        android:fadingEdgeLength="30dp"
+        android:requiresFadingEdge="horizontal"
+        android:scrollbars="none"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/image"
-        android:layout_toStartOf="@id/toggle"
+        android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        />
+        android:paddingEnd="20dp">
+        
+        <com.android.systemui.statusbar.powerwidget.QFloatingApps
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            >
+            
+                        
+
+        </com.android.systemui.statusbar.powerwidget.QFloatingApps>
+
+    </com.android.systemui.statusbar.phone.QuickSettingsHorizontalScrollView>
 
     <TextView
         android:id="@+id/label"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@id/toggle"
-        android:layout_alignEnd="@id/toggle"
+        android:layout_alignStart="@id/image"
+        android:layout_alignEnd="@id/image"
         android:layout_centerVertical="true"
         android:gravity="center"
         android:paddingTop="26dp"

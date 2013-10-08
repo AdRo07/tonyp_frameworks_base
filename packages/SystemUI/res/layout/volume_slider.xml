@@ -33,7 +33,7 @@
         android:text="@string/brightness_label"
         android:visibility="gone" />
 
-    <com.android.systemui.statusbar.policy.ImageToggleSlider
+    <com.android.systemui.statusbar.policy.StateToggleSlider
         android:id="@+id/volume"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
