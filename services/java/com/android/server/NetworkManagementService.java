@@ -995,9 +995,9 @@ public class NetworkManagementService extends INetworkManagementService.Stub
                 mConnector.execute("softap", "start", wlanIface);
             }
             if (wifiConfig == null) {
-                mConnector.execute("softap", "set", wlanIface);
+                mConnector.execute("softap", "set", wlanIface, "wl0.1");
             } else {
-                mConnector.execute("softap", "set", wlanIface, wifiConfig.SSID,
+                mConnector.execute("softap", "set", wlanIface, "wl0.1", wifiConfig.SSID,
                         getSecurityType(wifiConfig), new SensitiveArg(wifiConfig.preSharedKey));
             }
             mConnector.execute("softap", "startap");
@@ -1033,6 +1033,7 @@ public class NetworkManagementService extends INetworkManagementService.Stub
         mContext.enforceCallingOrSelfPermission(CONNECTIVITY_INTERNAL, TAG);
         try {
             mConnector.execute("softap", "stopap");
+            mConnector.execute("softap", "stop", wlanIface);
             wifiFirmwareReload(wlanIface, "STA");
         } catch (NativeDaemonConnectorException e) {
             throw e.rethrowAsParcelableException();
@@ -1044,9 +1045,9 @@ public class NetworkManagementService extends INetworkManagementService.Stub
         mContext.enforceCallingOrSelfPermission(CONNECTIVITY_INTERNAL, TAG);
         try {
             if (wifiConfig == null) {
-                mConnector.execute("softap", "set", wlanIface);
+                mConnector.execute("softap", "set", wlanIface, "wl0.1");
             } else {
-                mConnector.execute("softap", "set", wlanIface, wifiConfig.SSID,
+                mConnector.execute("softap", "set", wlanIface, "wl0.1", wifiConfig.SSID,
                         getSecurityType(wifiConfig), new SensitiveArg(wifiConfig.preSharedKey));
             }
         } catch (NativeDaemonConnectorException e) {

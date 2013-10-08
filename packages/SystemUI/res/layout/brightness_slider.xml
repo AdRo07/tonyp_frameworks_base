@@ -40,5 +40,4 @@
         android:paddingLeft="10dp"
         android:paddingRight="2dp"
         systemui:text="@string/status_bar_settings_auto_brightness_label" />
-
 </FrameLayout>

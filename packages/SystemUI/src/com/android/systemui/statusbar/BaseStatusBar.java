@@ -59,6 +59,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
@@ -78,6 +79,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Slog;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.IWindowManager;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -372,7 +374,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
 
         mHaloActive = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.HALO_ACTIVE, 1) == 1;
+                Settings.System.HALO_ACTIVE, 0) == 1;
 
         createAndAddWindows();
 
@@ -476,7 +478,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
     }
 
-    protected void restartHalo() {
+    public void restartHalo() {
         if (mHalo != null) {
             mHalo.cleanUp();
             mWindowManager.removeView(mHalo);
@@ -488,7 +490,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected void updateHalo() {
         mHaloActive = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.HALO_ACTIVE, 1) == 1;
+                Settings.System.HALO_ACTIVE, 0) == 1;
 
         updateHaloButton();
 
@@ -611,8 +613,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     private void launchFloating(PendingIntent pIntent, boolean qmode) {
         Intent overlay = new Intent();
-        overlay.addFlags(Intent.FLAG_FLOATING_WINDOW);
-        if(qmode)overlay.addFlags(Intent.FLAG_FLOATING_CHANGEABLE |  Intent.FLAG_ACTIVITY_NEW_TASK);
+        overlay.addFlags(Intent.FLAG_FLOATING_WINDOW | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if(qmode)overlay.addFlags(Intent.FLAG_FLOATING_CHANGEABLE);
         try {
             ActivityManagerNative.getDefault().resumeAppSwitches();
             ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
@@ -630,19 +632,15 @@ public abstract class BaseStatusBar extends SystemUI implements
         return new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                NotificationData.Entry  entry = (NotificationData.Entry) v.getTag();
-                StatusBarNotification sbn = entry.notification;
+                NotificationData.Entry entry = (NotificationData.Entry) v.getTag();
+                if (entry.notification == null) return false;
 
+                StatusBarNotification sbn = entry.notification;
                 final String packageNameF = sbn.getPackageName();
                 final PendingIntent contentIntent = sbn.getNotification().contentIntent;
-                boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
 
                 if (packageNameF == null) return false;
                 if (v.getWindowToken() == null) return false;
-
-                //Long click menu broken on PIE mode...pop up menu is useless (auto-launch on long click)
-                if (expanded) launchFloating(contentIntent);
 
                 mNotificationBlamePopup = new PopupMenu(mContext, v);
                 mNotificationBlamePopup.getMenuInflater().inflate(
@@ -665,6 +663,14 @@ public abstract class BaseStatusBar extends SystemUI implements
                         return true;
                     }
                 });
+
+                mNotificationBlamePopup.setOnDismissListener(new PopupMenu.OnDismissListener() {
+                    @Override
+                    public void onDismiss(PopupMenu popupMenu) {
+                        mNotificationBlamePopup = null;
+                    }
+                });
+
                 mNotificationBlamePopup.show();
 
                 return true;
@@ -863,6 +869,10 @@ public abstract class BaseStatusBar extends SystemUI implements
                     float statusBarHeight = res
                             .getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
                     float recentsItemTopPadding = statusBarHeight;
+
+                    if (getExpandedDesktopMode() == 2) {
+                        statusBarHeight = 0;
+                    }
 
                     float height = thumbTopMargin
                             + thumbHeight
@@ -1115,6 +1125,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
 
         public void onClick(View v) {
+            if (mNotificationBlamePopup != null) return;
             try {
                 // The intent we are sending is for the application, which
                 // won't have permission to immediately start an activity after

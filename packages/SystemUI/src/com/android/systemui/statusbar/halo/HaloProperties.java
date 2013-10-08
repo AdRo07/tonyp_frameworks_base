@@ -18,11 +18,8 @@ package com.android.systemui.statusbar.halo;
 
 import android.os.Handler;
 import android.content.Context;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuff.Mode;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,9 +29,7 @@ import android.widget.TextView;
 import android.widget.RelativeLayout;
 import android.widget.LinearLayout;
 import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.AccelerateInterpolator;
 import android.util.TypedValue;
 import android.provider.Settings;
 
@@ -66,6 +61,12 @@ public class HaloProperties extends FrameLayout {
         SYSTEM
     }
 
+
+    public static final int HALO_NOTIFY_NONE = 1;
+    public static final int HALO_NOTIFY_TOTAL = 2;
+    public static final int HALO_NOTIFY_PERAPP = 3;
+    public static final int HALO_NOTIFY_BOTH = 4;
+
     private Handler mAnimQueue = new Handler();
     private LayoutInflater mInflater;
 
@@ -73,6 +74,8 @@ public class HaloProperties extends FrameLayout {
     protected int mHaloContentY = 0;
     protected float mHaloContentAlpha = 0;
     private int mHaloContentHeight = 0;
+
+    private int mMsgCount, mValue;
 
     private Drawable mHaloDismiss;
     private Drawable mHaloBackL;
@@ -221,12 +224,28 @@ public class HaloProperties extends FrameLayout {
 
     protected CustomObjectAnimator msgNumberFlipAnimator = new CustomObjectAnimator(this);
     protected CustomObjectAnimator msgNumberAlphaAnimator = new CustomObjectAnimator(this);
-    public void animateHaloBatch(final int value, final int msgCount, final boolean alwaysFlip, int delay, final MessageType msgType) {
-        if (msgCount == 0) {
+    public void animateHaloBatch(final int value, int msgCount, final boolean alwaysFlip, int delay, final MessageType msgType) {
+        mMsgCount = msgCount;
+        mValue = value;
+
+        if (mMsgCount == 0) {
             msgNumberAlphaAnimator.animate(ObjectAnimator.ofFloat(mHaloNumberContainer, "alpha", 0f).setDuration(1000),
                     new DecelerateInterpolator(), null, delay, null);
             return;
         }
+
+        int haloCounterType = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HALO_NOTIFY_COUNT, HALO_NOTIFY_BOTH);
+
+        switch (haloCounterType) {
+            case HALO_NOTIFY_NONE: mHaloNumberContainer.setAlpha(0f);
+                return;
+            case HALO_NOTIFY_TOTAL: mValue = -1;
+                break;
+            case HALO_NOTIFY_PERAPP: mMsgCount = -1;
+                break;
+        }
+
         mAnimQueue.removeCallbacksAndMessages(null);
         mAnimQueue.postDelayed(new Runnable() {
             public void run() {
@@ -236,15 +255,17 @@ public class HaloProperties extends FrameLayout {
                     float oldAlpha = mHaloNumberContainer.getAlpha();
 
                     mHaloNumberContainer.getBackground().clearColorFilter();
-                    mHaloNumberContainer.setAlpha(1f);
+
+                    mHaloNumberContainer.setAlpha(0f);
                     mHaloNumber.setAlpha(0f);
                     mHaloNumberIcon.setAlpha(0f);
 
-                    if (msgCount > 0) {
+                    if (mMsgCount > 0) {
                         mHaloNumberContainer.getBackground().setColorFilter(0xff4fa736, PorterDuff.Mode.SRC_IN);
-                        mHaloNumber.setText(String.valueOf(msgCount));
+                        mHaloNumber.setText(String.valueOf(mMsgCount));
+                        mHaloNumberContainer.setAlpha(1f);
                         mHaloNumber.setAlpha(1f);
-                    } else if (value < 1 && msgCount < 1) {
+                    } else if (mValue == 0 && mMsgCount < 1) {
                         if (msgType == MessageType.PINNED) {
                             mHaloNumberIcon.setImageDrawable(mHaloIconPinned);
                         } else if (msgType == MessageType.SYSTEM) {
@@ -252,28 +273,31 @@ public class HaloProperties extends FrameLayout {
                         } else {
                             mHaloNumberIcon.setImageDrawable(mHaloIconMessage);
                         }
+                        mHaloNumberContainer.setAlpha(1f);
                         mHaloNumberIcon.setAlpha(1f);
-                    } else if (value < 100) {
-                        mHaloNumber.setText(String.valueOf(value));
+                    } else if (mValue > 0 && mValue < 100) {
+                        mHaloNumber.setText(String.valueOf(mValue));
+                        mHaloNumberContainer.setAlpha(1f);
                         mHaloNumber.setAlpha(1f);
-                    } else {
+                    } else if (mValue >= 100) {
                         mHaloNumber.setText("+");
+                        mHaloNumberContainer.setAlpha(1f);
                         mHaloNumber.setAlpha(1f);
                     }
                     
-                    if (value < 1 && msgCount < 1) {
+                    if (mValue < 1 && mMsgCount < 1) {
                         msgNumberAlphaAnimator.animate(ObjectAnimator.ofFloat(mHaloNumberContainer, "alpha", 0f).setDuration(1000),
                                 new DecelerateInterpolator(), null, 1500, null);
                     }
 
                     // Do NOT flip when ...
                     if (!alwaysFlip && oldAlpha == 1f && mHaloMessageType == msgType
-                            && (value == mHaloMessageNumber || (value > 99 && mHaloMessageNumber > 99))) return;
+                            && (mValue == mHaloMessageNumber || (mValue > 99 && mHaloMessageNumber > 99))) return;
 
                     msgNumberFlipAnimator.animate(ObjectAnimator.ofFloat(mHaloNumberContainer, "rotationY", -180, 0).setDuration(500),
                                 new DecelerateInterpolator(), null);
                 }
-                mHaloMessageNumber = value;
+                mHaloMessageNumber = mValue;
                 mHaloMessageType = msgType;
             }}, delay);
     }

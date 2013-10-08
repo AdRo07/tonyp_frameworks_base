@@ -29,6 +29,11 @@
     android:layout_marginStart="@dimen/notification_panel_margin_left"
     >
 
+    <com.android.systemui.statusbar.phone.NotificationWallpaper
+        android:id="@+id/notification_wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <View
         android:id="@+id/handle"
         android:layout_width="match_parent"
@@ -97,6 +102,15 @@
             </FrameLayout>
 
         </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/notification_min_height"
+            android:id="@+id/brightness_slider_container_below"
+            android:visibility="gone"
+            >
+
+        </FrameLayout>
 
         <TextView
             android:id="@+id/emergency_calls_only"

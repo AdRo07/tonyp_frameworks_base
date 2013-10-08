@@ -54,6 +54,10 @@
         <group gid="inet" />
     </permission>
 
+    <permission name="android.permission.CAMERA" >
+        <group gid="camera" />
+    </permission>
+
     <permission name="android.permission.READ_LOGS" >
         <group gid="log" />
     </permission>
@@ -108,7 +112,7 @@
 
     <!-- Permissions to read DRM-protected theme resources. -->
     <permission name="com.tmobile.permission.ACCESS_DRM_THEME" >
-        <group gid="theme_manager" />
+        <group gid="theme_man" />
     </permission>
 
     <!-- ================================================================== -->

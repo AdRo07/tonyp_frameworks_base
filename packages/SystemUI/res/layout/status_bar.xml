@@ -157,7 +157,6 @@
                     android:layout_height="match_parent"
                     android:singleLine="true"
                     android:paddingStart="@dimen/status_bar_battery_cluster_padding"
-                    android:layout_marginEnd="@dimen/status_bar_battery_cluster_text_margin"
                     android:gravity="left|center_vertical"
                     />
                 <ImageView
@@ -183,7 +182,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:singleLine="true"
-                android:paddingStart="6dip"
+                android:paddingStart="3dip"
                 android:gravity="center_vertical|left"
                 android:clickable="false"
                 android:visibility="gone"

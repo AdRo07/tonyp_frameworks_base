@@ -82,13 +82,14 @@
     <string name="permdesc_fm_radio_transmitter">Allows the app to control the FM transmitter.</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permlab_sendMockSms">Send mock SMS messages</string>
+    <string name="permlab_sendMockSms">send mock SMS messages</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permdesc_sendMockSms">Allows the app to send mock SMS messages.
-        This allows an app send SMS to trusted applications. Malicious apps could send messages
-        continuously, blocking the device notification system and disrupting the user.</string>
+    <string name="permdesc_sendMockSms">Allows the app to send mock SMS messages. This allows an app to send SMS to trusted apps. Malicious apps could send messages continuously, blocking the device notification system and disrupting the user.</string>
 
     <string name="lockscreen_discharging">Discharging, <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
+
+    <!-- Text for progress dialog while formatting SD card [CHAR LIMIT=NONE] -->
+    <string name="progress_nomediapresent" product="default">No removable media present\u2026</string>
 
     <!-- Storage description for the SD card on the dock. [CHAR LIMIT=NONE] -->
     <string name="storage_sd_dock_card">Dock SD card</string>
@@ -184,9 +185,7 @@
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_interceptSmsSent">intercept outgoing SMS</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permdesc_interceptSmsSent">Allows the app to
-        intercept an outgoing SMS.
-        Malicious apps may use this to prevent outgoing SMS messages.</string>
+    <string name="permdesc_interceptSmsSent">Allows the app to intercept an outgoing SMS. Malicious apps may use this to prevent outgoing SMS messages.</string>
 
     <!-- Title of policy access to start enforcing SELinux policy [CHAR LIMIT=30]-->
     <string name="policylab_enforceSelinux">Enforce SELinux</string>
@@ -196,5 +195,22 @@
     <string name="policylab_enforceMmac">Enforce MMAC</string>
     <!-- Description of policy access to start enforcing MMAC policy [CHAR LIMIT=110]-->
     <string name="policydesc_enforceMmac">Toggle MMAC policy enforcing or permissive mode.</string>
+
+    <!-- Animation Strings -->
+    <string name="animation_fade">Fade</string>
+    <string name="animation_slide_right">Slide in right</string>
+    <string name="animation_slide_left">Slide in left</string>
+    <string name="animation_slide_right_no_fade">Slide in right (No fade)</string>
+    <string name="animation_slide_left_no_fade">Slide in left (No fade)</string>
+    <string name="animation_slide_up">Slide in bottom</string>
+    <string name="animation_slide_down">Slide in top</string>
+    <string name="animation_default">Default</string>
+    <string name="animation_translucent">Translucent</string>
+    <string name="animation_grow_shrink">Grow in (Top)</string>
+    <string name="animation_grow_shrink_center">Grow in (Center)</string>
+    <string name="animation_grow_shrink_bottom">Grow in (Bottom)</string>
+    <string name="animation_grow_shrink_left">Grow in (Left)</string>
+    <string name="animation_grow_shrink_right">Grow in (Right)</string>
+    <string name="action_null">Blank</string> 
 
 </resources>

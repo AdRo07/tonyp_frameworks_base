@@ -67,6 +67,7 @@
   <java-symbol type="id" name="deny_button" />
   <java-symbol type="id" name="description" />
   <java-symbol type="id" name="divider" />
+  <java-symbol type="id" name="drawer_layout" />
   <java-symbol type="id" name="edit_query" />
   <java-symbol type="id" name="edittext_container" />
   <java-symbol type="id" name="enter_pin_section" />
@@ -239,6 +240,9 @@
   <java-symbol type="attr" name="windowFixedHeightMajor" />
   <java-symbol type="attr" name="windowFixedHeightMinor" />
   <java-symbol type="attr" name="accessibilityFocusedDrawable"/>
+  <java-symbol type="attr" name="drawer_shadow"/>
+  <java-symbol type="attr" name="drawer_background"/>
+  <java-symbol type="attr" name="ic_drawer"/>
 
   <java-symbol type="bool" name="action_bar_embed_tabs" />
   <java-symbol type="bool" name="action_bar_embed_tabs_pre_jb" />
@@ -300,6 +304,7 @@
   <java-symbol type="integer" name="config_lockSoundVolumeDb" />
   <java-symbol type="integer" name="config_multiuserMaximumUsers" />
   <java-symbol type="integer" name="config_safe_media_volume_index" />
+  <java-symbol type="integer" name="min_gesture_prediction_score" />
 
   <java-symbol type="color" name="tab_indicator_text_v4" />
 
@@ -705,6 +710,7 @@
   <java-symbol type="string" name="preposition_for_time" />
   <java-symbol type="string" name="progress_erasing" />
   <java-symbol type="string" name="progress_unmounting" />
+  <java-symbol type="string" name="mobile_provisioning_apn" />
   <java-symbol type="string" name="mobile_provisioning_url" />
   <java-symbol type="string" name="mobile_redirected_provisioning_url" />
   <java-symbol type="string" name="progress_nomediapresent" />
@@ -1108,6 +1114,7 @@
   <java-symbol type="layout" name="overlay_display_window" />
   <java-symbol type="layout" name="preference" />
   <java-symbol type="layout" name="preference_header_item" />
+  <java-symbol type="layout" name="preference_drawer_content" />
   <java-symbol type="layout" name="preference_list_content" />
   <java-symbol type="layout" name="preference_list_content_single" />
   <java-symbol type="layout" name="preference_list_fragment" />
@@ -1355,6 +1362,7 @@
   <java-symbol type="id" name="keyguard_click_area" />
   <java-symbol type="id" name="keyguard_selector_view" />
   <java-symbol type="id" name="keyguard_pattern_view" />
+  <java-symbol type="id" name="keyguard_gesture_view" />
   <java-symbol type="id" name="keyguard_password_view" />
   <java-symbol type="id" name="keyguard_pin_view" />
   <java-symbol type="id" name="keyguard_face_unlock_view" />
@@ -1371,6 +1379,7 @@
   <java-symbol type="id" name="keyguard_host_view" />
   <java-symbol type="id" name="delete_button" />
   <java-symbol type="id" name="lockPatternView" />
+  <java-symbol type="id" name="lockGestureView" />
   <java-symbol type="id" name="forgot_password_button" />
   <java-symbol type="id" name="glow_pad_view" />
   <java-symbol type="id" name="delete_button" />
@@ -1404,6 +1413,7 @@
   <java-symbol type="layout" name="global_actions_silent_mode" />
   <java-symbol type="layout" name="keyguard_selector_view" />
   <java-symbol type="layout" name="keyguard_pattern_view" />
+  <java-symbol type="layout" name="keyguard_gesture_view" />
   <java-symbol type="layout" name="keyguard_password_view" />
   <java-symbol type="layout" name="keyguard_pin_view" />
   <java-symbol type="layout" name="keyguard_face_unlock_view" />
@@ -1481,10 +1491,13 @@
   <java-symbol type="string" name="kg_emergency_call_label" />
   <java-symbol type="string" name="kg_forgot_pattern_button_text" />
   <java-symbol type="string" name="kg_wrong_pattern" />
+  <java-symbol type="string" name="kg_forgot_gesture_button_text" />
+  <java-symbol type="string" name="kg_wrong_gesture" />
   <java-symbol type="string" name="kg_wrong_password" />
   <java-symbol type="string" name="kg_wrong_pin" />
   <java-symbol type="string" name="kg_too_many_failed_attempts_countdown" />
   <java-symbol type="string" name="kg_pattern_instructions" />
+  <java-symbol type="string" name="kg_gesture_instructions" />
   <java-symbol type="string" name="kg_sim_pin_instructions" />
   <java-symbol type="string" name="kg_pin_instructions" />
   <java-symbol type="string" name="kg_password_instructions" />
@@ -1505,6 +1518,7 @@
   <java-symbol type="string" name="kg_login_checking_password" />
   <java-symbol type="string" name="kg_too_many_failed_pin_attempts_dialog_message" />
   <java-symbol type="string" name="kg_too_many_failed_pattern_attempts_dialog_message" />
+  <java-symbol type="string" name="kg_too_many_failed_gesture_attempts_dialog_message" />
   <java-symbol type="string" name="kg_too_many_failed_password_attempts_dialog_message" />
   <java-symbol type="string" name="kg_failed_attempts_almost_at_wipe" />
   <java-symbol type="string" name="kg_failed_attempts_now_wiping" />
@@ -1538,6 +1552,8 @@
   <java-symbol type="anim" name="rotation_animation_jump_exit" />
   <java-symbol type="anim" name="rotation_animation_xfade_exit" />
   <java-symbol type="anim" name="rotation_animation_enter" />
+  <java-symbol type="anim" name="shrink_fade_out_center" />
+  <java-symbol type="anim" name="grow_fade_in_center" />
   <java-symbol type="array" name="config_autoBrightnessButtonBacklightValues" />
   <java-symbol type="array" name="config_autoBrightnessKeyboardBacklightValues" />
   <java-symbol type="array" name="config_autoBrightnessLcdBacklightValues" />
@@ -1975,6 +1991,8 @@
   <!-- Panel auto brightness -->
   <java-symbol type="integer" name="config_panelAutoBrightnessValue" />
 
+  <java-symbol type="string" name="action_null"/>
+
   <!-- Options that show upon long-pressing a key on the physical keyboard -->
   <java-symbol type="string" name="symbol_picker_0" />
   <java-symbol type="string" name="symbol_picker_1" />
@@ -2049,5 +2067,50 @@
 
   <!-- Q-Floating -->
   <java-symbol type="id" name="q_floating_menu_stub" />
+
+  <!-- Package Manager -->
+  <java-symbol type="array" name="config_disabledComponents" />
+
+  <!--  Animations -->
+  <java-symbol type="string" name="animation_fade"/>
+  <java-symbol type="string" name="animation_slide_left"/>
+  <java-symbol type="string" name="animation_slide_right"/>
+  <java-symbol type="string" name="animation_slide_left_no_fade"/>
+  <java-symbol type="string" name="animation_slide_right_no_fade"/>
+  <java-symbol type="string" name="animation_slide_up"/>
+  <java-symbol type="string" name="animation_slide_down"/>
+  <java-symbol type="string" name="animation_default"/>
+  <java-symbol type="string" name="animation_translucent"/>
+  <java-symbol type="string" name="animation_grow_shrink"/>
+  <java-symbol type="string" name="animation_grow_shrink_center"/>
+  <java-symbol type="string" name="animation_grow_shrink_bottom"/>
+  <java-symbol type="string" name="animation_grow_shrink_left"/>
+  <java-symbol type="string" name="animation_grow_shrink_right"/>
+  <java-symbol type="anim" name="shrink_fade_out_ribbon" />
+  <java-symbol type="anim" name="shrink_fade_out_center_ribbon" />
+  <java-symbol type="anim" name="shrink_fade_out_right_ribbon" />
+  <java-symbol type="anim" name="shrink_fade_out_left_ribbon" />
+  <java-symbol type="anim" name="shrink_fade_out_from_bottom_ribbon" />
+  <java-symbol type="anim" name="grow_fade_in_ribbon" />
+  <java-symbol type="anim" name="grow_fade_in_center_ribbon" />
+  <java-symbol type="anim" name="grow_fade_in_left_ribbon" />
+  <java-symbol type="anim" name="grow_fade_in_right_ribbon" />
+  <java-symbol type="anim" name="grow_fade_in_from_bottom_ribbon" />
+  <java-symbol type="anim" name="translucent_enter_ribbon" />
+  <java-symbol type="anim" name="translucent_exit_ribbon" />
+  <java-symbol type="anim" name="slide_in_down" />
+  <java-symbol type="anim" name="slide_out_up" />
+  <java-symbol type="anim" name="slide_in_right_ribbon" />
+  <java-symbol type="anim" name="slide_out_right_ribbon" />
+  <java-symbol type="anim" name="slide_in_left_ribbon" />
+  <java-symbol type="anim" name="slide_out_left_ribbon" />
+  <java-symbol type="anim" name="slow_fade_in" />
+  <java-symbol type="anim" name="slow_fade_out" />
+  <java-symbol type="anim" name="slide_in_up_ribbon" />
+  <java-symbol type="anim" name="slide_out_down_ribbon" /> 
+  <java-symbol type="anim" name="slide_in_right_no_fade" />
+  <java-symbol type="anim" name="slide_out_left_no_fade" />
+  <java-symbol type="anim" name="slide_in_left_no_fade" />
+  <java-symbol type="anim" name="slide_out_right_no_fade" />
 
 </resources>

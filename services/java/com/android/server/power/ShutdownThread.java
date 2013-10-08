@@ -222,7 +222,7 @@ public final class ShutdownThread extends Thread {
     }
 
     private static boolean advancedRebootEnabled(Context context) {
-        return Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.ADVANCED_REBOOT, 0) == 1;
+        return Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.ADVANCED_REBOOT, 1) == 1;
     }
 
     private static class CloseDialogReceiver extends BroadcastReceiver
@@ -535,7 +535,7 @@ public final class ShutdownThread extends Thread {
                             Log.e(TAG, "RemoteException during NFC shutdown", ex);
                             nfcOff = true;
                         }
-                        if (radioOff) {
+                        if (nfcOff) {
                             Log.i(TAG, "NFC turned off.");
                         }
                     }
