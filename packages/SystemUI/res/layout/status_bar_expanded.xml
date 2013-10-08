@@ -93,6 +93,14 @@
                 >
             </FrameLayout>
 
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/powerwidget_min_height"
+                android:id="@+id/q_floating_slider_container"
+                android:visibility="gone"
+                >
+            </FrameLayout>
+
         </LinearLayout>
 
         <TextView

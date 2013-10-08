@@ -2915,12 +2915,12 @@ public final class Settings {
         public static final String SHOW_BRIGHTNESS_SLIDER_TRANSPARENT = "show_brightness_slider_transparent";
         
         /**
-         * Position to show the Ribbons in Notifications
+         * Whether to show the Ribbons in Notifications
          * default: -1
          * other = Position in NotificationBar
          * @hide
          */
-        public static final String RIBBONS_POSITION = "ribbons_position";
+        public static final String SHOW_RIBBONS = "show_ribbons";
 
         /**
          * Whether to show the VolumeSlider in Notifications
