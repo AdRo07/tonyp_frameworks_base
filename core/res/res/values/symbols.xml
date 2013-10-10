@@ -2065,9 +2065,6 @@
   <!-- Irda Service -->
   <java-symbol type="bool" name="config_enableIrdaManagerService" />
 
-  <!-- Q-Floating -->
-  <java-symbol type="id" name="q_floating_menu_stub" />
-
   <!-- Package Manager -->
   <java-symbol type="array" name="config_disabledComponents" />
 

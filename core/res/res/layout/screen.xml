@@ -26,13 +26,6 @@ This is the basic layout for a screen, with all of its features enabled.
     android:layout_height="match_parent"
 >
 
-    <!-- Menu for q Floating -->
-    <ViewStub android:id="@+id/q_floating_menu_stub"
-              android:inflatedId="@+id/q_floating_menu"
-              android:layout="@layout/q_floating_menu_bar"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content" />
-
     <!-- Popout bar for action modes -->
     <ViewStub android:id="@+id/action_mode_bar_stub"
               android:inflatedId="@+id/action_mode_bar"

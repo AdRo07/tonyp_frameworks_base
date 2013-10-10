@@ -2946,6 +2946,16 @@ public final class Settings {
         public static final String VOLUME_SLIDER_INPUT_MODE = "volume_slider_input_mode";
 
         /**
+         * Whether to show the clock in status bar left, centered or right
+         * 0: left
+         * 1: center
+         * 2: right
+         * default: 2
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_POSITION = "status_bar_clock_position";
+
+        /**
          * Whether to show the signal text or signal bars.
          * default: 0
          * 0: show signal bars
