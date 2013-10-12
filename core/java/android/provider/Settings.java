@@ -2946,6 +2946,15 @@ public final class Settings {
         public static final String VOLUME_SLIDER_INPUT_MODE = "volume_slider_input_mode";
 
         /**
+         * Whether to lock the screen by double tapping on the Statusbar
+         * 0: deactivated
+         * 1: activated
+         * default: 1
+         * @hide
+         */
+        public static final String STATUS_BAR_DOUBLE_TAP_LOCK = "status_bar_double_tap_lock";
+
+        /**
          * Whether to show the clock in status bar left, centered or right
          * 0: left
          * 1: center

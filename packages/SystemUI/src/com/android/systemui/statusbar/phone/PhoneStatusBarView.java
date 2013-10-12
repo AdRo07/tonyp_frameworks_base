@@ -37,12 +37,16 @@ import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Broadcaster;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.EventLog;
 import android.util.Slog;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -75,6 +79,10 @@ public class PhoneStatusBarView extends PanelBar {
     float mAlpha;
     int mAlphaMode;
     int mStatusBarColor;
+
+    private GestureDetector mGestureDetector;
+    private boolean mDoubleTapLock = true;
+    private PowerManager mPowerManager;
 
     private Runnable mUpdateInHomeAlpha = new Runnable() {
         @Override
@@ -135,6 +143,9 @@ public class PhoneStatusBarView extends PanelBar {
                     mStatusBarColor != -1 ? mStatusBarColor : ((ColorDrawable) bg).getColor());
             setBackground(bacd);
         }
+
+        mGestureDetector = new GestureDetector(mContext, new GestureListener());
+        mPowerManager = (PowerManager)mContext.getSystemService(Context.POWER_SERVICE);
     }
 
     public void setBar(PhoneStatusBar bar) {
@@ -284,6 +295,9 @@ public class PhoneStatusBarView extends PanelBar {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        boolean doubleTapConsumendEvent = false;
+        if(mDoubleTapLock)
+            doubleTapConsumendEvent = mGestureDetector.onTouchEvent(event)
         boolean barConsumedEvent = mBar.interceptTouchEvent(event);
 
         if (DEBUG_GESTURES) {
@@ -294,7 +308,7 @@ public class PhoneStatusBarView extends PanelBar {
             }
         }
 
-        return barConsumedEvent || super.onTouchEvent(event);
+        return (barConsumedEvent || doubleTapConsumendEvent || super.onTouchEvent(event));
     }
 
     @Override
@@ -397,6 +411,8 @@ public class PhoneStatusBarView extends PanelBar {
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_ALPHA_MODE), false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_COLOR), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_DOUBLE_TAP_LOCK), false, this);
         }
 
         @Override
@@ -413,9 +429,32 @@ public class PhoneStatusBarView extends PanelBar {
                 Settings.System.STATUS_BAR_ALPHA_MODE, 1);
         mStatusBarColor = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_COLOR, -1);
+        mDoubleTapLock = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_DOUBLE_TAP_LOCK, 1) == 1;
+
 
         updateBackgroundAlpha();
 
     }
+
+    protected boolean shoudlHandleDoubleTap() {
+        if(mDoubleTapLock) {
+            mPowerManager.goToSleep(SystemClock.uptimeMillis());
+            return true;
+        }
+        return false;
+    }
+
+    class GestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDoubleTap(MotionEvent event) {
+            if(shoudlHandleDoubleTap()) {
+                playSoundEffect(SoundEffectConstants.CLICK);
+                return true;
+            }
+            return false;
+        }
+    }
+
 
 }
