@@ -274,7 +274,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private boolean mShowCarrierInPanel = false;
 
     //clock position
-    private int mClockPosition;    
+    private int mClockPosition = 0;
 
     // drag bar
     CloseDragHandle mCloseView;
@@ -946,6 +946,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         mQSliderMode = -1;
         boolean transparentQ = false;
 
+        mClockPosition = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_CLOCK_POSITION, 0, UserHandle.USER_CURRENT);
+
         checkQAContainer();
 
         if(mBSliderMode>=0) {
@@ -963,6 +966,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         if(mRibbonPosition>=0)inflateRibbon();
 
         sortToggles();
+
+        updateClock(mClockPosition);
 
         mClingShown = ! (DEBUG_CLINGS
             || !Prefs.read(mContext).getBoolean(Prefs.SHOWN_QUICK_SETTINGS_HELP, false));

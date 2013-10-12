@@ -3164,8 +3164,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             mDecor.makeOptionalFitsSystemWindows();
 
             if(mIsFloatingChangeable) {
-	            ViewStub vs = (ViewStub)findViewById(com.android.internal.R.id.q_floating_menu_stub);
-	            qMenu = (LinearLayout)vs.inflate();
+	            /*ViewStub vs = (ViewStub)findViewById(com.android.internal.R.id.q_floating_menu_stub);
+	            qMenu = (LinearLayout)vs.inflate();*/
             }
             mTitleView = (TextView)findViewById(com.android.internal.R.id.title);
             if (mTitleView != null) {
