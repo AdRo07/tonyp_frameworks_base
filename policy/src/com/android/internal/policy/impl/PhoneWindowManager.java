@@ -819,6 +819,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private void interceptScreencastChord() {
+        if (mVolumeUpKeyTriggered && mPowerKeyTriggered && !mVolumeDownKeyTriggered) {
+            final long now = SystemClock.uptimeMillis();
+            if (now <= mVolumeUpKeyTime + ACTION_CHORD_DEBOUNCE_DELAY_MILLIS
+                    && now <= mPowerKeyTime + ACTION_CHORD_DEBOUNCE_DELAY_MILLIS) {
+                mVolumeUpKeyConsumedByChord = true;
+                cancelPendingPowerKeyAction();
+
+                mHandler.postDelayed(mScreencastRunnable, getScreenshotChordLongPressDelay());
+            }
+        }
+    }
+
     private long getScreenshotChordLongPressDelay() {
         if (mKeyguardMediator.isShowing()) {
             // Double the time it takes to take a screenshot from the keyguard
@@ -830,6 +843,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private void cancelPendingScreenshotChordAction() {
         mHandler.removeCallbacks(mScreenshotRunnable);
+    }
+
+    private void cancelPendingScreencastChordAction() {
+        mHandler.removeCallbacks(mScreencastRunnable);
     }
 
     private void interceptRingerChord() {
@@ -889,6 +906,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         @Override
         public void run() {
             takeScreenshot();
+        }
+    };
+
+    private final Runnable mScreencastRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Intent screencastIntent = new Intent("com.cyanogenmod.ACTION_START_SCREENCAST");
+            mContext.sendBroadcastAsUser(screencastIntent, UserHandle.CURRENT_OR_SELF);
         }
     };
 
@@ -2347,18 +2372,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHandler.removeCallbacks(mBackLongPress);
         }
 
-        // Specific device key handling
-        if (mDeviceKeyHandler != null) {
-            try {
-                // The device only should consume known keys.
-                if (mDeviceKeyHandler.handleKeyEvent(event)) {
-                    return -1;
-                }
-            } catch (Exception e) {
-                Slog.w(TAG, "Could not dispatch event to device key handler", e);
-            }
-        }
-
         // First we always handle the home key here, so applications
         // can never break it, although if keyguard is on, we do let
         // it handle it, because that gives us the correct 5 second
@@ -2456,6 +2469,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             } else if (longPress) {
                 if (!keyguardOn && !mHomeConsumed &&
                         mLongPressOnHomeBehavior != KEY_ACTION_NOTHING) {
+                    mHomePressed = true;
                     if (mLongPressOnHomeBehavior != KEY_ACTION_APP_SWITCH) {
                         cancelPreloadRecentApps();
                     }
@@ -2470,7 +2484,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // Hijack modified menu keys for debugging features
             final int chordBug = KeyEvent.META_SHIFT_ON;
 
-            if (virtualKey) {
+            if (virtualKey || keyguardOn) {
                 // Let the app handle the key
                 return 0;
             }
@@ -2503,7 +2517,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         return -1;
                     }
                 } else if (longPress) {
-                    if (!keyguardOn && mLongPressOnMenuBehavior != KEY_ACTION_NOTHING) {
+                    if (mLongPressOnMenuBehavior != KEY_ACTION_NOTHING) {
                         if (mLongPressOnMenuBehavior != KEY_ACTION_APP_SWITCH) {
                             cancelPreloadRecentApps();
                         }
@@ -2521,7 +2535,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (mPressOnMenuBehavior != KEY_ACTION_APP_SWITCH) {
                         cancelPreloadRecentApps();
                     }
-                    if (!canceled && !keyguardOn) {
+                    if (!canceled) {
                         performKeyAction(mPressOnMenuBehavior);
                     }
                 }
@@ -4273,6 +4287,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return result;
         }
 
+        // Specific device key handling
+        if (mDeviceKeyHandler != null) {
+            try {
+                // The device only should consume known keys.
+                if (mDeviceKeyHandler.handleKeyEvent(event)) {
+                    return 0;
+                }
+            } catch (Exception e) {
+                Slog.w(TAG, "Could not dispatch event to device key handler", e);
+            }
+        }
+
         // Handle special keys.
         switch (keyCode) {
             case KeyEvent.KEYCODE_ENDCALL: {
@@ -4326,6 +4352,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             mVolumeDownKeyTime = event.getDownTime();
                             mVolumeDownKeyConsumedByChord = false;
                             cancelPendingPowerKeyAction();
+                            cancelPendingScreencastChordAction();
                             interceptScreenshotChord();
                             interceptRingerChord();
                         }
@@ -4333,6 +4360,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         mVolumeDownKeyTriggered = false;
                         cancelPendingScreenshotChordAction();
                         cancelPendingRingerChordAction();
+                        cancelPendingScreencastChordAction();
                     }
                 } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
                     if (down) {
@@ -4344,11 +4372,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             cancelPendingPowerKeyAction();
                             cancelPendingScreenshotChordAction();
                             interceptRingerChord();
+                            interceptScreencastChord();
                         }
                     } else {
                         mVolumeUpKeyTriggered = false;
                         cancelPendingScreenshotChordAction();
                         cancelPendingRingerChordAction();
+                        cancelPendingScreencastChordAction();
                     }
                 }
                 if (down) {
