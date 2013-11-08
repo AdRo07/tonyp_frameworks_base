@@ -260,9 +260,6 @@ public class PhoneStatusBar extends BaseStatusBar {
     private int mVSliderMode;
     private VolumeSlider mVSlider;
     private FrameLayout mVSliderContainer;
-    private int mQSliderMode;
-    private QFloatingSlider mQSlider;
-    private FrameLayout mQSliderContainer;
 
     // top bar
     View mNotificationPanelHeader;
@@ -554,30 +551,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
         mVSliderContainer.setVisibility(View.VISIBLE);
         changeQAPosition(mVSliderContainer, mVSliderMode);
-    }
-    
-    private void cleanupQFloatingSlider() {
-        if (mQSlider == null) {
-            return;
-        }
-        mQSliderContainer.setVisibility(View.GONE);
-        mQSliderContainer.removeAllViews();
-        mQSlider = null;
-        mQSliderContainer = null;
-    }
-
-    private void showQFloatingSlider() {
-        if(mQSliderMode < 0)
-            return;
-        if(mQSlider == null) {
-            mQSlider = new QFloatingSlider(mContext);
-            mQSlider.setBar(this);
-            mQSliderContainer = (FrameLayout)mStatusBarWindow.findViewById(R.id.q_floating_slider_container);
-            mQSliderContainer.removeAllViews();
-            mQSliderContainer.addView(mQSlider);
-        }
-        mQSliderContainer.setVisibility(View.VISIBLE);
-        changeQAPosition(mQSliderContainer, mQSliderMode);
     }
 
     private void changeQAPosition(View v, int pos) {
@@ -987,7 +960,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         boolean transparentV = Settings.System.getIntForUser(resolver,
                         Settings.System.SHOW_VOLUME_SLIDER_TRANSPARENT, 0, UserHandle.USER_CURRENT) == 1;
 
-        mQSliderMode = -1;
         boolean transparentQ = false;
 
         checkQAContainer();
@@ -995,10 +967,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         if(mBSliderMode>=0) {
             showBrightnessSlider();
             mBSlider.setTransparent(transparentB);
-        }
-        if(mQSliderMode>=0){
-            showQFloatingSlider();
-            mQSlider.setTransparent(transparentQ);
         }
         if(mVSliderMode>=0){
             showVolumeSlider();
@@ -1040,7 +1008,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         list.addItemWithoutReorder(mBSliderContainer, mBSliderMode);
         list.addItemWithoutReorder(mVSliderContainer, mVSliderMode);
         list.addItemWithoutReorder(mRibbonScrollView, mRibbonPosition);
-        list.addItemWithoutReorder(mQFloatingContainer, mQSliderMode);
         list.reorder();
         int index = 0;
         for(int i = 0;i<list.length;i++) {
@@ -1050,14 +1017,14 @@ public class PhoneStatusBar extends BaseStatusBar {
                 index++;
             }
         }
-        if(mBSliderMode == -1 && mVSliderMode == -1 && mRibbonPosition == -1 && mQSliderMode == -1) {
+        if(mBSliderMode == -1 && mVSliderMode == -1 && mRibbonPosition == -1) {
             mQAContainer.setVisibility(View.GONE);
             mQAContainer = null;
         }
     }
 
     public void checkQAContainer() {
-        if(mQAContainer == null && (mBSliderMode >= 0 || mVSliderMode >= 0 || mRibbonPosition >= 0 || mQSliderMode >= 0)) {
+        if(mQAContainer == null && (mBSliderMode >= 0 || mVSliderMode >= 0 || mRibbonPosition >= 0)) {
             mQAContainer = (LinearLayout)mStatusBarWindow.findViewById(R.id.quick_access_container);
             mQAContainer.setVisibility(View.VISIBLE);
         }
@@ -1948,7 +1915,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     final int FLIP_DURATION = (FLIP_DURATION_IN + FLIP_DURATION_OUT);
 
     Animator mScrollViewAnim, mFlipSettingsViewAnim, mNotificationButtonAnim,
-        mSettingsButtonAnim, mClearButtonAnim, mQAContainerViewAnim;
+        mSettingsButtonAnim, mHaloButtonAnim, mClearButtonAnim, mQAContainerViewAnim;
 
     @Override
     public void animateExpandNotificationsPanel() {
@@ -3623,7 +3590,7 @@ public class PhoneStatusBar extends BaseStatusBar {
      * @author Firtecy
      */
     public class TogglesList {
-        private static final int MAX_TOGGLES = 4;
+        private static final int MAX_TOGGLES = 3;
         private View[] items;
         public final int length;
 
