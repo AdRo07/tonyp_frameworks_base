@@ -505,13 +505,12 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
     
     private void cleanupBrightnessSlider() {
-        if (mSlider == null) {
-            return;
-        }
         ((FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container_above)).removeAllViews();
         ((FrameLayout)mStatusBarWindow.findViewById(R.id.brightness_slider_container_below)).removeAllViews();
+        if (mSliderContainer == null) {
+            return;
+        }
         mSliderContainer.setVisibility(View.GONE);
-        mSliderContainer.removeAllViews();
         mSlider = null;
         mSliderContainer = null;
     }
