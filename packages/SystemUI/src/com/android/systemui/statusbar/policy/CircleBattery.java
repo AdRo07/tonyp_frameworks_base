@@ -16,7 +16,6 @@
 
 package com.android.systemui.statusbar.policy;
 
-import android.view.ViewGroup.LayoutParams;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -207,7 +206,7 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
             initSizeMeasureIconHeight();
         }
 
-        setMeasuredDimension(mCircleSize + getPaddingLeft(), mCircleSize);
+        setMeasuredDimension(mCircleSize + getPaddingStart(), mCircleSize);
     }
 
     protected int getBatteryLevel() {
@@ -292,6 +291,12 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
         mHandler.postDelayed(mInvalidate, 50);
     }
 
+    @Override
+    public void onRtlPropertiesChanged(int layoutDirection) {
+        mRectLeft = null;
+        invalidate();
+    }
+
     /**
      * initializes all size dependent variables
      * sets stroke width and text size of all involved paints
@@ -310,14 +315,14 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
         mPaintGray.setStrokeWidth(strokeWidth / 3.5f);
 
         // calculate rectangle for drawArc calls
-        int pLeft = getPaddingLeft();
-        mRectLeft = new RectF(pLeft + strokeWidth / 2.0f, 0 + strokeWidth / 2.0f, mCircleSize
-                - strokeWidth / 2.0f + pLeft, mCircleSize - strokeWidth / 2.0f);
+        int pLeft = getPaddingStart();
+        mRectLeft = new RectF(getPaddingLeft() + strokeWidth / 2.0f, 0 + strokeWidth / 2.0f, mCircleSize
+                - strokeWidth / 2.0f + getPaddingLeft(), mCircleSize - strokeWidth / 2.0f);
 
         // calculate Y position for text
         Rect bounds = new Rect();
         mPaintFont.getTextBounds("99", 0, "99".length(), bounds);
-        mTextLeftX = mCircleSize / 2.0f + getPaddingLeft();
+        mTextLeftX = mCircleSize / 2.0f + pLeft;
         // the +1 at end of formular balances out rounding issues. works out on all resolutions
         mTextY = mCircleSize / 2.0f + (bounds.bottom - bounds.top) / 2.0f - strokeWidth / 2.0f + 1;
 
