@@ -124,6 +124,8 @@ public class BrightnessDialog extends Dialog implements
 
     private void updateSetupButtonVisibility() {
         boolean isAuto = mSlider.isChecked();
+        //HACK: disable auto brightness adjustments
+        isAuto = false;
         mSetupButtonDivider.setVisibility(isAuto ? View.VISIBLE : View.GONE);
         mSetupButton.setVisibility(isAuto ? View.VISIBLE : View.GONE);
     }
