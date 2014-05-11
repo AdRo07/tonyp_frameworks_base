@@ -29,6 +29,7 @@ import com.android.server.display.DisplayManagerService;
 import com.android.server.dreams.DreamManagerService;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -67,6 +68,7 @@ import android.view.WindowManagerPolicy;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import libcore.util.Objects;
 
@@ -930,6 +932,13 @@ public final class PowerManagerService extends IPowerManager.Stub
                 for (int index = 0; index < mWakeLocks.size(); index++) {
                     WakeLock wl = mWakeLocks.get(index);
                     if(wl != null) {
+                        if(wl.mTag.startsWith("*sync*") && wl.mOwnerUid == Process.SYSTEM_UID) {
+                            releaseWakeLockInternal(wl.mLock, wl.mFlags);
+                            index--;
+                            if (DEBUG_SPEW) Slog.v(TAG, "Internally releasing the wakelock"
+                                                      + "acquired by SyncManager");
+                            continue;
+                        }
                         // release the wakelock for the blocked uid
                         if (wl.mOwnerUid == uid || checkWorkSourceObjectId(uid, wl)) {
                             releaseWakeLockInternal(wl.mLock, wl.mFlags);
@@ -1013,6 +1022,24 @@ public final class PowerManagerService extends IPowerManager.Stub
                     return false;
             }
         }
+    }
+
+    private boolean isQuickBootCall() {
+
+        ActivityManager activityManager = (ActivityManager) mContext
+                .getSystemService(Context.ACTIVITY_SERVICE);
+
+        List<ActivityManager.RunningAppProcessInfo> runningList = activityManager
+                .getRunningAppProcesses();
+        int callingPid = Binder.getCallingPid();
+        for (ActivityManager.RunningAppProcessInfo processInfo : runningList) {
+            if (processInfo.pid == callingPid) {
+                String process = processInfo.processName;
+                if ("com.qapp.quickboot".equals(process))
+                    return true;
+            }
+        }
+        return false;
     }
 
     @Override // Binder call
@@ -1135,6 +1162,14 @@ public final class PowerManagerService extends IPowerManager.Stub
             throw new IllegalArgumentException("event time must not be in the future");
         }
 
+        // check wakeup caller under QuickBoot mode
+        if (SystemProperties.getInt("sys.quickboot.enable", 0) == 1) {
+            if (!isQuickBootCall()) {
+                    Slog.d(TAG, "ignore wakeup request under QuickBoot");
+                    return;
+                }
+        }
+
         mContext.enforceCallingOrSelfPermission(android.Manifest.permission.DEVICE_POWER, null);
 
         final long ident = Binder.clearCallingIdentity();
@@ -1190,6 +1225,17 @@ public final class PowerManagerService extends IPowerManager.Stub
         userActivityNoUpdateLocked(
                 eventTime, PowerManager.USER_ACTIVITY_EVENT_OTHER, 0, Process.SYSTEM_UID);
         return true;
+    }
+
+    private void enableQbCharger(boolean enable) {
+        if (SystemProperties.getInt("sys.quickboot.enable", 0) == 1 &&
+                SystemProperties.getInt("sys.quickboot.poweroff", 0) != 1) {
+            // only handle "charged" event, native charger will handle
+            // "uncharged" event itself
+            if (enable && mIsPowered && !isScreenOn()) {
+                SystemProperties.set("sys.qbcharger.enable", "true");
+            }
+        }
     }
 
     @Override // Binder call
@@ -1391,6 +1437,7 @@ public final class PowerManagerService extends IPowerManager.Stub
                         + ", mBatteryLevel=" + mBatteryLevel);
             }
 
+            enableQbCharger(mIsPowered);
             if (wasPowered != mIsPowered || oldPlugType != mPlugType) {
                 mDirty |= DIRTY_IS_POWERED;
 
@@ -1425,6 +1472,10 @@ public final class PowerManagerService extends IPowerManager.Stub
 
         // Don't wake when powered if disabled in settings.
         if (mWakeUpWhenPluggedOrUnpluggedSetting == 0) {
+            return false;
+        }
+
+       if (SystemProperties.getInt("sys.quickboot.enable", 0) == 1) {
             return false;
         }
 

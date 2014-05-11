@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,7 @@ class AlarmManagerService extends IAlarmManager.Stub {
     private final AlarmHandler mHandler = new AlarmHandler();
     private ClockReceiver mClockReceiver;
     private UninstallReceiver mUninstallReceiver;
+    private QuickBootReceiver mQuickBootReceiver;
     private final ResultReceiver mResultReceiver = new ResultReceiver();
     private final PendingIntent mTimeTickSender;
     private final PendingIntent mDateChangeSender;
@@ -527,6 +528,7 @@ class AlarmManagerService extends IAlarmManager.Stub {
         mClockReceiver.scheduleTimeTickEvent();
         mClockReceiver.scheduleDateChangedEvent();
         mUninstallReceiver = new UninstallReceiver();
+        mQuickBootReceiver = new QuickBootReceiver();
         
         if (mDescriptor != -1) {
             mWaitThread.start();
@@ -818,13 +820,14 @@ class AlarmManagerService extends IAlarmManager.Stub {
         if (localLOGV) Slog.v(TAG, "UpdateBlockedUids: uid = "+uid +"isBlocked = "+isBlocked);
         synchronized(mLock) {
             if(isBlocked) {
-                for( int i=0; i < mTriggeredUids.size(); i++) {
+                for( int i = 0; i < mTriggeredUids.size(); i++) {
                     if(mTriggeredUids.contains(new Integer(uid))) {
                         if (localLOGV) {
                             Slog.v(TAG,"TriggeredUids has this uid, mBroadcastRefCount="
                                 +mBroadcastRefCount);
                         }
                         mTriggeredUids.remove(new Integer(uid));
+                        i--;
                         mBlockedUids.add(new Integer(uid));
                         if(mBroadcastRefCount > 0){
                             mBroadcastRefCount--;
@@ -846,11 +849,12 @@ class AlarmManagerService extends IAlarmManager.Stub {
                     }
                 }
             } else {
-                for(int i =0; i < mBlockedUids.size(); i++) {
+                for(int i = 0; i < mBlockedUids.size(); i++) {
                     if(!mBlockedUids.remove(new Integer(uid))) {
                         //no more matching uids break from the for loop
                         break;
                      }
+                     i--;
                 }
             }
         }
@@ -1300,6 +1304,22 @@ class AlarmManagerService extends IAlarmManager.Stub {
         }
     }
 
+    private void filtQuickBootAlarms(ArrayList<Alarm> triggerList) {
+
+        ArrayList<String> whiteList = new ArrayList();
+        whiteList.add("android");
+        whiteList.add("com.android.deskclock");
+
+        for (int i = triggerList.size() - 1; i >= 0; i--) {
+            Alarm alarm = triggerList.get(i);
+
+            if (!whiteList.contains(alarm.operation.getTargetPackage())) {
+                triggerList.remove(i);
+                Slog.v(TAG, "ignore -> " + alarm.operation.getTargetPackage());
+            }
+        }
+    }
+
     private class AlarmThread extends Thread
     {
         public AlarmThread()
@@ -1354,6 +1374,10 @@ class AlarmManagerService extends IAlarmManager.Stub {
                     }
                     triggerAlarmsLocked(triggerList, nowELAPSED, nowRTC);
                     rescheduleKernelAlarmsLocked();
+
+                    if (SystemProperties.getInt("sys.quickboot.enable", 0) == 1) {
+                        filtQuickBootAlarms(triggerList);
+                    }
 
                     // now deliver the alarm intents
                     for (int i=0; i<triggerList.size(); i++) {
@@ -1475,7 +1499,32 @@ class AlarmManagerService extends IAlarmManager.Stub {
             }
         }
     }
-    
+
+    private class QuickBootReceiver extends BroadcastReceiver {
+
+        public QuickBootReceiver() {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction("org.codeaurora.quickboot.appkilled");
+            mContext.registerReceiver(this, filter,
+                    "android.permission.DEVICE_POWER", null);
+        }
+
+        @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                String pkgList[] = null;
+                if ("org.codeaurora.quickboot.appkilled".equals(action)) {
+                    pkgList = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
+                    if (pkgList != null && (pkgList.length > 0)) {
+                        for (String pkg : pkgList) {
+                            removeLocked(pkg);
+                            mBroadcastStats.remove(pkg);
+                        }
+                    }
+                }
+            }
+    }
+
     class ClockReceiver extends BroadcastReceiver {
         public ClockReceiver() {
             IntentFilter filter = new IntentFilter();
@@ -1630,11 +1679,11 @@ class AlarmManagerService extends IAlarmManager.Stub {
                 } else {
                     mLog.w("No in-flight alarm for " + pi + " " + intent);
                 }
-                mTriggeredUids.remove(new Integer(uid));
                 if(mBlockedUids.contains(new Integer(uid))) {
                     mBlockedUids.remove(new Integer(uid));
                 } else {
                     if(mBroadcastRefCount > 0){
+                        mTriggeredUids.remove(new Integer(uid));
                         mBroadcastRefCount--;
                         if (mBroadcastRefCount == 0) {
                             mWakeLock.release();
@@ -1662,7 +1711,8 @@ class AlarmManagerService extends IAlarmManager.Stub {
                         // should never happen
                         try {
                         mLog.w("Alarm wakelock still held but sent queue empty");
-                        mWakeLock.setWorkSource(null);
+                        mBroadcastRefCount = 0;
+                        mWakeLock.release();
                         } catch (IllegalArgumentException ex) {
                             ex.printStackTrace();
                         }
