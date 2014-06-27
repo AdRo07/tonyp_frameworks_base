@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2014 The CyanogenMod Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License");s
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -142,6 +142,10 @@ public class EqualizerTile extends QuickSettingsTile {
         };
     }
 
+    @Override
+    protected View getImageView() {
+        return mTile.findViewById(R.id.visualizer_view);
+    }
 
     @Override
     void onPostCreate() {
