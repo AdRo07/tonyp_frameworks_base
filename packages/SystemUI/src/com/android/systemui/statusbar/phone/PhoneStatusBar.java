@@ -64,7 +64,6 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
@@ -163,9 +162,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     private static final int NOTIFICATION_PRIORITY_MULTIPLIER = 10; // see NotificationManagerService
     private static final int HIDE_ICONS_BELOW_SCORE = Notification.PRIORITY_LOW * NOTIFICATION_PRIORITY_MULTIPLIER;
-
-    protected static final boolean FORCE_TRANSLUCENT =
-            SystemProperties.getBoolean("persist.sys.force_transbar", false);
 
     private static final int STATUS_OR_NAV_TRANSIENT =
             View.STATUS_BAR_TRANSIENT | View.NAVIGATION_BAR_TRANSIENT;
@@ -659,7 +655,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     }
                 });
 
-        if (!ActivityManager.isHighEndGfx() && !PhoneStatusBar.FORCE_TRANSLUCENT) {
+        if (!ActivityManager.isHighEndGfx()) {
             mStatusBarWindow.setBackground(null);
             mNotificationPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                     R.color.notification_panel_solid_background)));
@@ -907,7 +903,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 }
 
                 if (mSettingsPanel != null) {
-                    if (!ActivityManager.isHighEndGfx() && !PhoneStatusBar.FORCE_TRANSLUCENT) {
+                    if (!ActivityManager.isHighEndGfx()) {
                         mSettingsPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                                 R.color.notification_panel_solid_background)));
                     }
@@ -1013,7 +1009,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
                 | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 (opaque ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT));
-        if (ActivityManager.isHighEndGfx() || PhoneStatusBar.FORCE_TRANSLUCENT) {
+        if (ActivityManager.isHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
         lp.gravity = Gravity.BOTTOM | Gravity.START;
@@ -1175,7 +1171,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 PixelFormat.TRANSLUCENT);
         // this will allow the navbar to run in an overlay on devices that support this
-        if (ActivityManager.isHighEndGfx() || PhoneStatusBar.FORCE_TRANSLUCENT) {
+        if (ActivityManager.isHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
 
