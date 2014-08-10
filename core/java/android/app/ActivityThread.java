@@ -39,7 +39,6 @@ import android.content.pm.ServiceInfo;
 import android.content.res.AssetManager;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
-import android.content.res.CustomTheme;
 import android.content.res.Resources;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDebug;
@@ -1674,10 +1673,9 @@ public final class ActivityThread {
                             new WeakReference<LoadedApk>(packageInfo));
                 }
             }
-            if (packageInfo.mResources == null
-                    || !packageInfo.mResources.getAssets().isUpToDate()) {
+            if (packageInfo.mResources != null
+                    && !packageInfo.mResources.getAssets().isUpToDate()) {
                 packageInfo.mResources = null;
-                packageInfo.getResources(this);
             }
             return packageInfo;
         }
