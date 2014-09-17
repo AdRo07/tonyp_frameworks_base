@@ -25,6 +25,7 @@ import static android.app.StatusBarManager.windowStateToString;
 import static com.android.systemui.statusbar.phone.BarTransitions.MODE_OPAQUE;
 import static com.android.systemui.statusbar.phone.BarTransitions.MODE_SEMI_TRANSPARENT;
 import static com.android.systemui.statusbar.phone.BarTransitions.MODE_TRANSLUCENT;
+import static com.android.systemui.statusbar.phone.BarTransitions.MODE_TRANSPARENT;
 import static com.android.systemui.statusbar.phone.BarTransitions.MODE_LIGHTS_OUT;
 
 import android.animation.Animator;
@@ -33,6 +34,7 @@ import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
+import android.app.ActivityOptions;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.StatusBarManager;
@@ -42,6 +44,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.ThemeConfig;
 import android.content.res.Resources;
@@ -96,6 +99,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.android.internal.statusbar.StatusBarIcon;
+import com.android.internal.util.cm.ActionUtils;
 import com.android.systemui.BatteryMeterView.BatteryMeterMode;
 import com.android.systemui.DemoMode;
 import com.android.systemui.DockBatteryMeterView;
@@ -126,6 +130,7 @@ import com.android.systemui.statusbar.policy.OnSizeChangedListener;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         NetworkController.UpdateUIListener {
@@ -571,12 +576,12 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     }
 
     private void cleanupRibbon() {
-        if (mRibbonView == null) {
-            return;
+        if (mRibbonView != null)
+            mRibbonView.setVisibility(View.GONE);
+        if (mRibbonQS != null) {
+            mRibbonQS.shutdown();
+            mRibbonQS = null;
         }
-        mRibbonView.setVisibility(View.GONE);
-        mRibbonQS.shutdown();
-        mRibbonQS = null;
     }
 
     private void inflateRibbon() {
@@ -1096,6 +1101,14 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         }
     };
 
+    private View.OnLongClickListener mRecentsLongPressListener = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            cancelPreloadingRecentTasksList();
+            return ActionUtils.switchToLastApp(mContext, mCurrentUserId);
+        }
+    };
+
     private int mShowSearchHoldoff = 0;
     private Runnable mShowSearchPanel = new Runnable() {
         public void run() {
@@ -1137,7 +1150,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private void prepareNavigationBarView() {
         mNavigationBarView.reorient();
         mNavigationBarView.setListeners(mRecentsClickListener,
-                mRecentsPreloadOnTouchListener, mHomeSearchActionListener);
+                mRecentsPreloadOnTouchListener, mRecentsLongPressListener,
+                mHomeSearchActionListener);
         updateSearchPanel();
     }
 
@@ -2478,6 +2492,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             if (!showing) {
                 mStatusBarView.collapseAllPanels(false);
             }
+            checkBarModes();
         }
         if (mNavigationBarView != null
                 && window == StatusBarManager.WINDOW_NAVIGATION_BAR
@@ -2594,22 +2609,25 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             // if dual panels are expandable, force the status bar opaque on any interaction
             sbMode = MODE_OPAQUE;
         }
-        checkBarMode(sbMode, mStatusBarWindowState, mStatusBarView.getBarTransitions());
+        boolean animateSb = shouldAnimateBarTransition(sbMode, mStatusBarWindowState);
+        mStatusBarView.getBarTransitions().transitionTo(sbMode, animateSb);
         if (mNavigationBarView != null) {
-            checkBarMode(mNavigationBarMode,
-                    mNavigationBarWindowState, mNavigationBarView.getBarTransitions());
+            mNavigationBarView.getBarTransitions().transitionTo(mNavigationBarMode,
+                    shouldAnimateBarTransition(mNavigationBarMode, mNavigationBarWindowState));
+            int sbbMode = mStatusBarWindowState == WINDOW_STATE_HIDDEN ? MODE_TRANSPARENT : sbMode;
+            mNavigationBarView.getStatusBarBlockerTransitions().transitionTo(sbbMode, animateSb);
         }
     }
 
-    private void checkBarMode(int mode, int windowState, BarTransitions transitions) {
-        final boolean anim = (mScreenOn == null || mScreenOn) && windowState != WINDOW_STATE_HIDDEN;
-        transitions.transitionTo(mode, anim);
+    private boolean shouldAnimateBarTransition(int mode, int windowState) {
+        return (mScreenOn == null || mScreenOn) && windowState != WINDOW_STATE_HIDDEN;
     }
 
     private void finishBarAnimations() {
         mStatusBarView.getBarTransitions().finishAnimations();
         if (mNavigationBarView != null) {
             mNavigationBarView.getBarTransitions().finishAnimations();
+            mNavigationBarView.getStatusBarBlockerTransitions().finishAnimations();
         }
     }
 
@@ -2841,6 +2859,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             pw.print("  mNavigationBarMode=");
             pw.println(BarTransitions.modeToString(mNavigationBarMode));
             dumpBarTransitions(pw, "mNavigationBarView", mNavigationBarView.getBarTransitions());
+            dumpBarTransitions(pw, "mStatusBarBlocker",
+                    mNavigationBarView.getStatusBarBlockerTransitions());
         }
 
         pw.print("  mNavigationBarView=");
@@ -3418,6 +3438,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         // Update the QuickSettings container
         if (mQS != null) mQS.updateResources();
+        if (mRibbonQS != null)
+            mRibbonQS.updateResources();
         if (mNavigationBarView != null)  {
             mNavigationBarView.updateResources(getNavbarThemedResources());
             updateSearchPanel();
@@ -3628,6 +3650,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 }
                 if (mNavigationBarView != null) {
                     mNavigationBarView.getBarTransitions().transitionTo(barMode, animate);
+                    mNavigationBarView.getStatusBarBlockerTransitions().transitionTo(
+                            barMode, animate);
                 }
             }
         }
@@ -3669,6 +3693,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 } else {
                     cleanupRibbon();
                 }
+            } else if (uri != null && uri.equals(Settings.System.getUriFor(
+                    Settings.System.QS_QUICK_ACCESS_SIZE))) {
+                if (mRibbonQS != null)
+                    mRibbonQS.updateResources();
             } else if (uri != null && uri.equals(Settings.System.getUriFor(
                     Settings.System.QS_QUICK_ACCESS_LINKED))) {
                 final ContentResolver resolver = mContext.getContentResolver();
@@ -3736,6 +3764,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_QUICK_ACCESS),
+                    false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.QS_QUICK_ACCESS_SIZE),
                     false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(

@@ -70,13 +70,12 @@ import android.os.UserHandle;
 import android.os.Vibrator;
 import android.provider.Settings;
 
-import com.android.internal.util.cm.DevUtils;
-
 import android.service.dreams.DreamService;
 import android.service.dreams.IDreamManager;
 import android.service.gesture.EdgeGestureManager;
 import com.android.internal.os.DeviceKeyHandler;
 
+import com.android.internal.util.cm.ActionUtils;
 import dalvik.system.DexClassLoader;
 
 import android.util.DisplayMetrics;
@@ -1067,7 +1066,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     Runnable mBackLongPress = new Runnable() {
         public void run() {
-            if (DevUtils.killForegroundApplication(mContext)) {
+            if (ActionUtils.killForegroundApp(mContext, mCurrentUserId)) {
                 performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
                 Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
             }
@@ -1149,7 +1148,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHandler.post(pmenu);
                 break;
             case KEY_ACTION_LAST_APP:
-                toggleLastApp();
+                ActionUtils.switchToLastApp(mContext, mCurrentUserId);
                 break;
             case KEY_ACTION_TORCH:
                 Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
@@ -5873,8 +5872,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private void applyLidSwitchState() {
         mPowerManager.setKeyboardVisibility(isBuiltInKeyboardVisible());
-
         if (mLidState == LID_CLOSED && mLidControlsSleep) {
+            if (mFocusedWindow != null && (mFocusedWindow.getAttrs().flags
+                    & WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON) != 0) {
+                // if an application requests that the screen be turned on
+                // and there's a closed device cover, don't turn the screen off!
+                return;
+            }
             ITelephony telephonyService = getTelephonyService();
             try {
                 if(telephonyService != null && telephonyService.isIdle()) {
