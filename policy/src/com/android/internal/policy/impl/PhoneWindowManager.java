@@ -185,12 +185,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_IN_APP_SEARCH = 5;
     private static final int KEY_ACTION_LAUNCH_CAMERA = 6;
     private static final int KEY_ACTION_LAST_APP = 7;
-    private static final int KEY_ACTION_SCREEN_OFF = 7;
-    private static final int KEY_ACTION_POWER_MENU = 8;
-    private static final int KEY_ACTION_LAST_APP = 9;
+    private static final int KEY_ACTION_SLEEP = 8;
+    private static final int KEY_ACTION_POWER_MENU = 9;
     private static final int KEY_ACTION_TORCH = 10;
     private static final int KEY_ACTION_SCREENSHOT = 11;
-    private static final int KEY_ACTION_SLEEP = 12;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -1135,10 +1133,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 break;
             case KEY_ACTION_LAUNCH_CAMERA:
                 launchCameraAction();
-                break;
-            case KEY_ACTION_SCREEN_OFF:
-                PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-                pm.goToSleep(SystemClock.uptimeMillis());
                 break;
             case KEY_ACTION_POWER_MENU:
                 Runnable pmenu = new Runnable() {
