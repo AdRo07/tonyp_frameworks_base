@@ -1148,6 +1148,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 break;
             case KEY_ACTION_SLEEP:
                 mPowerManager.goToSleep(SystemClock.uptimeMillis());
+                break;
             case KEY_ACTION_TORCH:
                 Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
                 i.putExtra("bright", false);
