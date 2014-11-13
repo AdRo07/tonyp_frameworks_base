@@ -55,6 +55,10 @@
   <string name="location_mode_sensors_only_title">Alleen apparaat</string>
   <string name="quick_settings_expanded_desktop">Uitgebreid</string>
   <string name="quick_settings_expanded_desktop_off">Normaal</string>
+  <plurals name="quick_settings_bluetooth_multi_label">
+    <item quantity="one">%1$d verbonden</item>
+    <item quantity="other">%1$d verbonden</item>
+  </plurals>
   <string name="quick_settings_camera_error_connect">Kan geen verbinding maken met de camera.</string>
   <string name="navbar_dialog_title">Kies de toe te wijzen functie</string>
   <string name="navbar_home_button">Thuisknop</string>
@@ -67,6 +71,7 @@
   <string name="navbar_menu_big_button">Menuknop</string>
   <string name="advanced_dev_option_wipe_app">App-gegevens wissen</string>
   <string name="advanced_dev_option_force_stop">Nu stoppen</string>
+  <string name="advanced_dev_option_uninstall">Verwijderen</string>
   <string name="accessibility_dock_battery_level">Dock-accu <xliff:g id="number">%d</xliff:g> procent.</string>
   <string name="screenshot_delete_action">Verwijderen</string>
   <string name="screenshot_delete_confirmation">Screenshot verwijderd.</string>
