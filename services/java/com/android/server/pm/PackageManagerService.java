@@ -5178,6 +5178,17 @@ public class PackageManagerService extends IPackageManager.Stub {
                 pkg.applicationInfo.themedIcon = id;
             }
 
+            // Clear out any icon in the cache so it can be recomopsed if needed
+            final boolean isBootScan = (scanMode & SCAN_BOOTING) != 0;
+            if (!isBootScan) {
+                String[] iconPaths =
+                        IconPackHelper.IconCustomizer.getCachedIconPaths(pkg.packageName);
+                for(String iconPath : iconPaths) {
+                    File file = new File(ThemeUtils.SYSTEM_THEME_ICON_CACHE_DIR, iconPath);
+                    file.delete();
+                }
+            }
+
             // Add the new setting to mPackages
             mPackages.put(pkg.applicationInfo.packageName, pkg);
             // Make sure we don't accidentally delete its data.
@@ -5495,7 +5506,6 @@ public class PackageManagerService extends IPackageManager.Stub {
 
             pkgSetting.setTimeStamp(scanFileTime);
 
-            final boolean isBootScan = (scanMode & SCAN_BOOTING) != 0;
             // Generate resources & idmaps if pkg is NOT a theme
             // We must compile resources here because during the initial boot process we may get
             // here before a default theme has had a chance to compile its resources
@@ -5530,7 +5540,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 Exception failedException = null;
 
                 insertIntoOverlayMap(target, pkg);
-                if (mBootThemeConfig != null &&
+                if (isBootScan && mBootThemeConfig != null &&
                         (pkg.packageName.equals(mBootThemeConfig.getOverlayPkgName()) ||
                         pkg.packageName.equals(
                                 mBootThemeConfig.getOverlayPkgNameForApp(target)))) {
@@ -5554,18 +5564,20 @@ public class PackageManagerService extends IPackageManager.Stub {
                         deletePackageLI(pkg.packageName, null, true, null, null, 0, null, false);
                         return null;
                     }
-                } else if (!isBootScan) {
-                    // Pass this off to the ThemeService for processing
-                    ThemeManager tm =
-                            (ThemeManager) mContext.getSystemService(Context.THEME_SERVICE);
-                    if (tm != null) {
-                        tm.processThemeResources(pkg.packageName);
-                    }
+                }
+            }
+
+            if (!isBootScan && (pkg.mIsThemeApk || pkg.mIsLegacyThemeApk)) {
+                // Pass this off to the ThemeService for processing
+                ThemeManager tm =
+                        (ThemeManager) mContext.getSystemService(Context.THEME_SERVICE);
+                if (tm != null) {
+                    tm.processThemeResources(pkg.packageName);
                 }
             }
 
             //Icon Packs need aapt too
-            if ((mBootThemeConfig != null &&
+            if (isBootScan && (mBootThemeConfig != null &&
                     pkg.packageName.equals(mBootThemeConfig.getIconPackPkgName()))) {
                 if (isIconCompileNeeded(pkg)) {
                     try {
@@ -6633,6 +6645,10 @@ public class PackageManagerService extends IPackageManager.Stub {
 
             // Remove protected Application components
             if (Binder.getCallingUid() != Process.SYSTEM_UID) {
+                int callingFlags  = getFlagsForUid(Binder.getCallingUid());
+                if ((callingFlags & ApplicationInfo.FLAG_SYSTEM) != 0) {
+                    return list;
+                }
                 Iterator<ResolveInfo> itr = list.iterator();
                 while (itr.hasNext()) {
                     if (itr.next().activityInfo.applicationInfo.protect) {

@@ -3713,6 +3713,16 @@ class BackupManagerService extends IBackupManager.Stub {
                                 break;
                         }
 
+                        // The path needs to be canonical
+                        // but check and overwrite result only if the operation hasn't already failed
+                        if (okay && (info.path.contains("..") || info.path.contains("//"))) {
+                            if (MORE_DEBUG) {
+                                Slog.w(TAG, "Dropping invalid path " + info.path);
+                            }
+                            result = RESULT_UNKNOWN_ERROR;
+                            okay = false;
+                        }
+
                         // If the policy is satisfied, go ahead and set up to pipe the
                         // data to the agent.
                         if (DEBUG && okay && mAgent != null) {
@@ -3894,7 +3904,13 @@ class BackupManagerService extends IBackupManager.Stub {
                 result = RESULT_UNKNOWN_ERROR;
             }
 
-            return result;
+            // The result for a single file is significant to non-interactive calls.
+            // For all other non-interactive calls, fail open and allow adb to continue restoring.
+            if (mNoninteractive) {
+                return result;
+            } else {
+                return (info == null) ? result : CONTINUE_RESTORE;
+            }
         }
 
         void setUpPipes() throws IOException {
@@ -5743,7 +5759,7 @@ class BackupManagerService extends IBackupManager.Stub {
         params.observer = observer;
         params.noninteractive = true;
         params.ignoreEncryptionPasswordCheck = ignoreEncryptionPasswordCheck;
-        params.ignoreVersionMismatchCheck = true;
+        params.ignoreVersionMismatchCheck = false;
         mWakelock.acquire();
         Message msg = mBackupHandler.obtainMessage(MSG_RUN_FULL_RESTORE, params);
         mBackupHandler.sendMessage(msg);
