@@ -73,11 +73,11 @@ final class ProcessList {
     // This is a process with a heavy-weight application.  It is in the
     // background, but we want to try to avoid killing it.  Value set in
     // system/rootdir/init.rc on startup.
-    static final int HEAVY_WEIGHT_APP_ADJ = 4;
+    static final int HEAVY_WEIGHT_APP_ADJ = 3;
 
     // This is a process currently hosting a backup operation.  Killing it
     // is not entirely fatal but is generally a bad idea.
-    static final int BACKUP_APP_ADJ = 3;
+    static final int BACKUP_APP_ADJ = 4;
 
     // This is a process only hosting components that are perceptible to the
     // user, and we really want to avoid killing them, but they are not
