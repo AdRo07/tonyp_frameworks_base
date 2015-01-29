@@ -163,10 +163,9 @@ final class ProcessList {
     // The actual OOM killer memory levels we are using.
     private final long[] mOomMinFree = new long[mOomAdj.length];
     // Optimal OOM killer memory levels for Low-Tier devices.
-    // Using some values stricter than CM
     private final long[] mOomMinFreeLowRam = new long[] {
-            3031, 4218, 5406,
-            7454, 8642, 10158
+            8192, 13652, 21844,
+            27308, 32768, 38228
     };
 
     private final long mTotalMemMb;
